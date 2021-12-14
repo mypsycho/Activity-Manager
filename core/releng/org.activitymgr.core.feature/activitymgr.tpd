@@ -1,17 +1,14 @@
 target "Activity Manager"
 
-location "http://download.eclipse.org/eclipse/updates/4.5" {
+with source
+
+location "http://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
 	org.eclipse.platform.feature.group lazy
-	org.eclipse.platform.source.feature.group lazy
 	org.eclipse.equinox.executable.feature.group lazy
 	org.eclipse.rcp.feature.group lazy
-	org.eclipse.rcp.source.feature.group lazy
 	org.eclipse.emf.common.feature.group lazy
-	org.eclipse.emf.common.source.feature.group lazy
 	org.eclipse.emf.ecore.feature.group lazy
-	org.eclipse.emf.ecore.source.feature.group lazy
 	org.junit lazy
-	org.junit.source lazy
 	org.hamcrest lazy
 	org.hamcrest.core lazy
 	org.hamcrest.library lazy
@@ -22,29 +19,17 @@ location "http://download.eclipse.org/eclipse/updates/4.5" {
 
 location "http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/" {
 	org.apache.commons.dbcp lazy
-	org.apache.commons.dbcp.source lazy
 	org.apache.commons.pool lazy
-	org.apache.commons.pool.source lazy
 	org.apache.commons.beanutils lazy
-	org.apache.commons.beanutils.source lazy
 	org.apache.commons.collections lazy
-	org.apache.commons.collections.source lazy
 	org.apache.commons.lang lazy
-	org.apache.commons.lang.source lazy
 	com.google.inject lazy
-	com.google.inject.source lazy
 	com.google.inject.assistedinject lazy
-	com.google.inject.assistedinject.source lazy
 	com.google.inject.multibindings lazy
-	com.google.inject.multibindings.source lazy
 	com.google.guava lazy
-	com.google.guava.source lazy
 	org.apache.log4j lazy
-	org.apache.log4j.source lazy
 	org.apache.poi lazy
-	org.apache.poi.source lazy
 	com.google.gson lazy
-	com.google.gson.source lazy
 }
 
 /** location "http://jfbrazeau.github.io/Vaadin-OSGi-Container/repository/" {

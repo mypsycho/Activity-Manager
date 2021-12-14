@@ -28,6 +28,9 @@
 package org.activitymgr.ui.rcp.util;
 
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.activitymgr.core.model.ModelException;
 import org.activitymgr.core.util.Strings;
 import org.activitymgr.ui.rcp.dialogs.ErrorDialog;
@@ -58,20 +61,14 @@ import org.eclipse.swt.widgets.Shell;
  * Object result = safeRunner.run(parent.getShell(), &quot;&quot;);
  * </pre>
  */
-public abstract class SafeRunner {
-
+public abstract class SafeRunner implements Callable<Object> {
+	
 	/** Logger */
-	private static Logger log = Logger.getLogger(SafeRunner.class);
+	private static final Logger LOG = Logger.getLogger(SafeRunner.class);
 
-	/**
-	 * Classe permettant de stoker le résultat du traitement. (sans cet objet il
-	 * n'est pas possible de récupérer le résultat dans le traitement exécuté
-	 * dans le Runnable puisqu'il faut passer par une référence finale).
-	 */
-	private static class Result {
-		public Object value;
-	}
-
+	@Deprecated // prefer lambda call
+	protected SafeRunner() {}
+	
 	/**
 	 * Lance le traitement dans le contexte sécurisé.
 	 * 
@@ -93,30 +90,7 @@ public abstract class SafeRunner {
 	 * @return le résultat du traitement.
 	 */
 	public Object run(final Shell parentShell, Object defaultValue) {
-		log.debug("ParentShell : " + parentShell); //$NON-NLS-1$
-		final Result result = new Result();
-		result.value = defaultValue;
-		// Exécution du traitement
-		BusyIndicator.showWhile(parentShell.getDisplay(), new Runnable() {
-			public void run() {
-				try {
-					result.value = runUnsafe();
-				} catch (ModelException e) {
-					log.info("UI Exception", e); //$NON-NLS-1$
-					new ErrorDialog(
-							parentShell,
-							Strings.getString(
-									"SafeRunner.errors.UNABLE_TO_COMPLETE_OPERATION", e.getMessage()), e).open(); //$NON-NLS-1$ //$NON-NLS-2$
-				} catch (Throwable t) {
-					log.error("Unexpected error", t); //$NON-NLS-1$
-					new ErrorDialog(parentShell, Strings
-							.getString("SafeRunner.errors.UNEXPECTED_ERROR"), t).open(); //$NON-NLS-1$
-				}
-			}
-		});
-		// Retour du résultat
-		log.debug(" -> result='" + result.value + "'"); //$NON-NLS-1$ //$NON-NLS-2$
-		return result.value;
+		return exec(parentShell, defaultValue, this);
 	}
 
 	/**
@@ -132,5 +106,50 @@ public abstract class SafeRunner {
 	 *             exception.
 	 */
 	protected abstract Object runUnsafe() throws Exception;
+	
+	@Override
+	public Object call() throws Exception {
+		return runUnsafe();
+	}
 
+	/**
+	 * Interface supporting Exception.
+	 */
+	public interface Exec {
+	    public void run() throws Exception;
+	}
+	
+	public static <T> T exec(Shell parentShell, T defaultValue, final Callable<T> runner) {
+		LOG.debug("ParentShell : " + parentShell); //$NON-NLS-1$
+		final AtomicReference<T> result = new AtomicReference<>(defaultValue);
+		// Exécution du traitement
+		BusyIndicator.showWhile(parentShell.getDisplay(), new Runnable() {
+			public void run() {
+				try {
+					result.set(runner.call());
+				} catch (ModelException e) {
+					LOG.info("DB Exception", e); //$NON-NLS-1$
+					new ErrorDialog(
+							parentShell,
+							Strings.getString(
+									"SafeRunner.errors.UNABLE_TO_COMPLETE_OPERATION", e.getMessage()), e).open(); //$NON-NLS-1$ //$NON-NLS-2$
+				} catch (Throwable t) {
+					LOG.error("Unexpected error", t); //$NON-NLS-1$
+					new ErrorDialog(parentShell, Strings
+							.getString("SafeRunner.errors.UNEXPECTED_ERROR"), t).open(); //$NON-NLS-1$
+				}
+			}
+		});
+		// Retour du résultat
+		LOG.debug(" -> result='" + result.get() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+		return result.get();
+	}
+	
+	public static void exec(Shell parentShell, final Exec runner) {
+		exec(parentShell, null, ()-> {
+			runner.run();
+			return null;
+		});
+	}
+	
 }

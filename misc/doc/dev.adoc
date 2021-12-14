@@ -1,0 +1,61 @@
+== Developer guide
+
+
+=== Setting the database
+
+==== Install Mysql +
+Get community server (5.7.36 version): +
+https://dev.mysql.com/downloads/mysql/5.7.html +
+
+More info on: +
+https://dev.mysql.com/doc/refman/5.7/en/ +
+
+==== Configure local data +
+Create my_config.ini file ... +
+[source,bash]
+----
+bin\mysqld --defaults-file=my-config.ini --initialize-insecure
+----
+This create a server with 'root' account and no password (~= insecure). +
+
+==== Starting DB
+[source,bash]
+----
+bin\mysqld --defaults-file=my-config.ini --console
+---- 
+
+start client : bin\mysql -u root --skip-password
+
+[NOTE]
+====
+Change password with:
+
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'new-root-password';
+
+But useless for developer.
+====
+
+==== Create schema
+
+Use in mysql client: /misc/sql/createDatabase.sql
+
+Create a connection in 'Data Source Explorer' from +
+/org.activitymgr.ui.web.feature/cfg-db.properties
+
+
+
+
+
+==== Stopping DB
+
+[source,bash]
+----
+bin\mysqladmin" -u root shutdown
+----
+
+
+Driver:
+https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.27.zip
+
+
+

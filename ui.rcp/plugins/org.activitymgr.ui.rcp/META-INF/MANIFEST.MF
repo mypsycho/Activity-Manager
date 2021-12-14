@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Activity Manager RCP UI
 Bundle-SymbolicName: org.activitymgr.ui.rcp;singleton:=true
+Automatic-Module-Name: org.activitymgr.ui.rcp
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.activitymgr.ui.rcp.Activator
 Bundle-Vendor: Jean-Francois Brazeau
@@ -12,5 +13,5 @@ Require-Bundle: org.eclipse.ui,
  org.apache.commons.dbcp;bundle-version="1.4.0",
  org.apache.poi;bundle-version="3.9.0",
  org.activitymgr.core.util;bundle-version="1.0.0"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

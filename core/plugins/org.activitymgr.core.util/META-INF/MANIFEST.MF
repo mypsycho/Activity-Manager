@@ -4,10 +4,11 @@ Bundle-Name: Activity Manager Utility Class
 Bundle-SymbolicName: org.activitymgr.core.util
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: Jean-Francois Brazeau
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: org.activitymgr.core.util
 Require-Bundle: org.apache.log4j;bundle-version="1.2.15";visibility:=reexport,
  com.google.inject;bundle-version="3.0.0";visibility:=reexport,
  javax.inject;bundle-version="1.0.0";visibility:=reexport,
  org.apache.poi;bundle-version="3.9.0",
  org.apache.commons.lang;bundle-version="2.6.0";visibility:=reexport
+Automatic-Module-Name: org.activitymgr.core.util

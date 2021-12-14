@@ -34,7 +34,7 @@ import org.activitymgr.core.dto.Task;
 import org.activitymgr.core.model.IModelMgr;
 import org.activitymgr.core.util.Strings;
 import org.activitymgr.ui.rcp.DatabaseUI.IDbStatusListener;
-import org.activitymgr.ui.rcp.TasksUI.ITaskListener;
+import org.activitymgr.ui.rcp.ITaskListener;
 import org.activitymgr.ui.rcp.util.ITaskSelectionListener;
 import org.activitymgr.ui.rcp.util.SafeRunner;
 import org.activitymgr.ui.rcp.util.TaskFinderPanel;

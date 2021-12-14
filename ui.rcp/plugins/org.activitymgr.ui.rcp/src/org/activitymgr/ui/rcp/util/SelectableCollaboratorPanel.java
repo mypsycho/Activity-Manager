@@ -403,7 +403,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 	 * @param listener
 	 *            le listener.
 	 */
-	public void removeSelectionListener(SelectionListener listener) {
+	public void removeSelectionListener(ICollaboratorSelectionListener listener) {
 		listeners.remove(listener);
 	}
 

@@ -3,6 +3,7 @@
 
 <product name="Activity Manager (RCP) v1.0.0" uid="org.activitymgr.ui.rcp.product" id="org.activitymgr.ui.rcp.product" application="org.activitymgr.ui.rcp.application" version="1.0.0.qualifier" useFeatures="true" includeLaunchers="true">
 
+
    <configIni use="default">
    </configIni>
 
@@ -23,14 +24,15 @@
    <launcher name="activitymgr">
       <linux icon="product/linux/alt_window_128.xpm"/>
       <macosx icon="product/macosx/alt_window.icns"/>
-      <solaris/>
       <win useIco="false">
          <bmp/>
       </win>
    </launcher>
 
+
    <vm>
    </vm>
+
 
    <plugins>
       <plugin id="com.google.inject"/>
@@ -51,8 +53,12 @@
       <plugin id="org.apache.batik.css"/>
       <plugin id="org.apache.batik.util"/>
       <plugin id="org.apache.batik.util.gui"/>
+      <plugin id="org.apache.commons.beanutils"/>
       <plugin id="org.apache.commons.codec"/>
+      <plugin id="org.apache.commons.collections"/>
       <plugin id="org.apache.commons.dbcp"/>
+      <plugin id="org.apache.commons.lang"/>
+      <plugin id="org.apache.commons.logging"/>
       <plugin id="org.apache.commons.pool"/>
       <plugin id="org.apache.log4j"/>
       <plugin id="org.apache.poi"/>
@@ -133,5 +139,12 @@
       <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="1" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="-1" />
    </configurations>
+
+   <preferencesInfo>
+      <targetfile overwrite="false"/>
+   </preferencesInfo>
+
+   <cssInfo>
+   </cssInfo>
 
 </product>

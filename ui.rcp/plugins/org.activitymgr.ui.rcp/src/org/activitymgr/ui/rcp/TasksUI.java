@@ -42,14 +42,12 @@ import org.activitymgr.core.model.IModelMgr;
 import org.activitymgr.core.model.ModelException;
 import org.activitymgr.core.util.StringHelper;
 import org.activitymgr.core.util.Strings;
-import org.activitymgr.ui.rcp.ContributionsUI.IContributionListener;
 import org.activitymgr.ui.rcp.DatabaseUI.IDbStatusListener;
 import org.activitymgr.ui.rcp.dialogs.ContributionsViewerDialog;
 import org.activitymgr.ui.rcp.dialogs.DialogException;
 import org.activitymgr.ui.rcp.dialogs.ITaskChooserValidator;
 import org.activitymgr.ui.rcp.dialogs.TaskChooserTreeWithHistoryDialog;
-import org.activitymgr.ui.rcp.util.AbstractTableMgr;
-import org.activitymgr.ui.rcp.util.ITaskSelectionListener;
+import org.activitymgr.ui.rcp.util.AbstractTableMgrUI;
 import org.activitymgr.ui.rcp.util.SWTHelper;
 import org.activitymgr.ui.rcp.util.SafeRunner;
 import org.activitymgr.ui.rcp.util.TableOrTreeColumnsMgr;
@@ -105,9 +103,9 @@ import org.eclipse.swt.widgets.Widget;
 /**
  * IHM de gestion des tâches.
  */
-public class TasksUI extends AbstractTableMgr implements IDbStatusListener,
+public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 		ICellModifier, SelectionListener, MenuListener, ITreeContentProvider,
-		ITableColorProvider, IContributionListener {
+		ITableColorProvider, ContributionsUI.IContributionListener {
 
 	/** Logger */
 	private static Logger log = Logger.getLogger(TasksUI.class);
@@ -122,50 +120,6 @@ public class TasksUI extends AbstractTableMgr implements IDbStatusListener,
 	public static final int DELTA_COLUMN_IDX = 6;
 	public static final int COMMENT_COLUMN_IDX = 7;
 	private static TableOrTreeColumnsMgr treeColsMgr;
-
-	/**
-	 * Interface utilisée pour permettre l'écoute de la suppression ou de
-	 * l'ajout de taches.
-	 */
-	public static interface ITaskListener {
-
-		/**
-		 * Indique qu'une tache a été ajoutée au référentiel.
-		 * 
-		 * @param task
-		 *            la tache ajoutée.
-		 */
-		public void taskAdded(Task task);
-
-		/**
-		 * Indique qu'une tache a été supprimée du référentiel.
-		 * 
-		 * @param task
-		 *            la tache supprimée.
-		 */
-		public void taskRemoved(Task task);
-
-		/**
-		 * Indique qu'une tache a été modifiée duans le référentiel.
-		 * 
-		 * @param task
-		 *            la tache modifiée.
-		 */
-		public void taskUpdated(Task task);
-
-		/**
-		 * Indique qu'une tache a été déplacée duans le référentiel.
-		 * 
-		 * @param oldTaskFullpath
-		 *            ancien chemin de la tache.
-		 * @param task
-		 *            la tache déplacée.
-		 */
-		public void taskMoved(String oldTaskFullpath, Task task);
-	}
-
-	/** Model manager */
-	private IModelMgr modelMgr;
 	
 	/** Listeners */
 	private List<ITaskListener> listeners = new ArrayList<ITaskListener>();
@@ -233,7 +187,7 @@ public class TasksUI extends AbstractTableMgr implements IDbStatusListener,
 	 *            composant parent.
 	 */
 	public TasksUI(Composite parentComposite, final IModelMgr modelMgr) {
-		this.modelMgr = modelMgr;
+		super(parentComposite, modelMgr);
 
 		// Création du composite parent
 		parent = new Composite(parentComposite, SWT.NONE);
@@ -243,32 +197,29 @@ public class TasksUI extends AbstractTableMgr implements IDbStatusListener,
 		taskFinderPanel = new TaskFinderPanel(parent, modelMgr);
 		GridData gridData = new GridData(SWT.FILL, SWT.NONE, true, false);
 		taskFinderPanel.setLayoutData(gridData);
-		taskFinderPanel.addTaskListener(new ITaskSelectionListener() {
-			public void taskSelected(final Task selectedTask) {
-				SafeRunner safeRunner = new SafeRunner() {
-					@Override
-					protected Object runUnsafe() throws Exception {
-						TaskSums selectedElement = null;
-						for (Object element : treeViewer.getExpandedElements()) {
-							TaskSums sums = (TaskSums) element;
-							if (sums.getTask().equals(selectedTask)) {
-								selectedElement = sums;
-								break;
-							}
+		taskFinderPanel.addTaskListener(selectedTask-> {
+
+				TaskSums selectedElement = safeExec(null, () -> {
+					TaskSums result = null;
+					for (Object element : treeViewer.getExpandedElements()) {
+						TaskSums sums = (TaskSums) element;
+						if (sums.getTask().equals(selectedTask)) {
+							result = sums;
+							break;
 						}
-						if (selectedElement == null) {
-							selectedElement = modelMgr.getTaskSums(selectedTask.getId(), null, null);
-						}
-						return selectedElement;
 					}
-				};
-				TaskSums selectedElement = (TaskSums) safeRunner.run(parent.getShell());
+					if (result == null) {
+						result = modelMgr.getTaskSums(selectedTask.getId(), null, null);
+					}
+					return result;
+				});
+
 				if (selectedElement != null) {
 					treeViewer.setSelection(new StructuredSelection(selectedElement));
 					treeViewer.getTree().setFocus();
 				}
 			}
-		});
+		);
 
 		// Arbre tableau
 		final Tree tree = new Tree(parent, SWT.MULTI | SWT.FULL_SELECTION
@@ -294,7 +245,7 @@ public class TasksUI extends AbstractTableMgr implements IDbStatusListener,
 			@Override
 			public void dragStart(DragSourceEvent event) {
 				IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
-				event.doit =  (selection.size() == 1);
+				event.doit = (selection.size() == 1);
 			}
 			@Override
 			public void dragSetData(DragSourceEvent event) {
@@ -307,32 +258,27 @@ public class TasksUI extends AbstractTableMgr implements IDbStatusListener,
 		target.addDropListener(new DropTargetAdapter() {
 			@Override
 			public void drop(final DropTargetEvent event) {
-				new SafeRunner() {
-					@Override
-					protected Object runUnsafe() throws Exception {
-						Task taskToMove = modelMgr.getTask(Long.parseLong((String)event.data));
-						TreeItem item = (TreeItem)event.item;
-						if (item == null) {
-							// If we move the task to outside of the tree (at the bottom), simply
-							// move the task under root
-							doMoveToAnotherTask(taskToMove, null);
+				safeExec(()->{
+					Task taskToMove = modelMgr.getTask(Long.parseLong((String)event.data));
+					TreeItem item = (TreeItem)event.item;
+					if (item == null) {
+						// If we move the task to outside of the tree (at the bottom), simply
+						// move the task under root
+						doMoveToAnotherTask(taskToMove, null);
+					} else {
+						Task destTask = ((TaskSums) item.getData()).getTask();
+						Point pt = tree.getDisplay().map(null, tree, event.x, event.y);
+						Rectangle bounds = item.getBounds();
+						if (pt.y < bounds.y + bounds.height/3) {
+							doMoveBeforeOrAfter(taskToMove, destTask, true);
+						} else if (pt.y > bounds.y + 2*bounds.height/3) {
+							doMoveBeforeOrAfter(taskToMove, destTask, false);
+						} else {
+							treeViewer.expandToLevel(event.item.getData(), 1);
+							doMoveToAnotherTask(taskToMove, destTask);
 						}
-						else {
-							Task destTask = ((TaskSums) item.getData()).getTask();
-							Point pt = tree.getDisplay().map(null, tree, event.x, event.y);
-							Rectangle bounds = item.getBounds();
-							if (pt.y < bounds.y + bounds.height/3) {
-								doMoveBeforeOrAfter(taskToMove, destTask, true);
-							} else if (pt.y > bounds.y + 2*bounds.height/3) {
-								doMoveBeforeOrAfter(taskToMove, destTask, false);
-							} else {
-								treeViewer.expandToLevel(event.item.getData(), 1);
-								doMoveToAnotherTask(taskToMove, destTask);
-							}
-						}
-						return null;
 					}
-				}.run(parent.getShell());
+				});
 			}
 			@Override
 			public void dragOver(DropTargetEvent event) {
@@ -385,16 +331,16 @@ public class TasksUI extends AbstractTableMgr implements IDbStatusListener,
 		treeColsMgr.configureTree(treeViewer);
 
 		// Configuration des éditeurs de cellules
-		CellEditor[] editors = new CellEditor[8];
-		editors[NAME_COLUMN_IDX] = new TextCellEditor(tree);
-		editors[CODE_COLUMN_IDX] = new TextCellEditor(tree);
-		editors[INITIAL_FUND_COLUMN_IDX] = new TextCellEditor(tree);
-		editors[INITIALLY_CONSUMED_COLUMN_IDX] = new TextCellEditor(tree);
-		editors[CONSUMED_COLUMN_IDX] = null;
-		editors[TODO_COLUMN_IDX] = new TextCellEditor(tree);
-		editors[DELTA_COLUMN_IDX] = null;
-		editors[COMMENT_COLUMN_IDX] = new TextCellEditor(tree);
-		treeViewer.setCellEditors(editors);
+		treeViewer.setCellEditors(new CellEditor[] {
+				new TextCellEditor(tree),
+				new TextCellEditor(tree),
+				new TextCellEditor(tree),
+				new TextCellEditor(tree),
+				null,
+				new TextCellEditor(tree),
+				null,
+				new TextCellEditor(tree)
+		});
 
 		// Initialisation des popups
 		taskChooserDialog = new TaskChooserTreeWithHistoryDialog(

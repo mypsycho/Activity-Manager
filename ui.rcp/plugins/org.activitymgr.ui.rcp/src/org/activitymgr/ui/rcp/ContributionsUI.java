@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -34,6 +34,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.activitymgr.core.dto.Collaborator;
 import org.activitymgr.core.dto.Contribution;
@@ -50,18 +51,16 @@ import org.activitymgr.core.util.Strings;
 import org.activitymgr.ui.rcp.CollaboratorsUI.ICollaboratorListener;
 import org.activitymgr.ui.rcp.DatabaseUI.IDbStatusListener;
 import org.activitymgr.ui.rcp.DurationsUI.IDurationListener;
-import org.activitymgr.ui.rcp.TasksUI.ITaskListener;
 import org.activitymgr.ui.rcp.dialogs.DialogException;
 import org.activitymgr.ui.rcp.dialogs.ITaskChooserValidator;
 import org.activitymgr.ui.rcp.dialogs.TaskChooserTreeWithHistoryDialog;
-import org.activitymgr.ui.rcp.util.AbstractTableMgr;
+import org.activitymgr.ui.rcp.util.AbstractTableMgrUI;
 import org.activitymgr.ui.rcp.util.ICollaboratorSelectionListener;
 import org.activitymgr.ui.rcp.util.SWTHelper;
 import org.activitymgr.ui.rcp.util.SafeRunner;
 import org.activitymgr.ui.rcp.util.SelectableCollaboratorPanel;
 import org.activitymgr.ui.rcp.util.TableOrTreeColumnsMgr;
 import org.apache.log4j.Logger;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.DialogCellEditor;
@@ -72,6 +71,7 @@ import org.eclipse.jface.viewers.ITableFontProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.dnd.Clipboard;
@@ -104,7 +104,7 @@ import org.eclipse.swt.widgets.Widget;
 /**
  * IHM de gestion des contributions.
  */
-public class ContributionsUI extends AbstractTableMgr implements
+public class ContributionsUI extends AbstractTableMgrUI implements
 		IDbStatusListener, ICellModifier, SelectionListener, MenuListener,
 		ITaskListener, ICollaboratorListener, ICollaboratorSelectionListener,
 		IDurationListener, ITableFontProvider {
@@ -149,7 +149,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 		/**
 		 * Retourne l'instance singleton de la classe.
-		 * 
+		 *
 		 * @return l'instance singleton de la classe.
 		 */
 		public static WeekContributionsSum getInstance() {
@@ -162,39 +162,36 @@ public class ContributionsUI extends AbstractTableMgr implements
 	 * Interface utilisée pour permettre l'écoute de la suppression ou de
 	 * l'ajout de durées.
 	 */
-	public static interface IContributionListener {
+	public interface IContributionListener {
 
 		/**
 		 * Indique qu'une contribution a été ajoutée au référentiel.
-		 * 
+		 *
 		 * @param contribution
 		 *            la contribution ajoutée.
 		 */
-		public void contributionAdded(Contribution contribution);
+		void contributionAdded(Contribution contribution);
 
 		/**
 		 * Indique que des contributions ont été supprimées du référentiel.
-		 * 
+		 *
 		 * @param contributions
 		 *            les contributions supprimées.
 		 */
-		public void contributionsRemoved(Contribution[] contributions);
+		void contributionsRemoved(Contribution[] contributions);
 
 		/**
 		 * Indique que des contributions ont été modifiée dans le référentiel.
-		 * 
+		 *
 		 * @param contributions
 		 *            les contributions modifiées.
 		 */
-		public void contributionsUpdated(Contribution[] contributions);
+		void contributionsUpdated(Contribution[] contributions);
 
 	}
 
-	/** Model manager */
-	private IModelMgr modelMgr;
-	
 	/** Listeners */
-	private List<IContributionListener> listeners = new ArrayList<IContributionListener>();
+	private List<IContributionListener> listeners = new ArrayList<>();
 
 	/** Viewer */
 	private TableViewer tableViewer;
@@ -248,7 +245,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/**
 	 * Constructeur permettant de placer l'IHM dans un onglet.
-	 * 
+	 *
 	 * @param tabItem
 	 *            item parent.
 	 * @param modelMgr
@@ -263,7 +260,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 * @param modelMgr
@@ -272,7 +269,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 	 *            bean factory.
 	 */
 	public ContributionsUI(Composite parentComposite, IModelMgr modelMgr, IDTOFactory factory) {
-		this.modelMgr = modelMgr;
+		super(parentComposite, modelMgr);
 		this.factory = factory;
 
 		// Création du composite parent
@@ -315,6 +312,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 		// Création du viewer
 		tableViewer = new TableViewer(table) {
+			@Override
 			public void refresh() {
 				super.refresh();
 				// When the viewer is refreshed, the last line
@@ -370,6 +368,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 		CellEditor[] editors = new CellEditor[10];
 		durationCellEditor = new ComboBoxCellEditor(table, new String[] {},
 				SWT.READ_ONLY) {
+			@Override
 			protected Control createControl(Composite parent) {
 				CCombo ccombo = (CCombo) super.createControl(parent);
 				ccombo.setVisibleItemCount(10);
@@ -379,6 +378,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 		editors[TASK_PATH_COLUMN_IDX] = null; // Read-only column
 		editors[TASK_NAME_COLUMN_IDX] = new DialogCellEditor(table) {
+			@Override
 			protected Object openDialogBox(Control cellEditorWindow) {
 				Object result = null;
 				// Positionnement de la valeur par défaut
@@ -387,12 +387,13 @@ public class ContributionsUI extends AbstractTableMgr implements
 				// Préparation du dialogue
 				taskChooserDialog.setValidator(buildTaskChooserValidator());
 				taskChooserDialog.setValue(w.getTask());
-				if (taskChooserDialog.open() == Dialog.OK) {
+				if (taskChooserDialog.open() == Window.OK) {
 					result = taskChooserDialog.getValue();
 				}
 				return result;
 			}
 
+			@Override
 			protected void updateContents(Object value) {
 				Label defaultLabel = getDefaultLabel();
 				if (defaultLabel == null)
@@ -442,9 +443,10 @@ public class ContributionsUI extends AbstractTableMgr implements
 		// de l'onglet de gestion des tache
 		// (Rq: les accélérateurs sont ignorés dans les menus contextuels)
 		KeyListener keyListener = new KeyAdapter() {
+			@Override
 			public void keyReleased(KeyEvent e) {
 				Widget simulatedWidget = null;
-				if ((e.keyCode == 'v') && (e.stateMask == SWT.CTRL))
+				if (e.keyCode == 'v' && e.stateMask == SWT.CTRL)
 					simulatedWidget = pasteItem;
 				// else if ...
 				if (simulatedWidget != null) {
@@ -534,14 +536,16 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java
 	 * .lang.Object)
 	 */
+	@Override
 	public Object[] getElements(Object inputElement) {
 		// Chargement des données
 		SafeRunner safeRunner = new SafeRunner() {
+			@Override
 			public Object runUnsafe() throws Exception {
 				// Mise à jour des dates de la semaine :
 				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy"); //$NON-NLS-1$
@@ -550,7 +554,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 				weekLabel
 						.setText(Strings
 								.getString(
-										"ContributionsUI.labels.WEEK", sdf.format(currentMonday.getTime()), sdf.format(sunday.getTime()))); //$NON-NLS-1$ //$NON-NLS-2$
+										"ContributionsUI.labels.WEEK", sdf.format(currentMonday.getTime()), sdf.format(sunday.getTime()))); //$NON-NLS-1$
 
 				// Mise à jour du nom des colonnes
 				TableColumn[] tableColumns = tableViewer.getTable()
@@ -565,7 +569,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 				Collaborator selectedCollaborator = selectableCollaboratorPanel
 						.getSelectedCollaborator();
-				List<Object> list = new ArrayList<Object>();
+				List<Object> list = new ArrayList<>();
 				if (selectedCollaborator != null) {
 					// Recherche des taches déclarées pour cet utilisateur
 					// pour la semaine courante (et la semaine passée pour
@@ -596,16 +600,17 @@ public class ContributionsUI extends AbstractTableMgr implements
 			}
 		};
 		// Exécution
-		Object result = (Object) safeRunner.run(parent.getShell());
+		Object result = safeRunner.run(parent.getShell());
 		return (Object[]) (result != null ? result : new TaskContributions[] {});
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.jface.viewers.ICellModifier#canModify(java.lang.Object,
 	 * java.lang.String)
 	 */
+	@Override
 	public boolean canModify(Object element, String property) {
 		log.debug("ICellModifier.canModify(" + element + ", " + property + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		boolean canModify = false;
@@ -617,20 +622,20 @@ public class ContributionsUI extends AbstractTableMgr implements
 		else {
 			int propertyIdx = tableColsMgr.getColumnIndex(property);
 			switch (propertyIdx) {
-			case (TASK_PATH_COLUMN_IDX):
+			case TASK_PATH_COLUMN_IDX:
 				canModify = false;
 				break;
-			case (TASK_NAME_COLUMN_IDX):
-			case (MONDAY_COLUMN_IDX):
-			case (TUESDAY_COLUMN_IDX):
-			case (WEDNESDAY_COLUMN_IDX):
-			case (THURSDAY_COLUMN_IDX):
-			case (FRIDAY_COLUMN_IDX):
-			case (SATURDAY_COLUMN_IDX):
-			case (SUNDAY_COLUMN_IDX):
+			case TASK_NAME_COLUMN_IDX:
+			case MONDAY_COLUMN_IDX:
+			case TUESDAY_COLUMN_IDX:
+			case WEDNESDAY_COLUMN_IDX:
+			case THURSDAY_COLUMN_IDX:
+			case FRIDAY_COLUMN_IDX:
+			case SATURDAY_COLUMN_IDX:
+			case SUNDAY_COLUMN_IDX:
 				canModify = true;
 				break;
-			case (BLANK_COLUMN_IDX) :
+			case BLANK_COLUMN_IDX :
 				canModify = false;
 				break;
 			default:
@@ -643,37 +648,38 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.jface.viewers.ICellModifier#getValue(java.lang.Object,
 	 * java.lang.String)
 	 */
+	@Override
 	public Object getValue(Object element, String property) {
 		log.debug("ICellModifier.getValue(" + element + ", " + property + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		TaskContributions weekContributions = (TaskContributions) element;
 		Object value = null;
 		int columnIndex = tableColsMgr.getColumnIndex(property);
 		switch (columnIndex) {
-		case (TASK_PATH_COLUMN_IDX):
+		case TASK_PATH_COLUMN_IDX:
 			throw new Error(
 					Strings.getString("ContributionsUI.errors.TASK_PATH_CANNOT_BE_MODIFIED")); //$NON-NLS-1$
-		case (TASK_NAME_COLUMN_IDX):
+		case TASK_NAME_COLUMN_IDX:
 			value = weekContributions.getTask();
 			break;
-		case (MONDAY_COLUMN_IDX):
-		case (TUESDAY_COLUMN_IDX):
-		case (WEDNESDAY_COLUMN_IDX):
-		case (THURSDAY_COLUMN_IDX):
-		case (FRIDAY_COLUMN_IDX):
-		case (SATURDAY_COLUMN_IDX):
-		case (SUNDAY_COLUMN_IDX):
+		case MONDAY_COLUMN_IDX:
+		case TUESDAY_COLUMN_IDX:
+		case WEDNESDAY_COLUMN_IDX:
+		case THURSDAY_COLUMN_IDX:
+		case FRIDAY_COLUMN_IDX:
+		case SATURDAY_COLUMN_IDX:
+		case SUNDAY_COLUMN_IDX:
 			Contribution contribution = weekContributions.getContributions()[columnIndex - 2];
 			value = contribution != null ? getDurationIndex(contribution
 					.getDurationId()) : null;
 			// Par défaut on prend la première sélection
 			if (value == null)
-				value = new Integer(0);
+				value = 0;
 			break;
-		case (BLANK_COLUMN_IDX) :
+		case BLANK_COLUMN_IDX :
 			value = null;
 			break;
 		default:
@@ -692,7 +698,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 		Integer result = null;
 		for (int i = 0; i < durations.length && result == null; i++) {
 			if (durations[i].getId() == durationId)
-				result = new Integer(i + 1); // +1 car l'index 0 correspond à la
+				result = i + 1; // +1 car l'index 0 correspond à la
 												// valeur "vide"
 		}
 		return result;
@@ -700,10 +706,11 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.jface.viewers.ICellModifier#modify(java.lang.Object,
 	 * java.lang.String, java.lang.Object)
 	 */
+	@Override
 	public void modify(final Object element, String property, final Object value) {
 		log.debug("ICellModifier.modify(" + element + ", " + property + ", " + value + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		TableItem item = (TableItem) element;
@@ -712,26 +719,26 @@ public class ContributionsUI extends AbstractTableMgr implements
 		final IBaseLabelProvider labelProvider = this;
 		final int columnIndex = tableColsMgr.getColumnIndex(property);
 		SafeRunner safeRunner = new SafeRunner() {
+			@Override
 			public Object runUnsafe() throws Exception {
 				switch (columnIndex) {
-				case (TASK_PATH_COLUMN_IDX):
+				case TASK_PATH_COLUMN_IDX:
 					throw new Error(
 							Strings.getString("ContributionsUI.errors.TASK_PATH_CANNOT_BE_MODIFIED")); //$NON-NLS-1$
-				case (TASK_NAME_COLUMN_IDX):
+				case TASK_NAME_COLUMN_IDX:
 					Task task = (Task) value;
 					weekContributions.setTask(task);
-					List<Contribution> nonNullContributions = new ArrayList<Contribution>();
+					List<Contribution> nonNullContributions = new ArrayList<>();
 					// Récupération des contributions
 					Contribution[] contributions = weekContributions
 							.getContributions();
 					// Suppression des contributions nulles
-					for (int i = 0; i < contributions.length; i++) {
-						Contribution contribution = contributions[i];
+					for (Contribution contribution : contributions) {
 						if (contribution != null)
 							nonNullContributions.add(contribution);
 					}
 					// Mise à jour des contributions
-					contributions = (Contribution[]) nonNullContributions
+					contributions = nonNullContributions
 							.toArray(new Contribution[nonNullContributions
 									.size()]);
 					modelMgr.changeContributionTask(contributions, task);
@@ -740,13 +747,13 @@ public class ContributionsUI extends AbstractTableMgr implements
 							labelProvider, weekContributions));
 					notifyContributionsUpdated(contributions);
 					break;
-				case (MONDAY_COLUMN_IDX):
-				case (TUESDAY_COLUMN_IDX):
-				case (WEDNESDAY_COLUMN_IDX):
-				case (THURSDAY_COLUMN_IDX):
-				case (FRIDAY_COLUMN_IDX):
-				case (SATURDAY_COLUMN_IDX):
-				case (SUNDAY_COLUMN_IDX):
+				case MONDAY_COLUMN_IDX:
+				case TUESDAY_COLUMN_IDX:
+				case WEDNESDAY_COLUMN_IDX:
+				case THURSDAY_COLUMN_IDX:
+				case FRIDAY_COLUMN_IDX:
+				case SATURDAY_COLUMN_IDX:
+				case SUNDAY_COLUMN_IDX:
 					Integer selectedIndex = (Integer) value;
 					Contribution contribution = weekContributions
 							.getContributions()[columnIndex - 2];
@@ -763,7 +770,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 					}
 					// Sinon création ou modification
 					else {
-						boolean create = (contribution == null);
+						boolean create = contribution == null;
 						// Cas d'une création
 						if (create) {
 							Collaborator selectedCollaboprator = selectableCollaboratorPanel
@@ -798,7 +805,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 					// Mise à jour des totaux
 					tableViewer.refresh(WeekContributionsSum.getInstance());
 					break;
-				case (BLANK_COLUMN_IDX) :
+				case BLANK_COLUMN_IDX :
 				default:
 					throw new Error(
 							Strings.getString("ContributionsUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
@@ -812,11 +819,12 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.jface.viewers.ITableFontProvider#getFont(java.lang.Object,
 	 * int)
 	 */
+	@Override
 	public Font getFont(Object element, int columnIndex) {
 		return element == WeekContributionsSum.getInstance() ? italicFont
 				: normalFont;
@@ -824,44 +832,46 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang
 	 * .Object, int)
 	 */
+	@Override
 	public String getColumnText(final Object element, final int columnIndex) {
 		log.debug("ITableLabelProvider.getColumnText(" + element + ", " + columnIndex + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		SafeRunner safeRunner = new SafeRunner() {
+			@Override
 			public Object runUnsafe() throws Exception {
 				String text = null;
 				// Cas de la ligne des totaux
 				if (element == WeekContributionsSum.getInstance()) {
 					switch (columnIndex) {
-					case (TASK_PATH_COLUMN_IDX):
+					case TASK_PATH_COLUMN_IDX:
 						text = ""; //$NON-NLS-1$
 						break;
-					case (TASK_NAME_COLUMN_IDX):
+					case TASK_NAME_COLUMN_IDX:
 						text = Strings
 								.getString("ContributionsUI.labels.TOTAL"); //$NON-NLS-1$
 						break;
-					case (MONDAY_COLUMN_IDX):
-					case (TUESDAY_COLUMN_IDX):
-					case (WEDNESDAY_COLUMN_IDX):
-					case (THURSDAY_COLUMN_IDX):
-					case (FRIDAY_COLUMN_IDX):
-					case (SATURDAY_COLUMN_IDX):
-					case (SUNDAY_COLUMN_IDX):
+					case MONDAY_COLUMN_IDX:
+					case TUESDAY_COLUMN_IDX:
+					case WEDNESDAY_COLUMN_IDX:
+					case THURSDAY_COLUMN_IDX:
+					case FRIDAY_COLUMN_IDX:
+					case SATURDAY_COLUMN_IDX:
+					case SUNDAY_COLUMN_IDX:
 						int tasksCount = tableViewer.getTable().getItemCount() - 1;
 						int sum = 0;
 						for (int i = 0; i < tasksCount; i++) {
 							TaskContributions tc = (TaskContributions) tableViewer
 									.getElementAt(i);
 							// Sometimes, when a refresh is performed, the total
-							// line is refreshed before the previous ones (it 
+							// line is refreshed before the previous ones (it
 							// happens for an obscur reason when the table lines
 							// count doesn't change after the refresh). In that
 							// case (and only in that case), the other elements
-							// are null. That is why the refresh method has been 
+							// are null. That is why the refresh method has been
 							// overrided in the tableviewer : after having performed
 							// the normal refresh, a specific refresh is performed
 							// on the last line to update the contribution sums.
@@ -876,7 +886,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 						}
 						text = StringHelper.hundredthToEntry(sum);
 						break;
-					case (BLANK_COLUMN_IDX) :
+					case BLANK_COLUMN_IDX :
 						text = null;
 						break;
 					default:
@@ -888,27 +898,27 @@ public class ContributionsUI extends AbstractTableMgr implements
 				else {
 					TaskContributions weekContributions = (TaskContributions) element;
 					switch (columnIndex) {
-					case (TASK_PATH_COLUMN_IDX):
+					case TASK_PATH_COLUMN_IDX:
 						// Construction du chemin de la tache
 						text = weekContributions.getTaskCodePath();
 						break;
-					case (TASK_NAME_COLUMN_IDX):
+					case TASK_NAME_COLUMN_IDX:
 						text = weekContributions.getTask().getName();
 						break;
-					case (MONDAY_COLUMN_IDX):
-					case (TUESDAY_COLUMN_IDX):
-					case (WEDNESDAY_COLUMN_IDX):
-					case (THURSDAY_COLUMN_IDX):
-					case (FRIDAY_COLUMN_IDX):
-					case (SATURDAY_COLUMN_IDX):
-					case (SUNDAY_COLUMN_IDX):
+					case MONDAY_COLUMN_IDX:
+					case TUESDAY_COLUMN_IDX:
+					case WEDNESDAY_COLUMN_IDX:
+					case THURSDAY_COLUMN_IDX:
+					case FRIDAY_COLUMN_IDX:
+					case SATURDAY_COLUMN_IDX:
+					case SUNDAY_COLUMN_IDX:
 						Contribution contribution = weekContributions
 								.getContributions()[columnIndex - 2];
 						text = contribution != null ? StringHelper
 								.hundredthToEntry(contribution.getDurationId())
 								: ""; //$NON-NLS-1$
 						break;
-					case (BLANK_COLUMN_IDX):
+					case BLANK_COLUMN_IDX:
 						text = null;
 						break;
 					default:
@@ -925,15 +935,17 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt
 	 * .events.SelectionEvent)
 	 */
+	@Override
 	public void widgetSelected(final SelectionEvent e) {
 		log.debug("SelectionListener.widgetSelected(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final Object source = e.getSource();
 		SafeRunner safeRunner = new SafeRunner() {
+			@Override
 			public Object runUnsafe() throws Exception {
 				TableItem[] selection = tableViewer.getTable().getSelection();
 				// Cas d'une création
@@ -942,7 +954,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 					taskChooserDialog.setValidator(buildTaskChooserValidator());
 					// Affichage du popup
 					Task task = null;
-					if (taskChooserDialog.open() == Dialog.OK) {
+					if (taskChooserDialog.open() == Window.OK) {
 						task = (Task) taskChooserDialog.getValue();
 						log.debug("Selected task=" + task); //$NON-NLS-1$
 						addNewLineOrSelectTaskLine(task);
@@ -968,15 +980,14 @@ public class ContributionsUI extends AbstractTableMgr implements
 					// Récupération des contributions
 					Contribution[] contributions = wc.getContributions();
 					// Suppression des contributions nulles
-					List<Contribution> list = new ArrayList<Contribution>();
-					for (int i = 0; i < contributions.length; i++) {
-						Contribution contribution = contributions[i];
+					List<Contribution> list = new ArrayList<>();
+					for (Contribution contribution : contributions) {
 						if (contribution != null)
 							list.add(contribution);
 					}
 					if (list.size() > 0) {
 						// Suppression des contributions non nulles
-						contributions = (Contribution[]) list
+						contributions = list
 								.toArray(new Contribution[list.size()]);
 						modelMgr.removeContributions(contributions);
 						// Notification des listeners
@@ -1036,19 +1047,16 @@ public class ContributionsUI extends AbstractTableMgr implements
 	 */
 	private ITaskChooserValidator buildTaskChooserValidator() {
 		// Création du valideur
-		ITaskChooserValidator taskChooserValidator = new ITaskChooserValidator() {
-			public void validateChoosenTask(Task selectedTask)
-					throws DialogException {
-				try {
-					if (!modelMgr.isLeaf(selectedTask.getId()))
-						throw new DialogException(
-								Strings.getString("ContributionsUI.errors.PARENT_TASK_SELECTED"), null);//$NON-NLS-1$
-				} catch (Throwable e) {
-					throw new DialogException(
-							e.getMessage(), null);
-				} 
-			}
-		};
+		ITaskChooserValidator taskChooserValidator = selectedTask -> {
+try {
+		if (!modelMgr.isLeaf(selectedTask.getId()))
+			throw new DialogException(
+					Strings.getString("ContributionsUI.errors.PARENT_TASK_SELECTED"), null);//$NON-NLS-1$
+} catch (Throwable e) {
+		throw new DialogException(
+				e.getMessage(), null);
+}
+};
 		// Retour du résultat
 		return taskChooserValidator;
 	}
@@ -1056,7 +1064,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 	/**
 	 * Ajoute une ligne dans le tableau ou sélectionne celle déja existante pour
 	 * la tache.
-	 * 
+	 *
 	 * @param task
 	 *            la tache associée à l'ajout ou la sélection.
 	 * @throws ModelException
@@ -1066,8 +1074,8 @@ public class ContributionsUI extends AbstractTableMgr implements
 		// La tache est elle déja associée à une semaine de contributions
 		TaskContributions weekContributions = null;
 		TableItem[] items = tableViewer.getTable().getItems();
-		for (int i = 0; i < items.length; i++) {
-			Object data = items[i].getData();
+		for (TableItem item : items) {
+			Object data = item.getData();
 			if (data instanceof TaskContributions) {
 				Task currentTask = ((TaskContributions) data).getTask();
 				if (task.equals(currentTask))
@@ -1092,26 +1100,28 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse
 	 * .swt.events.SelectionEvent)
 	 */
+	@Override
 	public void widgetDefaultSelected(SelectionEvent e) {
 		widgetSelected(e);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.swt.events.MenuListener#menuShown(org.eclipse.swt.events.
 	 * MenuEvent)
 	 */
+	@Override
 	public void menuShown(MenuEvent e) {
 		log.debug("menuShown(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
-		boolean collaboratorSelected = (selectableCollaboratorPanel
-				.getSelectedCollaborator() != null);
+		boolean collaboratorSelected = selectableCollaboratorPanel
+				.getSelectedCollaborator() != null;
 		TableItem[] selection = tableViewer.getTable().getSelection();
 		boolean emptySelection = selection.length == 0;
 		boolean singleSelection = selection.length == 1;
@@ -1125,29 +1135,31 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.swt.events.MenuListener#menuHidden(org.eclipse.swt.events
 	 * .MenuEvent)
 	 */
+	@Override
 	public void menuHidden(MenuEvent e) {
 		// Do nothing...
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseClosed()
 	 */
+	@Override
 	public void databaseClosed() {
 		// Suppression des items de collaborateurs
 		selectableCollaboratorPanel.databaseClosed();
 		// Suppression des items de contributions
 		Table table = tableViewer.getTable();
 		TableItem[] items = table.getItems();
-		for (int i = 0; i < items.length; i++) {
-			items[i].dispose();
+		for (TableItem item : items) {
+			item.dispose();
 		}
 	}
 
@@ -1156,7 +1168,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 	 */
 	private void initialize() {
 		// Chargement du référentiel de durées
-		loadDurations();
+		durationsChanged(safeExec(new Duration[0], () -> modelMgr.getActiveDurations()));
 
 		// Chargement des collaborateurs et suppression de l'ancienne sélection
 		// si elle existe
@@ -1172,54 +1184,36 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	}
 
-	/**
-	 * Charge le référentiel de durées.
-	 */
-	private void loadDurations() {
-		// Chargement de la liste des durées et des utilisateurs
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				// Chargement du référentiel de durées
-				durations = modelMgr.getActiveDurations();
-				String[] durationsStr = new String[durations.length + 1];
-				durationsStr[0] = ""; //$NON-NLS-1$
-				for (int i = 0; i < durations.length; i++)
-					durationsStr[i + 1] = StringHelper
-							.hundredthToEntry(durations[i].getId());
-				durationCellEditor.setItems(durationsStr);
-				return null;
-			}
-		};
-		// Exécution
-		safeRunner.run(parent.getShell());
-	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.util.ICollaboratorSelectionListener#
 	 * collaboratorSelected(jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorSelected(Collaborator selectedCollaborator) {
 		tableViewer.refresh();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.CollaboratorListener#
 	 * collaboratorAdded(jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorAdded(Collaborator collaborator) {
 		selectableCollaboratorPanel.collaboratorAdded(collaborator);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.CollaboratorListener#
 	 * collaboratorRemoved(jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorRemoved(Collaborator collaborator) {
 		selectableCollaboratorPanel.collaboratorRemoved(collaborator);
 		// Dans le cas ou le collaborateur supprimé est celui qui était
@@ -1236,21 +1230,23 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.CollaboratorListener#
 	 * collaboratorUpdated(jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorUpdated(Collaborator collaborator) {
 		selectableCollaboratorPanel.collaboratorUpdated(collaborator);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.ICollaboratorListener#
 	 * collaboratorActivationStatusChanged
 	 * (jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorActivationStatusChanged(Collaborator collaborator) {
 		selectableCollaboratorPanel
 				.collaboratorActivationStatusChanged(collaborator);
@@ -1268,10 +1264,11 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseOpened()
 	 */
+	@Override
 	public void databaseOpened() {
 		// Annulation de la sélection d'un collaborateur si une sélection
 		// est en cours (peut arriver si la base a été réinstallée)
@@ -1279,58 +1276,17 @@ public class ContributionsUI extends AbstractTableMgr implements
 		initialize();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * jfb.tools.activitymgr.ui.DurationsUI.IDurationListener#durationAdded(
-	 * jfb.tools.activitymgr.core.beans.Duration)
-	 */
-	public void durationAdded(Duration duration) {
-		loadDurations();
-	}
+
+
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * jfb.tools.activitymgr.ui.DurationsUI.DurationListener#durationRemoved
-	 * (jfb.tools.activitymgr.core.beans.Duration)
-	 */
-	public void durationRemoved(Duration duration) {
-		loadDurations();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * jfb.tools.activitymgr.ui.DurationsUI.DurationListener#durationUpdated
-	 * (jfb.tools.activitymgr.core.beans.Duration,
-	 * jfb.tools.activitymgr.core.beans.Duration)
-	 */
-	public void durationUpdated(Duration oldDuration, Duration newDuration) {
-		loadDurations();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see jfb.tools.activitymgr.ui.DurationsUI.IDurationListener#
-	 * durationActivationStatusChanged
-	 * (jfb.tools.activitymgr.core.beans.Duration)
-	 */
-	public void durationActivationStatusChanged(Duration duration) {
-		loadDurations();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * jfb.tools.activitymgr.ui.TasksUI.TaskListener#taskAdded(jfb.tools.activitymgr
 	 * .core.beans.Task)
 	 */
+	@Override
 	public void taskAdded(Task task) {
 		// Transfert de la notification au popup de choix de tache
 		taskChooserDialog.taskAdded(task);
@@ -1341,12 +1297,14 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.TasksUI.TaskListener#taskRemoved(jfb.tools.
 	 * activitymgr.core.beans.Task)
 	 */
+	@Override
 	public void taskRemoved(final Task removedTask) {
 		new SafeRunner() {
+			@Override
 			protected Object runUnsafe() throws Exception {
 				// Transfert de la notification au popup de choix de tache
 				taskChooserDialog.taskRemoved(removedTask);
@@ -1406,10 +1364,11 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.TasksUI.TaskListener#taskUpdated(jfb.tools.
 	 * activitymgr.core.beans.Task)
 	 */
+	@Override
 	public void taskUpdated(final Task updatedTask) {
 		// Transfert de la notification au popup de choix de tache
 		taskChooserDialog.taskUpdated(updatedTask);
@@ -1440,13 +1399,15 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * jfb.tools.activitymgr.ui.TasksUI.ITaskListener#taskMoved(java.lang.String
 	 * , jfb.tools.activitymgr.core.beans.Task)
 	 */
+	@Override
 	public void taskMoved(final String oldTaskFullpath, final Task movedTask) {
 		new SafeRunner() {
+			@Override
 			protected Object runUnsafe() throws Exception {
 				// Transfert de la notification au popup de choix de tache
 				taskChooserDialog.taskMoved(oldTaskFullpath, movedTask);
@@ -1498,7 +1459,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/**
 	 * Ajoute un listener.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -1508,7 +1469,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/**
 	 * Ajoute un listener.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -1518,7 +1479,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/**
 	 * Notifie les listeners qu'une contribution a été ajoutée.
-	 * 
+	 *
 	 * @param newContribution
 	 *            la contribution ajoutée.
 	 */
@@ -1532,7 +1493,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/**
 	 * Notifie les listeners que des contributions ont été supprimées.
-	 * 
+	 *
 	 * @param contributions
 	 *            les contributions supprimées.
 	 */
@@ -1546,7 +1507,7 @@ public class ContributionsUI extends AbstractTableMgr implements
 
 	/**
 	 * Notifie les listeners que des contributions ont été modifiées.
-	 * 
+	 *
 	 * @param contributions
 	 *            les contributions modifiées.
 	 */
@@ -1556,6 +1517,15 @@ public class ContributionsUI extends AbstractTableMgr implements
 			IContributionListener listener = it.next();
 			listener.contributionsUpdated(contributions);
 		}
+	}
+
+	@Override
+	public void durationsChanged(Duration[] durations) {
+		durationCellEditor.setItems(Stream.concat(Stream.of(""), //$NON-NLS-1$
+			Stream.of(durations)
+				.filter(Duration::getIsActive)
+				.map(it -> StringHelper.hundredthToEntry(it.getId()))
+		).toArray(String[]::new));
 	}
 
 }

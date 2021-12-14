@@ -4,7 +4,7 @@ Bundle-Name: Activity Manager Web UI View
 Bundle-SymbolicName: org.activitymgr.ui.web.view;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: Jean-Francois Brazeau
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.activitymgr.ui.web.logic;visibility:=reexport,
  org.eclipse.equinox.app,
  org.eclipse.core.runtime,
@@ -29,3 +29,4 @@ Export-Package: com.vaadin.data,
  com.vaadin.ui,
  org.activitymgr.ui.web.view,
  org.activitymgr.ui.web.view.impl.dialogs
+Automatic-Module-Name: org.activitymgr.ui.web.view

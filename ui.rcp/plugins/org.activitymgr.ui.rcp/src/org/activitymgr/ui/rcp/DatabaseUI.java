@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -77,6 +78,8 @@ import org.xml.sax.SAXException;
  */
 public class DatabaseUI implements ModifyListener {
 
+	private static final List<Long> DEFAULT_DURATION = Arrays.asList(25l, 50l, 75l, 100l);
+	
 	/**
 	 * Interface utilisée pour notifier de l'état de la connexion à la base de
 	 * données.
@@ -188,7 +191,7 @@ public class DatabaseUI implements ModifyListener {
 				true));
 		centeredPanel.setLayout(new GridLayout(1, false));
 
-		// Groupe et pannneau contenant les données de connexion à la BDD
+		// Groupe et panneau contenant les données de connexion à la BDD
 		Group conectionGroup = new Group(centeredPanel, SWT.NONE);
 		conectionGroup.setText(Strings
 				.getString("DatabaseUI.labels.CONNECTION_PROPERTIES")); //$NON-NLS-1$
@@ -284,7 +287,9 @@ public class DatabaseUI implements ModifyListener {
 		jdbcUrlLabel.setText(Strings.getString("DatabaseUI.labels.SERVER_URL")); //$NON-NLS-1$
 		jdbcUrlText = new Text(conectionPanel, SWT.BORDER);
 		gridData = new GridData();
-		gridData.widthHint = 250;
+		// gridData.widthHint = 250;
+		gridData.horizontalAlignment = SWT.FILL;
+		
 		gridData.horizontalSpan = 2;
 		jdbcUrlText.setLayoutData(gridData);
 
@@ -293,7 +298,8 @@ public class DatabaseUI implements ModifyListener {
 		jdbcUserIdLabel.setText(Strings.getString("DatabaseUI.labels.USER_ID")); //$NON-NLS-1$
 		jdbcUserIdText = new Text(conectionPanel, SWT.BORDER);
 		gridData = new GridData();
-		gridData.widthHint = 80;
+		//gridData.widthHint = 80;
+		gridData.horizontalAlignment = SWT.FILL;
 		gridData.horizontalSpan = 2;
 		jdbcUserIdText.setLayoutData(gridData);
 
@@ -315,9 +321,8 @@ public class DatabaseUI implements ModifyListener {
 		// Champ password
 		jdbcPasswordText = new Text(jdbcPasswordAndWarningPanel, SWT.BORDER
 				| SWT.PASSWORD);
-		gridData = new GridData();
-		gridData.widthHint = 80;
-		jdbcPasswordText.setLayoutData(gridData);
+		jdbcPasswordText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		// Warning
 		jdbcPasswordWarning = new Label(jdbcPasswordAndWarningPanel, SWT.NONE);
 		jdbcPasswordWarning.setText(Strings
@@ -843,15 +848,11 @@ public class DatabaseUI implements ModifyListener {
 						Strings.getString("DatabaseUI.labels.CONFIRMATION"), //$NON-NLS-1$
 						Strings.getString("DatabaseUI.questions.CREATE_DEFAULT_DURATIONS"))) { //$NON-NLS-1$
 			try {
-				Duration duration = factory.newDuration();
-				duration.setId(25);
-				modelMgr.createDuration(duration);
-				duration.setId(50);
-				modelMgr.createDuration(duration);
-				duration.setId(75);
-				modelMgr.createDuration(duration);
-				duration.setId(100);
-				modelMgr.createDuration(duration);
+				for(Long id : DEFAULT_DURATION) {
+					Duration duration = factory.newDuration();
+					duration.setId(id);
+					modelMgr.createDuration(duration);
+				}
 			} catch (ModelException e) {
 				log.error(
 						"Unexpected error while creating default durations", e); //$NON-NLS-1$

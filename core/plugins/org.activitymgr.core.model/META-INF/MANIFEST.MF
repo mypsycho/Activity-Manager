@@ -4,7 +4,7 @@ Bundle-Name: Activity Manager Core
 Bundle-SymbolicName: org.activitymgr.core.model;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: Jean-Francois Brazeau
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.activitymgr.core.util;bundle-version="1.0.0",
  org.activitymgr.core.dao;bundle-version="1.0.0",
  org.activitymgr.core.orm;bundle-version="1.0.0",
@@ -14,3 +14,4 @@ Require-Bundle: org.activitymgr.core.util;bundle-version="1.0.0",
  org.apache.commons.lang;bundle-version="2.6.0"
 Export-Package: org.activitymgr.core.model
 Bundle-ClassPath: .
+Automatic-Module-Name: org.activitymgr.core.model

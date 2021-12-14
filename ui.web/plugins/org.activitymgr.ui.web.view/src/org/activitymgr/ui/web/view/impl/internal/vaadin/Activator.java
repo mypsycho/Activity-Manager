@@ -45,9 +45,10 @@ public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 
 	private static final String PRODUCTION_MODE_PARAM = "productionMode";
 
+	@SuppressWarnings("unchecked")
 	private static final List<Class<?>> SERVICE_CLASSES = Arrays
-			.asList(new Class<?>[] { IExtensionRegistry.class,
-					HttpService.class /* , HttpContextExtensionService.class */});
+			.asList(IExtensionRegistry.class,
+					HttpService.class /* , HttpContextExtensionService.class */);
 
 	private BundleContext context;
 
@@ -164,8 +165,8 @@ public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 					"/",
 					new ActivityMgrServlet(),
 					props,
-					new OSGiUIHttpContext(httpService
-							.createDefaultHttpContext(), resourceProviderBundles));
+					new OSGiUIHttpContext(httpService.createDefaultHttpContext(), 
+							resourceProviderBundles));
 		} catch (ServletException e) {
 			exception = e;
 		} catch (NamespaceException e) {

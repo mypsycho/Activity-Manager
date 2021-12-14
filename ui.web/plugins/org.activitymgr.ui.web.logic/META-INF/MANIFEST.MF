@@ -4,7 +4,7 @@ Bundle-Name: Activity Manager Web UI Logic
 Bundle-SymbolicName: org.activitymgr.ui.web.logic;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: Jean-Francois Brazeau
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.eclipse.osgi,
  org.activitymgr.core.model,
  org.eclipse.equinox.registry,
@@ -23,3 +23,4 @@ Export-Package: org.activitymgr.ui.web.logic,
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.activitymgr.ui.web.logic.impl.internal.Activator
 Bundle-ClassPath: .
+Automatic-Module-Name: org.activitymgr.ui.web.logic
