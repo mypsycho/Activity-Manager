@@ -114,7 +114,7 @@ public abstract class AbstractLogicImpl<VIEW extends ILogic.IView>
 		return instance;
 	}
 
-	protected IEventBus getEventBus() {
+	public IEventBus getEventBus() {
 		return eventBus;
 	}
 	

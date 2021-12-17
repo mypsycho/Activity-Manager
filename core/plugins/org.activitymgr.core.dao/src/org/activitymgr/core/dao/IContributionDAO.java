@@ -15,11 +15,11 @@ public interface IContributionDAO extends IDAO<Contribution> {
 	 * @param contributor
 	 *            le collaborateur associé aux contributions.
 	 * @param task
-	 *            la tache associée aux contributions.
+	 *            la tache associée aux contributions, toutes si 'null'.
 	 * @param fromDate
 	 *            la date de départ.
 	 * @param toDate
-	 *            la date de fin.
+	 *            la date de fin. (incluse)
 	 * @return la liste des contributions associées aux paramétres spécifiés.
 	 * @throws DAOException
 	 *             levé en cas d'incident technique d'accès à la base.

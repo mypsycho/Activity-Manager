@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  1. Redistributions of source code must retain the above copyright notice,
+ *     this list of conditions and the following disclaimer.
+ * 
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ *  3. The name of the author may not be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIEDWARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+target "Activity Manager - runtime" 
+
+//
+// This target platform list dependencies to build project components.
+//
+
+with requirements
+// do not include source for this target
+// it should be used only by compiler
+
+// This target platform declare dependencies of components to be release
+
+location "http://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
+	org.eclipse.platform.feature.group lazy
+	org.eclipse.equinox.executable.feature.group lazy
+	org.eclipse.rcp.feature.group lazy
+	org.eclipse.emf.common.feature.group lazy
+	org.eclipse.emf.ecore.feature.group lazy
+	org.apache.commons.codec lazy
+
+//	org.hamcrest lazy
+//	org.hamcrest.core lazy
+//	org.hamcrest.library lazy
+//	org.hamcrest.integration lazy
+//	org.hamcrest.text lazy
+
+}
+
+location "http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/" {
+	org.apache.commons.dbcp lazy
+	org.apache.commons.pool lazy
+	org.apache.commons.beanutils lazy
+	org.apache.commons.collections lazy
+	org.apache.commons.lang lazy
+	com.google.inject lazy
+	com.google.inject.assistedinject lazy
+	com.google.inject.multibindings lazy
+	com.google.guava lazy
+	org.apache.log4j [1.2.15,2.0.0)
+	org.apache.poi lazy
+	com.google.gson lazy
+}

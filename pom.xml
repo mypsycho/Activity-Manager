@@ -2,103 +2,72 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.activitymgr</groupId>
-	<artifactId>org.activitymgr.parent</artifactId>
+	<artifactId>container</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
-
+	<name>POM Container</name>
+	
 	<properties>
-		<tycho-version>0.24.0</tycho-version>
-		<tycho-extras-version>0.24.0</tycho-extras-version>
 		<tycho.scmUrl>scm:git:https://github.com/jfbrazeau/Activity-Manager.git</tycho.scmUrl>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<modules>
-		<module>core</module>
+		<module>parent</module>
+		
+		<!-- Regular components -->
+		<module>core/plugins/org.activitymgr.core.dao</module>
+		<module>core/plugins/org.activitymgr.core.dao.h2fragment</module>
+		<module>core/plugins/org.activitymgr.core.dao.hsqldbfragment</module>
+		<module>core/plugins/org.activitymgr.core.dao.mysqlfragment</module>
+		<module>core/plugins/org.activitymgr.core.dto</module>
+		<module>core/plugins/org.activitymgr.core.model</module>
+		<module>core/plugins/org.activitymgr.core.orm</module>
+		<module>core/plugins/org.activitymgr.core.util</module>
+		
+		<module>ui.rcp/plugins/org.activitymgr.ui.rcp</module>
+		
+		<module>ui.web/plugins/org.activitymgr.ui.web.logic</module>
+		<module>ui.web/plugins/org.activitymgr.ui.web.view</module>
 	</modules>
 
 	<profiles>
+	
 		<profile>
-			<id>ui.rcp</id>
+		    <!-- 
+			By default, tests are executed.
+			use -Dmaven.test.skip=true to disable.
+			-->
+			<id>tests</id>
+			<activation>
+				<property>
+					<name>maven.test.skip</name>
+					<value>!true</value>
+				</property>
+			</activation>
 			<modules>
-				<module>ui.rcp</module>
+				<module>core/plugins/org.activitymgr.core.tests</module>
 			</modules>
 		</profile>
+		
 		<profile>
-			<id>ui.web</id>
+		    <!-- 
+			By default, tests are executed.
+			use -Dmaven.test.skip=true to disable.
+			-->
+			<id>releng</id>
+			<activation>
+				<property>
+					<name>tycho.releng.skip</name>
+					<value>!true</value>
+				</property>
+			</activation>
 			<modules>
-				<module>ui.web</module>
+				<module>ui.rcp/releng/org.activitymgr.ui.rcp.repository</module>
+				<module>ui.rcp/releng/org.activitymgr.ui.rcp.feature</module>
 			</modules>
 		</profile>
+
 	</profiles>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.eclipse.tycho</groupId>
-				<artifactId>tycho-maven-plugin</artifactId>
-				<version>${tycho-version}</version>
-				<extensions>true</extensions>
-			</plugin>
-			<plugin>
-				<groupId>org.eclipse.tycho</groupId>
-				<artifactId>tycho-packaging-plugin</artifactId>
-				<version>${tycho-version}</version>
-				<configuration>
-					<sourceReferences>
-						<generate>true</generate>
-					</sourceReferences>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.eclipse.tycho.extras</groupId>
-						<artifactId>tycho-sourceref-jgit</artifactId>
-						<version>${tycho-extras-version}</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<plugin>
-				<groupId>org.eclipse.tycho</groupId>
-				<artifactId>target-platform-configuration</artifactId>
-				<version>${tycho-version}</version>
-				<configuration>
-					<target>
-						<artifact>
-							<groupId>org.activitymgr</groupId>
-							<artifactId>org.activitymgr.core.feature</artifactId>
-							<version>1.0.0-SNAPSHOT</version>
-							<classifier>activitymgr</classifier>
-						</artifact>
-					</target>
-					<environments>
-						<environment>
-							<os>linux</os>
-							<ws>gtk</ws>
-							<arch>x86</arch>
-						</environment>
-						<environment>
-							<os>linux</os>
-							<ws>gtk</ws>
-							<arch>x86_64</arch>
-						</environment>
-						<environment>
-							<os>win32</os>
-							<ws>win32</ws>
-							<arch>x86</arch>
-						</environment>
-						<environment>
-							<os>win32</os>
-							<ws>win32</ws>
-							<arch>x86_64</arch>
-						</environment>
-						<environment>
-							<os>macosx</os>
-							<ws>cocoa</ws>
-							<arch>x86_64</arch>
-						</environment>
-					</environments>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+
 </project>

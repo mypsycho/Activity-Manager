@@ -944,9 +944,9 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 	public void widgetSelected(final SelectionEvent e) {
 		log.debug("SelectionListener.widgetSelected(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final Object source = e.getSource();
-		SafeRunner safeRunner = new SafeRunner() {
-			@Override
-			public Object runUnsafe() throws Exception {
+
+		SafeRunner.exec(parent.getShell(), () -> {
+
 				TableItem[] selection = tableViewer.getTable().getSelection();
 				// Cas d'une création
 				if (newItem.equals(source)) {
@@ -1035,11 +1035,8 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 					currentMonday = DateHelper.moveToFirstDayOfWeek(currentMonday);
 					tableViewer.refresh();
 				}
-				return null;
 			}
-		};
-		// Exécution
-		safeRunner.run(parent.getShell());
+		);
 	}
 
 	/**

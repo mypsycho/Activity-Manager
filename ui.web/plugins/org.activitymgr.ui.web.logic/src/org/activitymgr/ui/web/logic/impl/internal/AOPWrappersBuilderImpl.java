@@ -12,11 +12,14 @@ import org.activitymgr.ui.web.logic.IAOPWrappersBuilder;
 import org.activitymgr.ui.web.logic.ILogic.IView;
 import org.activitymgr.ui.web.logic.IRootLogic;
 import org.activitymgr.ui.web.logic.IUINotificationsBlockingViewWrapper;
+import org.apache.log4j.Logger;
 
 import com.google.inject.Inject;
 
-final class AOPWrappersBuilderImpl implements
-		IAOPWrappersBuilder {
+final class AOPWrappersBuilderImpl implements IAOPWrappersBuilder {
+	
+	/** Logger */
+	private static final Logger LOGGER = Logger.getLogger(AOPWrappersBuilderImpl.class);
 	
 	@Inject
 	private IRootLogic rootLogic;
@@ -136,7 +139,9 @@ final class AOPWrappersBuilderImpl implements
 									txCtx.getTx().rollback();
 								}
 								Throwable exception = t.getTargetException();
-								exception.printStackTrace();
+								LOGGER.warn("Transcation failure", exception);
+								
+								// exception.printStackTrace();
 								// Building message
 								String message = exception.getMessage();
 								if (message == null || "".equals(message.trim())) {

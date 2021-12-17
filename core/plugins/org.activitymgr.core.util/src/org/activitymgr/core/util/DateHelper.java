@@ -17,12 +17,18 @@ public class DateHelper {
 	 * @return the days count between the two dates.
 	 */
 	public static int countDaysBetween(Calendar date1, Calendar date2) {
+		
 		Calendar from = date1;
 		Calendar to = date2;
 		if (date1.after(date2)) {
 			from = date2;
 			to = date1;
 		}
+		
+		// TODO should be replaced by :
+//		long diff = TimeUnit.DAYS.convert(to.getTimeInMillis() - from.getTimeInMillis(), 
+//				TimeUnit.MILLISECONDS);
+		
 		int y1 = from.get(Calendar.YEAR);
 		int y2 = to.get(Calendar.YEAR);
 		// If both dates are within the same year, we only have to compare

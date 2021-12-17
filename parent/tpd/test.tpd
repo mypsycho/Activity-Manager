@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  1. Redistributions of source code must retain the above copyright notice,
+ *     this list of conditions and the following disclaimer.
+ * 
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ *  3. The name of the author may not be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIEDWARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+target "Activity Manager - test" 
+
+//
+// Dependencies for tests executions
+//
+
+with requirements
+// do not include source for this target
+// it should be used only by compiler
+
+// This target platform declare dependencies only used by automatic tests
+
+location eclipse_core "https://download.eclipse.org/releases/2020-03/" {
+	
+	// Required for tooling in xtend
+	// Included org.eclipse.xtext.sdk.feature.group
+	// org.eclipse.xtext.xbase.feature.group	
+	// org.eclipse.xtext.redist.feature.group
+	
+	// org.eclipse.platform.feature.group (in runtime)
+	// +-> org.eclipse.ui.ide.application (default of sure-fire)
+
+	org.junit
+	
+	org.eclipse.jdt.feature.group // already dragged by runtime
+	// +-> org.eclipse.jdt.junit
+	
+	org.eclipse.pde.feature.group
+	// +-> org.eclipse.pde.junit
+	
+	org.eclipse.xtext.sdk.feature.group
+	// +-> org.eclipse.xtext.xbase.testing
+	
+	org.eclipse.emf.mwe2.launcher.feature.group
+	// +-> org.eclipse.emf.mwe2.launcher
+	
+	org.eclipse.xpand.feature.group
+	// (required by xtext.generator)
+
+	org.eclipse.xtend.feature.group
+	// (required by xtext.generator)
+
+}
+
+location sirius "https://download.eclipse.org/sirius/updates/releases/6.5.1/2020-03/" {
+	org.eclipse.sirius.tests.support.feature.group
+}
+
+location xpect-tests "http://www.xpect-tests.org/updatesite/nightly/local" {
+	// Issue
+	// Public p2 is composite including:
+	// http://meysholdt.github.com/eclipse_jdt_junit_runners/updatesite/
+	// But it fails as real URL is:
+	// http://meysholdt.github.io/eclipse_jdt_junit_runners/updatesite/
+	
+	// Eclipse can handle it (log an error) but maven rejects.
+	
+	// Xpect is test suite for Xtext project
+	org.xpect.sdk.feature.group // several versions are available
+}
+
+location jdt-runner "http://meysholdt.github.io/eclipse_jdt_junit_runners/updatesite/" {
+	// Dependencies for Xpect (no activity)
+	org.eclipse.jdt.junit.runners.feature.feature.group // several versions are available
+}
+
