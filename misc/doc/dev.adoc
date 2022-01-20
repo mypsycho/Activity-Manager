@@ -50,7 +50,7 @@ Create a connection in 'Data Source Explorer' from +
 
 [source,bash]
 ----
-bin\mysqladmin" -u root shutdown
+bin\mysqladmin -u root shutdown
 ----
 
 

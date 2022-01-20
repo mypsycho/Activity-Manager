@@ -37,7 +37,7 @@ with requirements
 
 // This target platform declare dependencies of components to be release
 
-location "http://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
+location eclipse "http://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
 	org.eclipse.platform.feature.group lazy
 	org.eclipse.equinox.executable.feature.group lazy
 	org.eclipse.rcp.feature.group lazy
@@ -53,7 +53,7 @@ location "http://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
 
 }
 
-location "http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/" {
+location orbit "http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/" {
 	org.apache.commons.dbcp lazy
 	org.apache.commons.pool lazy
 	org.apache.commons.beanutils lazy

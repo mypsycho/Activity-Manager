@@ -1,0 +1,74 @@
+!SESSION 2022-01-19 09:52:06.660 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=11.0.11
+java.vendor=AdoptOpenJDK
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Framework arguments:  -eclipse.keyring C:\Users\NPERAN~1\AppData\Local\Temp\tycho15645180587015541928secure_storage
+Command-line arguments:  -eclipse.keyring C:\Users\NPERAN~1\AppData\Local\Temp\tycho15645180587015541928secure_storage
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:06.661
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:06.661
+!MESSAGE Add request for Activity Manager (RCP) v1.0.0 1.0.0.v20220119-0851 (org.activitymgr.ui.rcp.product 1.0.0.v20220119-0851) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:14.051
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:14.051
+!MESSAGE Add request for Activity Manager (RCP) v1.0.0 1.0.0.v20220119-0851 (org.activitymgr.ui.rcp.product 1.0.0.v20220119-0851) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:20.782
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:20.782
+!MESSAGE Add request for Activity Manager (RCP) v1.0.0 1.0.0.v20220119-0851 (org.activitymgr.ui.rcp.product 1.0.0.v20220119-0851) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:38.447
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:38.447
+!MESSAGE Add request for Activity Manager UI (Web) 1.0.0.v20220119-0851 (org.activitymgr.ui.web.view.product 1.0.0.v20220119-0851) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:42.936
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:42.936
+!MESSAGE Add request for Activity Manager UI (Web) 1.0.0.v20220119-0851 (org.activitymgr.ui.web.view.product 1.0.0.v20220119-0851) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:47.296
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 09:52:47.296
+!MESSAGE Add request for Activity Manager UI (Web) 1.0.0.v20220119-0851 (org.activitymgr.ui.web.view.product 1.0.0.v20220119-0851) is satisfiable
+!SESSION 2022-01-19 10:57:07.893 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=11.0.11
+java.vendor=AdoptOpenJDK
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=fr_FR
+Framework arguments:  -eclipse.keyring C:\Users\NPERAN~1\AppData\Local\Temp\tycho12915892413925653026secure_storage
+Command-line arguments:  -eclipse.keyring C:\Users\NPERAN~1\AppData\Local\Temp\tycho12915892413925653026secure_storage
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:07.893
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:07.893
+!MESSAGE Add request for Activity Manager (RCP) v1.0.0 1.0.0.v20220119-0956 (org.activitymgr.ui.rcp.product 1.0.0.v20220119-0956) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:14.971
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:14.971
+!MESSAGE Add request for Activity Manager (RCP) v1.0.0 1.0.0.v20220119-0956 (org.activitymgr.ui.rcp.product 1.0.0.v20220119-0956) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:21.457
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:21.457
+!MESSAGE Add request for Activity Manager (RCP) v1.0.0 1.0.0.v20220119-0956 (org.activitymgr.ui.rcp.product 1.0.0.v20220119-0956) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:38.125
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:38.125
+!MESSAGE Add request for Activity Manager UI (Web) 1.0.0.v20220119-0956 (org.activitymgr.ui.web.view.product 1.0.0.v20220119-0956) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:42.738
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:42.738
+!MESSAGE Add request for Activity Manager UI (Web) 1.0.0.v20220119-0956 (org.activitymgr.ui.web.view.product 1.0.0.v20220119-0956) is satisfiable
+
+!ENTRY org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:47.302
+!MESSAGE Overall install request is satisfiable
+!SUBENTRY 1 org.eclipse.equinox.p2.director 0 0 2022-01-19 10:57:47.302
+!MESSAGE Add request for Activity Manager UI (Web) 1.0.0.v20220119-0956 (org.activitymgr.ui.web.view.product 1.0.0.v20220119-0956) is satisfiable

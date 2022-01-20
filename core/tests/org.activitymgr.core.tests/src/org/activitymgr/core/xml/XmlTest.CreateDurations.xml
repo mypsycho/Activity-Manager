@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE model SYSTEM "activitymgr.dtd">
+<model>
+	<durations>
+		<duration>
+			<value>200</value>
+		</duration>
+		<duration>
+			<value>300</value>
+		</duration>
+		<duration>
+			<value>400</value>
+		</duration>
+	</durations>
+</model>

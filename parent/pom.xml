@@ -37,13 +37,13 @@
 	<artifactId>parent</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>POM parent</name>
+	<name>POM Parent</name>
 	
 	<properties>
 		<tp.version>1.0.0-SNAPSHOT</tp.version>
 		<tp.mode>build</tp.mode>
 		
-		<tycho.version>0.24.0</tycho.version>
+		<tycho.version>2.5.0</tycho.version><!-- 0.24.0 -->
 		<tycho.scmUrl>scm:git:https://github.com/jfbrazeau/Activity-Manager.git</tycho.scmUrl>
 		
 		<!-- Xtend plugin does not take source version from TPD  -->
@@ -444,8 +444,8 @@ for p2-metadata in feature
 				<!-- RCPTT Suite is identified by its name, not its filename -->
 				<rcptt.suite.name>_suite.name:undefined_</rcptt.suite.name>
 				
-				<product.name>${groupId}.product</product.name>
-				<product.archive>${groupId}</product.archive>
+				<product.name>${project.groupId}.product</product.name>
+				<product.archive>${project.groupId}</product.archive>
 				
 				<!-- rcptt tests should be in: tests/rcptt/<project_name> -->
 				<rcptt.root.path>../../..</rcptt.root.path>
