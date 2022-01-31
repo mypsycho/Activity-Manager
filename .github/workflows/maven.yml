@@ -30,7 +30,7 @@ jobs:
         run: xvfb-run mvn --batch-mode verify -Dmaven.test.failure.ignore=true
       
       - name: Deploy RCP 🚀
-        if: ${{ (github.ref == 'refs/heads/main') }}
+        if: ${{ (github.ref == 'refs/heads/master') }}
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
@@ -38,7 +38,7 @@ jobs:
           target-folder: nightly/ui.rcp
         
       - name: Deploy Web 🚀
-        if: ${{ (github.ref == 'refs/heads/main') }}
+        if: ${{ (github.ref == 'refs/heads/master') }}
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
