@@ -34,7 +34,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
-          folder: ui.rcp/releng/org.activitymgr.ui.rcp.repository
+          folder: ui.rcp/releng/org.activitymgr.ui.rcp.repository/target/repository
           target-folder: nightly/ui.rcp
         
       - name: Deploy Web 🚀
@@ -42,7 +42,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
-          folder: ui.web/releng/org.activitymgr.ui.web.repository
+          folder: ui.web/releng/org.activitymgr.ui.web.repository/target/repository
           target-folder: nightly/ui.web
         
       - name: Get the tag version 🏷️
@@ -54,7 +54,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
-          folder: ui.rcp/releng/org.activitymgr.ui.rcp.repository
+          folder: ui.rcp/releng/org.activitymgr.ui.rcp.repository/target/repository
           target-folder: release/${{ steps.get_version.outputs.TAG_VERSION }}/ui.rcp
         
       - name: Deploy Release Web 🚀🏷️
@@ -62,7 +62,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
-          folder: ui.web/releng/org.activitymgr.ui.web.repository
+          folder: ui.web/releng/org.activitymgr.ui.web.repository/target/repository
           target-folder: release/${{ steps.get_version.outputs.TAG_VERSION }}/ui.web
         
           
