@@ -28,5 +28,6 @@ Export-Package: com.vaadin.data,
  com.vaadin.server,
  com.vaadin.ui,
  org.activitymgr.ui.web.view,
- org.activitymgr.ui.web.view.impl.dialogs
+ org.activitymgr.ui.web.view.impl.dialogs,
+ org.activitymgr.ui.web.view.impl.internal
 Automatic-Module-Name: org.activitymgr.ui.web.view
