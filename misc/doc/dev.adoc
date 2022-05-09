@@ -1,6 +1,7 @@
 == Developer guide
 
 
+
 === Setting the database
 
 ==== Install Mysql +
@@ -11,39 +12,49 @@ More info on: +
 https://dev.mysql.com/doc/refman/5.7/en/ +
 
 ==== Configure local data +
-Create my_config.ini file ... +
+Create my_config.ini file in mysql  ... +
 [source,bash]
 ----
 bin\mysqld --defaults-file=my-config.ini --initialize-insecure
 ----
-This create a server with 'root' account and no password (~= insecure). +
+This command creates a server with 'root' account and no password (~= insecure). +
 
 ==== Starting DB
+
+To start the mysql database if not installed as a service. (or copy and use "start-server.bat" in installation)
+
 [source,bash]
 ----
 bin\mysqld --defaults-file=my-config.ini --console
 ---- 
 
-start client : bin\mysql -u root --skip-password
+To start client: 
+[source,bash]
+----
+bin\mysql -u root --skip-password
+----
+
 
 [NOTE]
 ====
-Change password with:
-
+You can change password with:
+[source,sql]
+----
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'new-root-password';
-
+---- 
 But useless for developer.
 ====
 
 ==== Create schema
 
-Use in mysql client: /misc/sql/createDatabase.sql
+Use in mysql client: _/misc/sql/createDatabase.sql_
+[source,bash]
+----
+bin\mysql -u root --skip-password < %git_home%\Activity-Manager\misc\sql\createDatabase.sql
+---- 
 
 Create a connection in 'Data Source Explorer' from +
-/org.activitymgr.ui.web.feature/cfg-db.properties
-
-
-
+_/org.activitymgr.ui.web.feature/cfg-db.properties_
 
 
 ==== Stopping DB
@@ -54,8 +65,34 @@ bin\mysqladmin -u root shutdown
 ----
 
 
-Driver:
+=== Configure Db client with Eclipse
+
+.Get Eclipse instance from Oomph
+
+Use _/misc/oomph/org.eclipse.setup_ to get all plugins.
+
+Path without git-clone:
+https://raw.githubusercontent.com/mypsycho/Activity-Manager/1.0.x/misc/oomph/org.eclipse.setup
+
+
+.Declare MySQL driver
+
+Driver is placed at _/misc/sql/mysql-connector-java-8.0.27.jar_, downloaded from:
 https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.27.zip
 
+In _Windows/Preference#Data manager/Connectivity/Driver definition_:+
+Create a 'MySQL JDBC Driver' with provided JAR.
+
+.Declare a connection
+
+In 'Data Source Explorer' view ('Database development' perspective), import _/misc/doc/eclipse_connection.xml_.
 
 
+=== Initialize database structure
+
+[source,bash]
+----
+bin\mysql taskmgr_db < %git_home%\Activity-Manager\misc\sql\createTables.sql
+----
+
+or use eclipse connection with _misc/sql/createTables.sql_.
