@@ -65,4 +65,20 @@ jobs:
           folder: ui.web/releng/org.activitymgr.ui.web.repository/target/repository
           target-folder: release/${{ steps.get_version.outputs.TAG_VERSION }}/ui.web
         
-          
+      - name: Release Admin RCP Products 🖱️
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          overwrite: true
+          tag: ${{ github.ref }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ui.rcp/releng/org.activitymgr.ui.rcp.repository/target/products/activitymgr-rcp-*.*
+
+      - name: Release Web Products 🖱️
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          overwrite: true
+          tag: ${{ github.ref }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ui.web/releng/org.activitymgr.ui.web.repository/target/products/activitymgr-web-server-*.*

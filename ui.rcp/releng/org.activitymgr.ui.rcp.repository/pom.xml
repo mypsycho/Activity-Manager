@@ -43,6 +43,10 @@
 
 	<artifactId>org.activitymgr.ui.rcp.repository</artifactId>
 	<packaging>eclipse-repository</packaging>
+	
+	<properties>
+		<archiveFileName>activitymgr-rcp</archiveFileName>
+	</properties>
 
 	<build>
 		<plugins>
@@ -62,7 +66,10 @@
 					<products>
 						<product>
 							<id>org.activitymgr.ui.rcp.product</id>
+							<!-- 
 							<archiveFileName>activitymgr-rcp-${unqualifiedVersion}.${buildQualifier}</archiveFileName>
+							 -->
+							<archiveFileName>${archiveFileName}</archiveFileName>
 							<rootFolder>activitymgr</rootFolder>
 							<rootFolders>
 								<macosx>ActivityManager</macosx>
@@ -85,6 +92,34 @@
 					</execution>
 				</executions>
 			</plugin>
+			
+			<!-- fails: tycho-p2-repository-plugin::archive-repository must happen after this.
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>products-on-site</id>
+			            <phase>package</phase>
+			            <goals>
+			              <goal>copy-resources</goal>
+			            </goals>
+					</execution>
+				</executions>
+				<configuration>
+	              <outputDirectory>${basedir}/target/products</outputDirectory>
+	              <resources>          
+	                <resource>
+	                  <directory>${basedir}/target/repository</directory>
+	                  <includes>
+          				<include>${archiveFileName}*.zip</include>
+          				<include>${archiveFileName}*.tar.gz</include>
+        			  </includes>
+	                </resource>
+	              </resources>
+				</configuration>
+			</plugin>
+			 -->
+			
 		</plugins>
 	</build>
 

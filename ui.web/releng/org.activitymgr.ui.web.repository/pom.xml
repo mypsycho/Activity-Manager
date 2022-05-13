@@ -72,7 +72,10 @@
 					<products>
 						<product>
 							<id>org.activitymgr.ui.web.view.product</id>
+							<!-- 
 							<archiveFileName>activitymgr-web-server-${unqualifiedVersion}.${buildQualifier}</archiveFileName>
+							 -->
+							<archiveFileName>activitymgr-web-server</archiveFileName>
 							<rootFolder>activitymgr-web-server</rootFolder>
 						</product>
 					</products>
