@@ -9,7 +9,7 @@
     http://www.eclipse.org/oomph/setup/workingsets/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/SetupWorkingSets.ecore
     "
 	name="activitymgr"
-	label="Eclipse Development Profile for Activity Manager"
+	label="Developing  Activity Manager"
 >
 
 	<!-- product name is used in the installation path -->
@@ -34,6 +34,12 @@
 		<setupTask xsi:type="setup:PreferenceTask" key="/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.typefilter.enabled" value="java.awt.*;" />
 		<setupTask xsi:type="setup:PreferenceTask" key="/instance/org.eclipse.core.resources/encoding" value="UTF-8" />
 		<setupTask xsi:type="setup:PreferenceTask" key="/instance/org.eclipse.pde.ui/Preferences.MainPage.addToJavaSearch" value="true" />
+		
+		<setupTask xsi:type="setup:PreferenceTask" key="/instance/org.eclipse.egit.ui/StagingView_MaxLimitListMode" value="8" />
+		<setupTask xsi:type="setup:PreferenceTask" key="/instance/org.eclipse.egit.ui/StagingView_Presentation" value="COMPACT_TREE" />
+		<setupTask xsi:type="setup:PreferenceTask" key="/instance/org.eclipse.egit.ui/HistoryView_ColumnAuthorDateShow" value="false" />
+		<setupTask xsi:type="setup:PreferenceTask" key="/instance/org.eclipse.egit.ui/HistoryView_ColumnAuthorShow" value="false" />
+
 	</setupTask>
 	<setupTask xsi:type="setup:ResourceCreationTask" excludedTriggers="STARTUP MANUAL"
 		filter="(osgi.os=linux)"
@@ -45,7 +51,7 @@
     <!-- sub-file should be edited using Copy/Paste of 'Dynamic Working Set' in "MENU/Windows/Preferences" -->
     <setupTask xsi:type="setup.workingsets:WorkingSetTask" href="org.eclipse.worksets.setup#/"/>
 
-    <version href="org.eclipse.version_2021-12.setup#/"/>
+    <version href="org.eclipse.version_2020-06.setup#/"/>
 
 	
 	<description><![CDATA[

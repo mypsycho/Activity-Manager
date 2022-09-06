@@ -8,7 +8,7 @@
     xsi:schemaLocation="
     http://www.eclipse.org/oomph/setup/workingsets/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/SetupWorkingSets.ecore
     "
-	name="2020-06" label="2020-06" requiredJavaVersion="1.8"
+	name="2020-06" label="2020-06" requiredJavaVersion="11"
 >
 	
 	<description><![CDATA[
@@ -97,9 +97,10 @@
 		<repository url="https://de-jcup.github.io/update-site-eclipse-asciidoctor-editor/update-site/" />
 		<requirement name="de.jcup.asciidoctoreditor.feature.group" />
 	    
-	    <!-- Image browser -->
+	    <!-- Image browser 
 		<repository url="http://manu26.manufrog.com/~psnetnu/eclipse/updates/" />
 		<requirement name="nu.psnet.quickimage.feature.group" />
+		-->
 	</setupTask>
 	
 	<!-- Devstyle (provide Darkest theme) -->

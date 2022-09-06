@@ -7,8 +7,8 @@
     xmlns:setup.workingsets="http://www.eclipse.org/oomph/setup/workingsets/1.0"
     xsi:schemaLocation="http://www.eclipse.org/oomph/predicates/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/Predicates.ecore http://www.eclipse.org/oomph/setup/workingsets/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/SetupWorkingSets.ecore">
   <workingSet
-      name="Poosl"
-      id="org.eclipse.poosl-plugins">
+      name="actvm"
+      id="org.activitymgr-plugins">
     <predicate
         xsi:type="predicates:AndPredicate">
       <operand
@@ -17,41 +17,29 @@
       <operand
           xsi:type="predicates:LocationPredicate"
           pattern=".*\/plugins\/.*"/>
-      <operand
-          xsi:type="predicates:NotPredicate">
-        <operand
-            xsi:type="predicates:NamePredicate"
-            pattern="fr\.obeo\.poosl.*"/>
-      </operand>
     </predicate>
   </workingSet>
   <workingSet
-      name="Poosl tests"
-      id="org.eclipse.poosl-test">
+      name="actvm tests"
+      id="org.activitymgr-test">
     <predicate
         xsi:type="predicates:AndPredicate">
       <operand
           xsi:type="predicates:NamePredicate"
-          pattern=".*\.poosl.*"/>
+          pattern="org\.activitymgr.*"/>
       <operand
           xsi:type="predicates:LocationPredicate"
           pattern=".*\/tests\/.*"/>
-      <operand
-          xsi:type="predicates:NotPredicate">
-        <operand
-            xsi:type="predicates:NamePredicate"
-            pattern="fr\.obeo\.poosl.*"/>
-      </operand>
     </predicate>
   </workingSet>
   <workingSet
-      name="Poosl releng"
+      name="actvm releng"
       id="org.eclipse.poosl-releng">
     <predicate
         xsi:type="predicates:AndPredicate">
       <operand
           xsi:type="predicates:NamePredicate"
-          pattern=".*\.poosl.*"/>
+          pattern="org\.activitymgr.*"/>
       <operand
           xsi:type="predicates:OrPredicate">
         <operand
@@ -63,31 +51,6 @@
         <operand
             xsi:type="predicates:LocationPredicate"
             pattern=".*\/docs"/>
-      </operand>
-      <operand
-          xsi:type="predicates:NotPredicate">
-        <operand
-            xsi:type="predicates:NamePredicate"
-            pattern="fr\.obeo\.poosl.*"/>
-      </operand>
-    </predicate>
-  </workingSet>
-  <workingSet
-      name="Poosl tooling"
-      id="org.eclipse.poosl-test">
-    <predicate
-        xsi:type="predicates:AndPredicate">
-      <operand
-          xsi:type="predicates:NamePredicate"
-          pattern=".*\.poosl.*"/>
-      <operand
-          xsi:type="predicates:LocationPredicate"
-          pattern=".*\/tooling\/.*"/>
-      <operand
-          xsi:type="predicates:NotPredicate">
-        <operand
-            xsi:type="predicates:NamePredicate"
-            pattern="fr\.obeo\.poosl.*"/>
       </operand>
     </predicate>
   </workingSet>

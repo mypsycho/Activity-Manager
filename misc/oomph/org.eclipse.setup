@@ -45,7 +45,7 @@
     <!-- sub-file should be edited using Copy/Paste of 'Dynamic Working Set' in "MENU/Windows/Preferences" -->
     <setupTask xsi:type="setup.workingsets:WorkingSetTask" href="org.eclipse.worksets.setup#/"/>
 
-    <version href="org.eclipse.version_2021-12.setup#/"/>
+    <version href="org.eclipse.version_2020-06.setup#/"/>
 
 	
 	<description><![CDATA[
