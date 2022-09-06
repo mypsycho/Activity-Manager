@@ -27,11 +27,13 @@
  */
 package org.activitymgr.core.util;
 
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 
 public class WorkbookBuilder {
@@ -45,7 +47,7 @@ public class WorkbookBuilder {
 	public WorkbookBuilder() {
 		// Création du style des cellules
 		bodyCellStyle = workbook.createCellStyle();
-		bodyCellStyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+		bodyCellStyle.setBorderBottom(BorderStyle.THIN);
 		bodyCellStyle.setBorderLeft(bodyCellStyle.getBorderBottom());
 		bodyCellStyle.setBorderRight(bodyCellStyle.getBorderBottom());
 		bodyCellStyle.setBorderTop(bodyCellStyle.getBorderBottom());
@@ -53,21 +55,20 @@ public class WorkbookBuilder {
 		// Création du style de l'entête
 		headerCellStyle = workbook.createCellStyle();
 		headerCellStyle.cloneStyleFrom(bodyCellStyle);
-		headerCellStyle.setFillForegroundColor(HSSFColor.GREY_40_PERCENT.index);
-		headerCellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-		headerCellStyle.setAlignment(HSSFCellStyle.ALIGN_LEFT);
+		headerCellStyle.setFillForegroundColor(HSSFColorPredefined.GREY_40_PERCENT.getIndex());
+		headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		headerCellStyle.setAlignment(HorizontalAlignment.LEFT);
 
 		// Création du style des cellules alignées à droite
 		bodyRightAlignmentCellStyle = workbook.createCellStyle();
 		bodyRightAlignmentCellStyle.cloneStyleFrom(bodyCellStyle);
-		bodyRightAlignmentCellStyle.setAlignment(CellStyle.ALIGN_RIGHT);
+		bodyRightAlignmentCellStyle.setAlignment(HorizontalAlignment.RIGHT);
 
 		// Création du style des cellules alignées à gauche
 		footerCellStyle = workbook.createCellStyle();
 		footerCellStyle.cloneStyleFrom(bodyRightAlignmentCellStyle);
-		footerCellStyle
-				.setFillForegroundColor(HSSFColor.GREY_25_PERCENT.index);
-		footerCellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+		footerCellStyle.setFillForegroundColor(HSSFColorPredefined.GREY_25_PERCENT.getIndex());
+		footerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 	}
 	
 	public Workbook getWorkbook() {

@@ -93,9 +93,12 @@ import org.apache.commons.beanutils.BeanUtilsBean2;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -2005,10 +2008,10 @@ public class ModelMgrImpl implements IModelMgr {
 		sheet.createFreezePane(0, 1);
 		// Header style
 		CellStyle headerCellStyle = wbk.createCellStyle();
-		headerCellStyle.setFillForegroundColor(HSSFColor.GREY_25_PERCENT.index);
-		headerCellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
-		headerCellStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
-		headerCellStyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+		headerCellStyle.setFillForegroundColor(HSSFColorPredefined.GREY_25_PERCENT.getIndex());
+		headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+		headerCellStyle.setBorderBottom(BorderStyle.THIN);
 		headerCellStyle.setBorderLeft(headerCellStyle.getBorderBottom());
 		headerCellStyle.setBorderRight(headerCellStyle.getBorderBottom());
 		headerCellStyle.setBorderTop(headerCellStyle.getBorderBottom());
@@ -2050,7 +2053,7 @@ public class ModelMgrImpl implements IModelMgr {
 		
 		// Output
 		CellStyle bodyCellStyle = wbk.createCellStyle();
-		bodyCellStyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+		bodyCellStyle.setBorderBottom(BorderStyle.THIN);
 		bodyCellStyle.setBorderLeft(bodyCellStyle.getBorderBottom());
 		bodyCellStyle.setBorderRight(bodyCellStyle.getBorderBottom());
 		bodyCellStyle.setBorderTop(bodyCellStyle.getBorderBottom());

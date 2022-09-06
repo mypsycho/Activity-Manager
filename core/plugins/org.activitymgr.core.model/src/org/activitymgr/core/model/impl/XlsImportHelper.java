@@ -11,6 +11,7 @@ import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.BeanUtilsBean2;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -87,24 +88,24 @@ public class XlsImportHelper {
 				if (cell != null) {
 					Object value = null;
 					// Retrieve type
-					int cellType = cell.getCellType();
-					if (cellType == Cell.CELL_TYPE_FORMULA) {
+					CellType cellType = cell.getCellType();
+					if (cellType == CellType.FORMULA) {
 						cellType = cell.getCachedFormulaResultType();
 					}
 					switch (cellType) {
-					case Cell.CELL_TYPE_BLANK :
+					case BLANK :
 						// Do nothing
 						break;
-					case Cell.CELL_TYPE_BOOLEAN :
+					case BOOLEAN :
 						value = cell.getBooleanCellValue();
 						break;
-					case Cell.CELL_TYPE_STRING :
+					case STRING :
 						value = cell.getStringCellValue();
 						break;
-					case Cell.CELL_TYPE_NUMERIC :
+					case NUMERIC :
 						value = cell.getNumericCellValue();
 						break;
-					case Cell.CELL_TYPE_ERROR :
+					case ERROR :
 						throw new XLSModelException(cell, "Cell contains an error");
 					}
 					map.put(columnName, new XLSCell(columnName, cell, value));

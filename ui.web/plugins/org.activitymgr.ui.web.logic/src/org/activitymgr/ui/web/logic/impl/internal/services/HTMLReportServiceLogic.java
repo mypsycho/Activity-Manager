@@ -9,6 +9,8 @@ import org.activitymgr.core.dto.Collaborator;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Color;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -80,21 +82,21 @@ public class HTMLReportServiceLogic extends AbstractReportServiceLogic {
 				} else {
 					CellStyle style = cell.getCellStyle();
 					pw.print("  <td");
-					HSSFColor bgColor = (HSSFColor) style
-							.getFillForegroundColorColor();
-					if (bgColor != null
-							&& !HSSFColor.AUTOMATIC.getInstance().equals(
-									bgColor)) {
+					Color bgColor = style.getFillForegroundColorColor();
+
+					if (bgColor instanceof HSSFColor
+							&& HSSFColor.HSSFColorPredefined.AUTOMATIC.getIndex()
+								!= style.getFillForegroundColor()) {
 						pw.print(" bgcolor='#");
-						pw.print(bgColor.getHexString());
+						pw.print(((HSSFColor) bgColor).getHexString());
 						pw.print("'");
 					}
 					pw.print(" align='");
 					switch (style.getAlignment()) {
-					case CellStyle.ALIGN_CENTER:
+					case CENTER:
 						pw.print("center");
 						break;
-					case CellStyle.ALIGN_RIGHT:
+					case RIGHT:
 						pw.print("right");
 						break;
 					default:
@@ -102,20 +104,20 @@ public class HTMLReportServiceLogic extends AbstractReportServiceLogic {
 					}
 					pw.print("'");
 					pw.print(">");
-					int cellType = cell.getCellType();
-					if (cellType == Cell.CELL_TYPE_FORMULA) {
+					CellType cellType = cell.getCellType();
+					if (cellType == CellType.FORMULA) {
 						cellType = cell.getCachedFormulaResultType();
 					}
 					switch (cellType) {
-					case Cell.CELL_TYPE_BLANK:
+					case BLANK:
 						break;
-					case Cell.CELL_TYPE_BOOLEAN:
+					case BOOLEAN:
 						pw.print(cell.getBooleanCellValue());
 						break;
-					case Cell.CELL_TYPE_ERROR:
+					case ERROR:
 						pw.print("#ERROR");
 						break;
-					case Cell.CELL_TYPE_NUMERIC:
+					case NUMERIC:
 						String formatted = NumberFormat.getNumberInstance()
 								.format(cell.getNumericCellValue());
 						if (decimalSeparator != null) {
@@ -130,7 +132,7 @@ public class HTMLReportServiceLogic extends AbstractReportServiceLogic {
 						}
 						pw.print(formatted);
 						break;
-					case Cell.CELL_TYPE_STRING:
+					case STRING:
 						String str = cell.getStringCellValue();
 						if (str != null) {
 							str = str.replaceAll("<", "&lt;");
