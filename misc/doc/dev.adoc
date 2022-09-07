@@ -12,7 +12,10 @@ More info on: +
 https://dev.mysql.com/doc/refman/5.7/en/ +
 
 ==== Configure local data +
-Create my_config.ini file in mysql  ... +
+
+Copy and update '_my_config.ini_' file in mysql using the sibling file. +
+In Administrator CMD, run:
+
 [source,bash]
 ----
 bin\mysqld --defaults-file=my-config.ini --initialize-insecure
@@ -74,25 +77,26 @@ Use _/misc/oomph/org.eclipse.setup_ to get all plugins.
 Path without git-clone:
 https://raw.githubusercontent.com/mypsycho/Activity-Manager/1.0.x/misc/oomph/org.eclipse.setup
 
+.Import a connection
+
+In 'Data Source Explorer' view ('Database development' perspective), import _/misc/doc/eclipse_connection.xml_.
 
 .Declare MySQL driver
+
+Importing a connection also declare the driver but JAR file is absolute.
 
 Driver is placed at _/misc/sql/mysql-connector-java-8.0.27.jar_, downloaded from:
 https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.27.zip
 
 In _Windows/Preference#Data manager/Connectivity/Driver definition_:+
-Create a 'MySQL JDBC Driver' with provided JAR.
-
-.Declare a connection
-
-In 'Data Source Explorer' view ('Database development' perspective), import _/misc/doc/eclipse_connection.xml_.
+Correct 'MySQL JDBC Driver' with provided JAR.
 
 
 === Initialize database structure
 
 [source,bash]
 ----
-bin\mysql taskmgr_db < %git_home%\Activity-Manager\misc\sql\createTables.sql
+bin\mysql --user=taskmgr --password=taskmgr taskmgr_db < %git_home%\Activity-Manager\misc\sql\createTables.sql
 ----
 
 or use eclipse connection with _misc/sql/createTables.sql_.

@@ -37,7 +37,7 @@ create table TASK (
 );
 
 -- ------------------------------------------------------------
--- Dur�es
+-- Durées
 -- ------------------------------------------------------------
 create table DURATION (
 	DUR_ID         integer(3) not null,
@@ -64,9 +64,9 @@ create table CONTRIBUTION (
     constraint CTB_DURATION_FK foreign key (CTB_DURATION) references DURATION (DUR_ID)
 );
 
---------------------------------------------------------------
+-- -----------------------------------------------------------
 -- Report configurations
---------------------------------------------------------------
+-- -----------------------------------------------------------
 create table REPORT_CONFIG (
 	REP_ID            integer(   3) not null auto_increment,
 	REP_CATEGORY      varchar(  50) not null,
@@ -78,9 +78,9 @@ create table REPORT_CONFIG (
     constraint REP_CONTRIBUTOR_FK foreign key (REP_OWNER) references COLLABORATOR (CLB_ID)
 );
 
---------------------------------------------------------------
+-- -----------------------------------------------------------
 -- View
---------------------------------------------------------------
+-- -----------------------------------------------------------
 create view CONTRIBUTION_VIEW as
 select 
 	ctb_year, ctb_month, ctb_day, 
