@@ -37,7 +37,7 @@ with requirements
 
 // This target platform declare dependencies only used by automatic tests
 
-location eclipse "http://download.eclipse.org/eclipse/updates/4.5" {
+location eclipse "https://download.eclipse.org/eclipse/updates/4.5" {
 	
 	// Required for tooling in xtend
 	// Included org.eclipse.xtext.sdk.feature.group
