@@ -83,8 +83,8 @@
 		
 		<profile>
 		    <!-- 
-			By default, tests are executed.
-			use -Dmaven.test.skip=true to disable.
+			By default, release component are built.
+			use -Dmaven.releng.skip=true to disable.
 			-->
 			<id>releng</id>
 			<activation>
