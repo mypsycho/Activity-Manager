@@ -14,7 +14,7 @@ https://dev.mysql.com/doc/refman/5.7/en/ +
 ==== Configure local data +
 
 Copy and update '_my_config.ini_' file in mysql using the sibling file. +
-In Administrator CMD, run:
+In *Administrator* CMD, run:
 
 [source,bash]
 ----
@@ -40,12 +40,12 @@ bin\mysql -u root --skip-password
 
 [NOTE]
 ====
-You can change password with:
+You can change root password with:
 [source,sql]
 ----
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'new-root-password';
 ---- 
-But useless for developer.
+But it is useless for developer.
 ====
 
 ==== Create schema
@@ -62,11 +62,14 @@ _/org.activitymgr.ui.web.feature/cfg-db.properties_
 
 ==== Stopping DB
 
+The proper way to stop is to call this command.
+
 [source,bash]
 ----
 bin\mysqladmin -u root shutdown
 ----
 
+Using console "Close" may break a transaction.
 
 === Configure Db client with Eclipse
 
@@ -85,11 +88,11 @@ In 'Data Source Explorer' view ('Database development' perspective), import _/mi
 
 Importing a connection also declare the driver but JAR file is absolute.
 
-Driver is placed at _/misc/sql/mysql-connector-java-8.0.27.jar_, downloaded from:
+Driver is placed at _/misc/sql/mysql-connector-java-8.0.27.jar_, mirror of:
 https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.27.zip
 
 In _Windows/Preference#Data manager/Connectivity/Driver definition_:+
-Correct 'MySQL JDBC Driver' with provided JAR.
+Correct 'MySQL JDBC Driver' with provided JAR if needed.
 
 
 === Initialize database structure
