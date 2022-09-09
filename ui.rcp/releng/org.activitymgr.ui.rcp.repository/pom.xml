@@ -46,6 +46,14 @@
 	
 	<properties>
 		<archiveFileName>activitymgr-rcp</archiveFileName>
+		<tpd.path>parent/tpd</tpd.path>
+		
+		<!-- 
+Repository default path for archive is defined by in:
+https://github.com/eclipse/tycho/blob/tycho-2.3.0/tycho-p2/tycho-p2-repository-plugin/src/main/java/org/eclipse/tycho/plugins/p2/repository/AbstractRepositoryMojo.java
+-->
+  		<repo.outputDirectory>${project.build.directory}/repository</repo.outputDirectory>
+		
 	</properties>
 
 	<build>
@@ -91,6 +99,30 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+	  			<executions>
+	  				<execution>
+	  					<id>include-tpd</id>
+	  					<goals><goal>copy-resources</goal></goals>
+	  					<phase>prepare-package</phase>
+	  					<configuration>
+							<resources>
+								<resource>
+									<directory>../../../${tpd.path}</directory>
+									<includes>
+										<include>**/*.tpd</include>
+									</includes>
+								</resource>
+							</resources>
+	  						<outputDirectory>${repo.outputDirectory}/tpd</outputDirectory>
+	  					</configuration>
+	  				</execution>
+	  			</executions>
 			</plugin>
 			
 			<!-- fails: tycho-p2-repository-plugin::archive-repository must happen after this.
