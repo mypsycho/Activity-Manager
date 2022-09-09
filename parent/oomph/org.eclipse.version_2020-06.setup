@@ -97,9 +97,10 @@
 		<repository url="https://de-jcup.github.io/update-site-eclipse-asciidoctor-editor/update-site/" />
 		<requirement name="de.jcup.asciidoctoreditor.feature.group" />
 	    
-	    <!-- Image browser -->
+	    <!-- Image browser
 		<repository url="http://manu26.manufrog.com/~psnetnu/eclipse/updates/" />
 		<requirement name="nu.psnet.quickimage.feature.group" />
+		 -->
 	</setupTask>
 	
 	<!-- Devstyle (provide Darkest theme) -->

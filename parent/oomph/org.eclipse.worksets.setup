@@ -13,7 +13,7 @@
         xsi:type="predicates:AndPredicate">
       <operand
           xsi:type="predicates:NamePredicate"
-          pattern=".*\.poosl.*"/>
+          pattern="org\.activitymgr.*"/>
       <operand
           xsi:type="predicates:LocationPredicate"
           pattern=".*\/plugins\/.*"/>
