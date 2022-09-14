@@ -1,0 +1,27 @@
+== Activity Manager Project
+
+// Technical identification
+// (Update when clone)
+:gh-account: mypsycho
+:gh-project: Activity-Manager
+:gh-urlbase: https://github.com/{gh-account}/{gh-project}
+
+// CI flags
+[link={gh-urlbase}/actions/workflows/maven.yml] 
+image::{gh-urlbase}/workflows/Java%20CI/badge.svg[gh-actions status]
+
+
+
+=== How to get
+
+Last release update site
+
+:ghp_urlbase: https://{gh-account}.github.io/{gh-project}
+:last_version: 1.0.0
+
+Web part P2: {ghp_urlbase}/release/v{last_version}/ui.web/ +
+Admin UI part P2: {ghp_urlbase}/release/v{last_version}/ui.rcp/
+
+=== How to improve
+
+To setup a develop environment, follow {gh-urlbase}/blob/master/misc/doc/dev.adoc[Developer guide].
