@@ -66,6 +66,7 @@ jobs:
           tag: ${{ github.ref }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ui.rcp/releng/org.activitymgr.ui.rcp.repository/target/products/activitymgr-rcp-*.*
+          file_glob: true
 
       - name: Release Web Products 🖱️
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
@@ -75,3 +76,4 @@ jobs:
           tag: ${{ github.ref }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ui.web/releng/org.activitymgr.ui.web.repository/target/products/activitymgr-web-server-*.*
+          file_glob: true
