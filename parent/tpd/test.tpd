@@ -37,12 +37,9 @@ with requirements
 
 // This target platform declare dependencies only used by automatic tests
 
-location eclipse "https://download.eclipse.org/eclipse/updates/4.5" {
-	
-	// Required for tooling in xtend
-	// Included org.eclipse.xtext.sdk.feature.group
-	// org.eclipse.xtext.xbase.feature.group	
-	// org.eclipse.xtext.redist.feature.group
+location eclipse "https://download.eclipse.org/releases/2019-03/" {
+// location eclipse "https://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
+
 	
 	// org.eclipse.platform.feature.group (in runtime)
 	// +-> org.eclipse.ui.ide.application (default of sure-fire)
@@ -54,18 +51,6 @@ location eclipse "https://download.eclipse.org/eclipse/updates/4.5" {
 	
 	org.eclipse.pde.feature.group
 	// +-> org.eclipse.pde.junit
-	
-//	org.eclipse.xtext.sdk.feature.group
-//	// +-> org.eclipse.xtext.xbase.testing
-//	
-//	org.eclipse.emf.mwe2.launcher.feature.group
-//	// +-> org.eclipse.emf.mwe2.launcher
-//	
-//	org.eclipse.xpand.feature.group
-//	// (required by xtext.generator)
-//
-//	org.eclipse.xtend.feature.group
-//	// (required by xtext.generator)
 
 }
 

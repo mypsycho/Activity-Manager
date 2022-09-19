@@ -37,34 +37,36 @@ with requirements
 
 // This target platform declare dependencies of components to be release
 
-location eclipse "https://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
-	org.eclipse.platform.feature.group lazy
-	org.eclipse.equinox.executable.feature.group lazy
-	org.eclipse.rcp.feature.group lazy
-	org.eclipse.emf.common.feature.group lazy
-	org.eclipse.emf.ecore.feature.group lazy
-	org.apache.commons.codec lazy
+location eclipse "https://download.eclipse.org/releases/2019-03/" {
+// location eclipse "https://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
+	org.eclipse.platform.feature.group
+	org.eclipse.equinox.executable.feature.group
+	org.eclipse.rcp.feature.group
+	org.eclipse.emf.common.feature.group
+	org.eclipse.emf.ecore.feature.group
+	org.apache.commons.codec
 
-//	org.hamcrest lazy
-//	org.hamcrest.core lazy
-//	org.hamcrest.library lazy
-//	org.hamcrest.integration lazy
-//	org.hamcrest.text lazy
+//	org.hamcrest
+//	org.hamcrest.core
+//	org.hamcrest.library
+//	org.hamcrest.integration
+//	org.hamcrest.text
 
 }
 
 // location orbit "https://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/" {
 location orbit "https://download.eclipse.org/tools/orbit/downloads/drops/R20211213173813/repository/" {
-	org.apache.commons.dbcp lazy
-	org.apache.commons.pool lazy
-	org.apache.commons.beanutils lazy
-	org.apache.commons.collections lazy
-	org.apache.commons.lang lazy
-	com.google.inject lazy
-	com.google.inject.assistedinject lazy
-	com.google.inject.multibindings lazy
-	com.google.guava lazy
+	org.apache.commons.dbcp
+	org.apache.commons.pool
+	org.apache.commons.beanutils
+	org.apache.commons.collections
+	org.apache.commons.lang
+	com.google.inject
+	com.google.inject.assistedinject
+	com.google.inject.multibindings
+	com.google.guava
 	org.apache.log4j [1.2.15,2.0.0)
-	org.apache.poi lazy
-	com.google.gson lazy
+	org.apache.poi
+	com.google.gson
+	javax.xml
 }

@@ -105,4 +105,39 @@
 	</profiles>
 
 
+	<build>
+	   <plugins>
+	       <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <version>3.0.0-M3</version>
+            <executions>
+	          	<execution>
+		            <id>show-os</id>
+		            <phase>validate</phase>
+		            <goals>
+		              <goal>display-info</goal>
+	            	</goals>
+	            </execution>
+            </executions>
+	       </plugin>
+	   </plugins>
+	
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-versions-plugin</artifactId>
+					<version>1.5.1</version>
+					<configuration>
+						<!-- List of ArtifactIds reachable by this pom. -->
+						<!-- Only the ones without project.parent. -->
+						<artifacts>container,parent</artifacts>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		
+	</build>
+
 </project>

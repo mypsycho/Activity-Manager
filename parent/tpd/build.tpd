@@ -31,7 +31,7 @@
 
 with requirements
 
-environment JavaSE-1.8
+environment JavaSE-11
 
 // Do not modify, do not include sources (useless for build)
 

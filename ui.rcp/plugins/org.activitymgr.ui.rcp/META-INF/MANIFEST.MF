@@ -9,9 +9,10 @@ Bundle-Vendor: Jean-Francois Brazeau
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.activitymgr.core.model,
+ org.activitymgr.core.dao,
  org.apache.log4j,
  org.apache.commons.dbcp;bundle-version="1.4.0",
  org.apache.poi;bundle-version="3.9.0",
  org.activitymgr.core.util;bundle-version="1.0.0"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy

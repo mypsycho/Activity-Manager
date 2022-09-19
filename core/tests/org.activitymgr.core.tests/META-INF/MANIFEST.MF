@@ -4,7 +4,7 @@ Bundle-Name: Activity Manager Core Tests
 Bundle-SymbolicName: org.activitymgr.core.tests
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: Jean-Francois Brazeau
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: org.activitymgr.core.model;visibility:=reexport,
  org.apache.commons.dbcp;bundle-version="1.4.0";visibility:=reexport,
  org.activitymgr.core.util;bundle-version="1.0.0",

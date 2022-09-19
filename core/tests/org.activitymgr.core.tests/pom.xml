@@ -59,8 +59,18 @@
 					<dependency-resolution>
 						<extraRequirements>
 							<requirement>
-								<type>eclipse-feature</type>
-								<id>org.activitymgr.core.feature</id>
+								<type>eclipse-plugin</type>
+								<id>org.activitymgr.core.dao.h2fragment</id>
+								<versionRange>0.0.0</versionRange>
+							</requirement>
+							<requirement>
+								<type>eclipse-plugin</type>
+								<id>org.activitymgr.core.dao.hsqldbfragment</id>
+								<versionRange>0.0.0</versionRange>
+							</requirement>
+							<requirement>
+								<type>eclipse-plugin</type>
+								<id>org.activitymgr.core.dao.mysqlfragment</id>
 								<versionRange>0.0.0</versionRange>
 							</requirement>
 						</extraRequirements>

@@ -4,7 +4,7 @@ Bundle-Name: Activity Manager Data Transfer Objects
 Bundle-SymbolicName: org.activitymgr.core.dto
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: Jean-Francois Brazeau
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: org.activitymgr.core.dto,
  org.activitymgr.core.dto.misc,
  org.activitymgr.core.dto.report
