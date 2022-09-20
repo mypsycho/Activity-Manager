@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -29,7 +29,6 @@ package org.activitymgr.ui.rcp;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -75,7 +74,7 @@ public class MainView extends ViewPart {
 	private static DurationsUI durationsUI;
 	private static CollaboratorsUI collaboratorsUI;
 	private static TasksUI tasksUI;
-	private static ReportsUI reportsUI;
+	// private static ReportsUI reportsUI;
 	private static ContributionsUI contributionsUI;
 
 	/** Model manager */
@@ -88,15 +87,16 @@ public class MainView extends ViewPart {
 	 * This is a callback that will allow us to create the viewer and initialize
 	 * it.
 	 */
+	@Override
 	public void createPartControl(Composite parent) {
 		// Tab folder creation
 		final TabFolder tabFolder = new TabFolder(parent, SWT.TOP);
 		tabFolder
 				.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		// TODO move the core module & model manager initialization 
+		// TODO move the core module & model manager initialization
 		initialize();
-		
+
 		// Database access configuration tab
 		databaseTab = new TabItem(tabFolder, SWT.NONE);
 		databaseTab.setText(Strings.getString("Main.tabs.DATABASE")); //$NON-NLS-1$
@@ -128,7 +128,7 @@ public class MainView extends ViewPart {
 		reportsTab = new TabItem(tabFolder, SWT.NONE);
 		reportsTab.setText(Strings
 				.getString("Main.tabs.REPORTS")); //$NON-NLS-1$
-		reportsUI = new ReportsUI(reportsTab, modelMgr);
+		new ReportsUI(reportsTab, modelMgr);
 
 		// General informations tab creation
 		aboutTab = new TabItem(tabFolder, SWT.NONE);
@@ -149,24 +149,16 @@ public class MainView extends ViewPart {
 		final IStatusLineManager statusBar = getViewSite().getActionBars().getStatusLineManager();
 		final Shell shell = parent.getShell();
 		IDbStatusListener dbStatusListener = new IDbStatusListener() {
+			@Override
 			public void databaseOpened() {
-				shell.getDisplay().asyncExec(new Runnable() {
-					@Override
-					public void run() {
-						statusBar.setMessage(Strings
-								.getString("Main.status.CONNECTED")); //$NON-NLS-1$
-					}
-				});
+				shell.getDisplay().asyncExec(() -> statusBar.setMessage(Strings
+						.getString("Main.status.CONNECTED")));
 			}
 
+			@Override
 			public void databaseClosed() {
-				shell.getDisplay().asyncExec(new Runnable() {
-					@Override
-					public void run() {
-						statusBar.setMessage(Strings
-								.getString("Main.status.NOT_CONNECTED")); //$NON-NLS-1$
-					}
-				});
+				shell.getDisplay().asyncExec(() -> statusBar.setMessage(Strings
+						.getString("Main.status.NOT_CONNECTED")));
 			}
 		};
 		databaseUI.addDbStatusListener(dbStatusListener);
@@ -180,57 +172,49 @@ public class MainView extends ViewPart {
 	 */
 	private void initialize() {
 		// Create Guice injector
-		final ThreadLocal<Connection> dbTxs = new ThreadLocal<Connection>();
+		final ThreadLocal<Connection> dbTxs = new ThreadLocal<>();
 		final Injector injector = Guice.createInjector(
 				new CoreModelModule(),
 				new AbstractModule() {
 					@Override
 					protected void configure() {
 						bind(Connection.class).toProvider(
-								new Provider<Connection>() {
-									@Override
-									public Connection get() {
-										return dbTxs.get();
-									}
-								});
+								(Provider<Connection>) () -> dbTxs.get());
 					}
 				});
 		// Creates a new model manager wrapper (managing the transaction)
 		modelMgr = (IModelMgr) Proxy.newProxyInstance(
 				MainView.class.getClassLoader(),
-				new Class<?>[] { IModelMgr.class }, new InvocationHandler() {
-					@Override
-					public Object invoke(Object proxy, Method method,
-							Object[] args) throws Throwable {
-						Connection tx = null;
-						try {
-							// Open the transaction
-							BasicDataSource datasource = databaseUI.getDatasource();
-							if (datasource == null) {
-								throw new IllegalStateException("Database is closed");
-							}
-							tx = datasource.getConnection();
-							dbTxs.set(tx);
-							// Call the real model manager
-							IModelMgr wrappedModelMgr = injector.getInstance(IModelMgr.class);
-							Object result = method.invoke(wrappedModelMgr, args);
-							// Commit the transaction
-							tx.commit();
-							return result;
-						} catch (SQLException e) {
-							throw new IllegalStateException("Database connection failed", e);
-						} catch (InvocationTargetException t) {
-							// Rollback the transaction in case of failure
-							if (tx != null) {
-								tx.rollback();
-							}
-							throw t.getCause();
-						} finally {
-							// Release the transaction
-							dbTxs.remove();
-							if (tx != null) {
-								tx.close();
-							}
+				new Class<?>[] { IModelMgr.class },
+				(InvocationHandler) (proxy, method, args) -> {
+					Connection tx = null;
+					try {
+						// Open the transaction
+						BasicDataSource datasource = databaseUI.getDatasource();
+						if (datasource == null) {
+							throw new IllegalStateException("Database is closed");
+						}
+						tx = datasource.getConnection();
+						dbTxs.set(tx);
+						// Call the real model manager
+						IModelMgr wrappedModelMgr = injector.getInstance(IModelMgr.class);
+						Object result = method.invoke(wrappedModelMgr, args);
+						// Commit the transaction
+						tx.commit();
+						return result;
+					} catch (SQLException e) {
+						throw new IllegalStateException("Database connection failed", e);
+					} catch (InvocationTargetException t) {
+						// Rollback the transaction in case of failure
+						if (tx != null) {
+							tx.rollback();
+						}
+						throw t.getCause();
+					} finally {
+						// Release the transaction
+						dbTxs.remove();
+						if (tx != null) {
+							tx.close();
 						}
 					}
 				});
@@ -240,6 +224,7 @@ public class MainView extends ViewPart {
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
+	@Override
 	public void setFocus() {
 	}
 

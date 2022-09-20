@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -46,7 +46,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -83,7 +82,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 	private Image unselectedItemIcon;
 
 	/** Liste des listeners */
-	private List<ICollaboratorSelectionListener> listeners = new ArrayList<ICollaboratorSelectionListener>();
+	private List<ICollaboratorSelectionListener> listeners = new ArrayList<>();
 
 	/** Collaborateur sélectionné */
 	private Collaborator selectedCollaborator;
@@ -92,7 +91,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 * @param modelMgr
@@ -111,9 +110,11 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 		table.setHeaderVisible(true);
 		table.setEnabled(true);
 		table.addSelectionListener(new SelectionListener() {
+			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
 			}
 
+			@Override
 			public void widgetSelected(SelectionEvent e) {
 				Iterator<ICollaboratorSelectionListener> it = listeners
 						.iterator();
@@ -150,24 +151,22 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 		// Ajout du listener de gestion du tri des colonnes
 		// Add sort indicator and sort data when column selected
-		Listener sortListener = new Listener() {
-			public void handleEvent(Event e) {
-				log.debug("handleEvent(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
-				TableColumn previousSortColumn = table.getSortColumn();
-				TableColumn newSortColumn = (TableColumn) e.widget;
-				int dir = table.getSortDirection();
-				if (previousSortColumn == newSortColumn) {
-					dir = dir == SWT.UP ? SWT.DOWN : SWT.UP;
-				} else {
-					table.setSortColumn(newSortColumn);
-					dir = SWT.UP;
-				}
-				table.setSortDirection(dir);
-				sortColumnIndex = Arrays.asList(table.getColumns()).indexOf(
-						newSortColumn);
-				// Rafraichissement des données
-				tableViewer.refresh();
+		Listener sortListener = e -> {
+			log.debug("handleEvent(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+			TableColumn previousSortColumn = table.getSortColumn();
+			TableColumn newSortColumn = (TableColumn) e.widget;
+			int dir = table.getSortDirection();
+			if (previousSortColumn == newSortColumn) {
+				dir = dir == SWT.UP ? SWT.DOWN : SWT.UP;
+			} else {
+				table.setSortColumn(newSortColumn);
+				dir = SWT.UP;
 			}
+			table.setSortDirection(dir);
+			sortColumnIndex = Arrays.asList(table.getColumns()).indexOf(
+					newSortColumn);
+			// Rafraichissement des données
+			tableViewer.refresh();
 		};
 		table.getColumns()[FIRST_NAME_COLUMN_IDX].addListener(SWT.Selection,
 				sortListener);
@@ -186,7 +185,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/**
 	 * Retourne le nombre de collaborateurs présentés dans le tableau.
-	 * 
+	 *
 	 * @return le nombre de collaborateurs présentés dans le tableau.
 	 */
 	public int getCollaboratorsCount() {
@@ -195,7 +194,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/**
 	 * Définit le collaborateur sélectionné.
-	 * 
+	 *
 	 * @param idx
 	 *            index du collaborateur sélectionné.
 	 */
@@ -206,7 +205,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/**
 	 * Définit le collaborateur sélectionné.
-	 * 
+	 *
 	 * @param collaborator
 	 *            le collaborateur.
 	 */
@@ -224,7 +223,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/**
 	 * Retourne le collaborateur sélectionné.
-	 * 
+	 *
 	 * @return le collaborateur sélectionné.
 	 */
 	public Collaborator getSelectedCollaborator() {
@@ -233,15 +232,15 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java
 	 * .lang.Object)
 	 */
+	@Override
 	public Object[] getElements(Object inputElement) {
 		// Chargement des données
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
+		return SafeRunner.exec(parent.getShell(), new Collaborator[] {}, () -> {
 				// Recherche des collaborateurs
 				int orderByFieldIndex = -1;
 				switch (sortColumnIndex) {
@@ -256,32 +255,29 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 				// Récupération
 				return modelMgr.getActiveCollaborators(orderByFieldIndex,
 						tableViewer.getTable().getSortDirection() == SWT.UP);
-			}
-		};
-		// Exécution
-		Object result = (Object) safeRunner.run(parent.getShell());
-		return (Collaborator[]) (result != null ? result
-				: new Collaborator[] {});
+			});
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang
 	 * .Object, int)
 	 */
+	@Override
 	public String getColumnText(final Object element, final int columnIndex) {
 		log.debug("ITableLabelProvider.getColumnText(" + element + ", " + columnIndex + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
+
+		// Exécution
+		return SafeRunner.exec(parent.getShell(), "", () -> {
 				Collaborator collaborator = (Collaborator) element;
 				String text = null;
 				switch (columnIndex) {
-				case (FIRST_NAME_COLUMN_IDX):
+				case FIRST_NAME_COLUMN_IDX:
 					text = collaborator.getFirstName();
 					break;
-				case (LAST_NAME_COLUMN_IDX):
+				case LAST_NAME_COLUMN_IDX:
 					text = collaborator.getLastName();
 					break;
 				default:
@@ -289,12 +285,10 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 							Strings.getString("SelectableCollaboratorPanel.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
 				}
 				return text;
-			}
-		};
-		// Exécution
-		return (String) safeRunner.run(parent.getShell(), ""); //$NON-NLS-1$
+			});
 	}
 
+	@Override
 	public Image getColumnImage(Object element, int columnIndex) {
 		Image image = null;
 		if (columnIndex == 0) {
@@ -315,45 +309,49 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseOpened()
 	 */
+	@Override
 	public void databaseOpened() {
 		initialize();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseClosed()
 	 */
+	@Override
 	public void databaseClosed() {
 		Table table = tableViewer.getTable();
 		TableItem[] items = table.getItems();
-		for (int i = 0; i < items.length; i++) {
-			items[i].dispose();
+		for (TableItem item : items) {
+			item.dispose();
 		}
 		selectedCollaborator = null;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.ICollaboratorListener#
 	 * collaboratorAdded(jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorAdded(Collaborator collaborator) {
 		tableViewer.refresh();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.ICollaboratorListener#
 	 * collaboratorRemoved(jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorRemoved(Collaborator collaborator) {
 		// Si le collaborateur supprimé est celui qui est actuellement
 		// sélectionné => on supprime la sélection
@@ -364,21 +362,23 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.ICollaboratorListener#
 	 * collaboratorUpdated(jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorUpdated(Collaborator collaborator) {
 		tableViewer.refresh(collaborator);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.ICollaboratorListener#
 	 * collaboratorActivationStatusChanged
 	 * (jfb.tools.activitymgr.core.beans.Collaborator)
 	 */
+	@Override
 	public void collaboratorActivationStatusChanged(Collaborator collaborator) {
 		// C'est soit comme une suppression ou comme un ajout
 		if (collaborator.getIsActive())
@@ -389,7 +389,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/**
 	 * Ajoute un listener de sélection.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -399,7 +399,7 @@ public class SelectableCollaboratorPanel extends AbstractTableMgr implements
 
 	/**
 	 * Supprime un listener de sélection.
-	 * 
+	 *
 	 * @param listener
 	 *            le listener.
 	 */

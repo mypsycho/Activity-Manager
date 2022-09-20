@@ -187,7 +187,8 @@ public class TaskDAOImpl extends AbstractORMDAOImpl<Task> implements ITaskDAO {
 			default:
 				throw new DAOException(
 						Strings.getString(
-								"DbMgr.errors.UNKNOWN_CRITERIA_INDEX", new Integer(filter.getCriteriaIndex())), null); //$NON-NLS-1$ //$NON-NLS-2$
+								"DbMgr.errors.UNKNOWN_CRITERIA_INDEX", //$NON-NLS-1$
+								filter.getCriteriaIndex()), null);
 			}
 			// Préparation de la requête
 			log.debug("Search request : '" + request + "'"); //$NON-NLS-1$ //$NON-NLS-2$

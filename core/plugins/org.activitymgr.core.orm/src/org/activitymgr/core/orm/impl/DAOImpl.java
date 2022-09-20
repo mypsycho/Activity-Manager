@@ -183,14 +183,15 @@ public class DAOImpl<TYPE> implements IDAO<TYPE> {
 			attributesDictionnary.put(attribute.getName(), attribute);
 			try {
 				Class<? extends IConverter<?>> converterClass = (Class<? extends IConverter<?>>) mapping.getAttributeConverter(theClass, attribute);
-				IConverter<? extends Object> converter = converterClass == null ? DEFAULT_CONVERTERS.get(attribute.getType()) : converterClass.newInstance();
+				IConverter<? extends Object> converter = 
+						converterClass == null 
+						? DEFAULT_CONVERTERS.get(attribute.getType()) 
+						: converterClass.getDeclaredConstructor().newInstance();
 				if (converter == null) {
 					throw new IllegalArgumentException("No converter found for " + attribute);
 				}
 				converters.put(attribute, converter);
-			} catch (InstantiationException e) {
-				throw new IllegalArgumentException("Unable to instantiate a converter", e);
-			} catch (IllegalAccessException e) {
+			} catch (ReflectiveOperationException | IllegalArgumentException | SecurityException  e) {
 				throw new IllegalArgumentException("Unable to instantiate a converter", e);
 			}
 	

@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -65,7 +65,7 @@ public class AboutUI implements SelectionListener {
 
 	/**
 	 * Constructeur permettant de placer l'IHM dans un onglet.
-	 * 
+	 *
 	 * @param tabItem
 	 *            item parent.
 	 */
@@ -76,7 +76,7 @@ public class AboutUI implements SelectionListener {
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 */
@@ -150,13 +150,7 @@ public class AboutUI implements SelectionListener {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt
-	 * .events.SelectionEvent)
-	 */
+	@Override
 	public void widgetSelected(SelectionEvent e) {
 		String osName = System.getProperty("os.name"); //$NON-NLS-1$
 		String link = e.text;
@@ -167,18 +161,12 @@ public class AboutUI implements SelectionListener {
 				&& osName.toLowerCase().indexOf("windows") >= 0; //$NON-NLS-1$
 		boolean copyURLToClipboard = true;
 		// Sous windows lancement du brower ou du client de mail
-		if (windows) {
-			SafeRunner runner = new SafeRunner() {
-				protected Object runUnsafe() throws Exception {
-					Process proc = Runtime.getRuntime().exec(
-							"rundll32 url.dll,FileProtocolHandler " + url); //$NON-NLS-1$
-					return proc;
-				}
-			};
-			// Si le lancement échoue, on effectuera le copier/coller
-			if (runner.run(parent.getShell()) != null)
-				copyURLToClipboard = false;
-		}
+		// Si le lancement échoue, on effectuera le copier/coller
+		if (windows && (SafeRunner.exec(parent.getShell(), null, () ->
+			Runtime.getRuntime().exec(
+					"rundll32 url.dll,FileProtocolHandler " + url) //$NON-NLS-1$
+			) != null))
+			copyURLToClipboard = false;
 		// Sur les autres plateformes que linux, dépot dans le clipboard
 		if (copyURLToClipboard) {
 			Clipboard clipBoard = new Clipboard(parent.getDisplay());
@@ -189,17 +177,11 @@ public class AboutUI implements SelectionListener {
 					.openInformation(parent.getShell(),
 							Strings.getString("AboutUI.titles.INFORMATION"), //$NON-NLS-1$
 							Strings.getString(
-									"AboutUI.errors.COULDNT_OPEN_MAIL_OR_BROWSER_APP", e.text)); //$NON-NLS-1$ //$NON-NLS-2$
+									"AboutUI.errors.COULDNT_OPEN_MAIL_OR_BROWSER_APP", e.text)); //$NON-NLS-1$
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse
-	 * .swt.events.SelectionEvent)
-	 */
+	@Override
 	public void widgetDefaultSelected(SelectionEvent e) {
 		widgetSelected(e);
 	}

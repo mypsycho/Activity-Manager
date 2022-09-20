@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -50,11 +50,11 @@ import org.activitymgr.ui.rcp.dialogs.TaskChooserTreeWithHistoryDialog;
 import org.activitymgr.ui.rcp.util.SafeRunner;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -98,8 +98,7 @@ public class ReportsUI {
 			int compare = obj1.compareTo(obj2);
 			// If not significant, field name becomes significant
 			if (compare == 0) {
-				return new Integer(itemOrder.indexOf(id1)).compareTo(itemOrder
-						.indexOf(id2));
+				return itemOrder.indexOf(id1) - itemOrder.indexOf(id2);
 			} else if (orderByTasksButton.getSelection()) {
 				return -compare;
 			} else {
@@ -110,19 +109,19 @@ public class ReportsUI {
 	}
 
 	private static final String PATH_ATTRIBUTE = "task.path";
-	
+
 	private static final String CODE_ATTRIBUTE = "task.code";
 
 	private static final String NAME_ATTRIBUTE = "task.name";
-	
+
 	private static final String COMMENT_ATTRIBUTE = "task.comment";
-	
+
 	private static final String BUDGET_ATTRIBUTE = "task.budget";
-	
+
 	private static final String INITIALLY_CONSUMED_ATTRIBUTE = "task.initiallyConsumed";
-	
+
 	private static final String ETC_ATTRIBUTE = "task.etc";
-	
+
 	private static final String LOGIN_ATTRIBUTE = "collaborator.login";
 
 	private static final String FIRST_NAME_ATTRIBUTE = "collaborator.firstName";
@@ -159,7 +158,7 @@ public class ReportsUI {
 
 	private DateTime endDateTime;
 
-	private Map<String, Button> attributesCheckboxesMap = new LinkedHashMap<String, Button>();
+	private Map<String, Button> attributesCheckboxesMap = new LinkedHashMap<>();
 
 	private Button includeTasksButton;
 
@@ -197,7 +196,7 @@ public class ReportsUI {
 
 	/**
 	 * Default constructor intended to be used from within a tab.
-	 * 
+	 *
 	 * @param tabItem
 	 *            item parent.
 	 * @param modelMgr
@@ -212,7 +211,7 @@ public class ReportsUI {
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            the parent composite.
 	 * @param modelMgr
@@ -387,7 +386,7 @@ public class ReportsUI {
 		columnsOrderTableGridData.heightHint = 60;
 		columnsOrderTableGridData.widthHint = 200;
 		columnsOrderList.setLayoutData(columnsOrderTableGridData);
-		columnsOrderElements = new ArrayList<String>();
+		columnsOrderElements = new ArrayList<>();
 		columnsOrderViewer.setInput(columnsOrderElements);
 
 		Composite columnsOrderButtonsPanel = new Composite(columnsOrderPanel,
@@ -481,7 +480,7 @@ public class ReportsUI {
 		filterByTaskSelectButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent ev) {
-				if (taskChooserDialog.open() == Dialog.OK) {
+				if (taskChooserDialog.open() == Window.OK) {
 					Task selectedTask = (Task) taskChooserDialog.getValue();
 					try {
 						String taskCodePath = modelMgr
@@ -509,7 +508,7 @@ public class ReportsUI {
 
 		// Create column elements comparator
 		columnElementsComparator = new ColumnElementsComparator(
-				tasksCentricButton, new ArrayList<String>(
+				tasksCentricButton, new ArrayList<>(
 						attributesCheckboxesMap.keySet()));
 
 		// Update fields enablement
@@ -546,7 +545,7 @@ public class ReportsUI {
 				intervalCount = (end.get(Calendar.YEAR) - start
 						.get(Calendar.YEAR))
 						* 12
-						+ (end.get(Calendar.MONTH) - start.get(Calendar.MONTH));
+						+ end.get(Calendar.MONTH) - start.get(Calendar.MONTH);
 				break;
 			case WEEK:
 				intervalCount = DateHelper.countDaysBetween(start, end) / 7;
@@ -569,10 +568,10 @@ public class ReportsUI {
 			}
 			Workbook report = modelMgr.buildReport(start, intervalType,
 					intervalCount, rootTaskId, taskDepth,
-					onlyKeepTasksWithContributionsButton.getSelection(), 
+					onlyKeepTasksWithContributionsButton.getSelection(),
 					includeCollaboratorsButton.getSelection(),
 					collaboratorsCentricButton.getSelection(),
-					null, 
+					null,
 					columnsOrderElements
 							.toArray(new String[columnsOrderElements.size()]),
 					true, false);
@@ -625,7 +624,7 @@ public class ReportsUI {
 				// Goto start of year
 				start.set(Calendar.MONTH, 0);
 				start.set(Calendar.DATE, 1);
-				
+
 				// Goto start of following year
 				end.set(Calendar.MONTH, 0);
 				end.set(Calendar.DATE, 1);
@@ -634,7 +633,7 @@ public class ReportsUI {
 			case MONTH:
 				// Goto start of month
 				start.set(Calendar.DATE, 1);
-				
+
 				// Goto start of following month
 				end.set(Calendar.DATE, 1);
 				end.add(Calendar.MONTH, 1);
@@ -642,7 +641,7 @@ public class ReportsUI {
 			case WEEK:
 				// Goto start of week
 				start = DateHelper.moveToFirstDayOfWeek(start);
-				
+
 				// Goto start of following month
 				end = DateHelper.moveToFirstDayOfWeek(end);
 				end.add(Calendar.WEEK_OF_YEAR, 1);
@@ -688,8 +687,8 @@ public class ReportsUI {
 		columnsOrderViewer.refresh();
 
 		// Update order by fields enablement
-		boolean orderByEnabled = (includeCollaboratorsButton.getSelection() && includeTasksButton
-				.getSelection());
+		boolean orderByEnabled = includeCollaboratorsButton.getSelection() && includeTasksButton
+				.getSelection();
 		tasksCentricButton.setEnabled(orderByEnabled);
 		collaboratorsCentricButton.setEnabled(orderByEnabled);
 		boolean customMode = customColumnsOrderButton.getSelection();
@@ -704,7 +703,7 @@ public class ReportsUI {
 				.setEnabled(upAndDownButtonsEnabled
 						&& columnsOrderViewer.getList().getSelectionIndex() != columnsOrderViewer
 								.getList().getItemCount() - 1);
-		
+
 		// 2nd filter : if in collaborator mode, several task fields
 		// cannot be used (because it's not possible to agregate them)
 		if (collaboratorsCentricButton.isEnabled() && collaboratorsCentricButton.getSelection()) {

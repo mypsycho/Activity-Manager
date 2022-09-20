@@ -534,19 +534,10 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 		clipboard = new Clipboard(parentComposite.getDisplay());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java
-	 * .lang.Object)
-	 */
 	@Override
 	public Object[] getElements(Object inputElement) {
 		// Chargement des données
-		SafeRunner safeRunner = new SafeRunner() {
-			@Override
-			public Object runUnsafe() throws Exception {
+		return SafeRunner.exec(parent.getShell(), new TaskContributions[] {}, () -> {
 				// Mise à jour des dates de la semaine :
 				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy"); //$NON-NLS-1$
 				Calendar sunday = (Calendar) currentMonday.clone();
@@ -598,10 +589,7 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 				// Retour du résultat
 				return list.toArray();
 			}
-		};
-		// Exécution
-		Object result = safeRunner.run(parent.getShell());
-		return (Object[]) (result != null ? result : new TaskContributions[] {});
+		);
 	}
 
 	/*
@@ -704,117 +692,106 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.viewers.ICellModifier#modify(java.lang.Object,
-	 * java.lang.String, java.lang.Object)
-	 */
 	@Override
 	public void modify(final Object element, String property, final Object value) {
 		log.debug("ICellModifier.modify(" + element + ", " + property + ", " + value + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		TableItem item = (TableItem) element;
-		final TaskContributions weekContributions = (TaskContributions) item
-				.getData();
+		final TaskContributions weekContributions = (TaskContributions) item.getData();
 		final IBaseLabelProvider labelProvider = this;
 		final int columnIndex = tableColsMgr.getColumnIndex(property);
-		SafeRunner safeRunner = new SafeRunner() {
-			@Override
-			public Object runUnsafe() throws Exception {
-				switch (columnIndex) {
-				case TASK_PATH_COLUMN_IDX:
-					throw new Error(
-							Strings.getString("ContributionsUI.errors.TASK_PATH_CANNOT_BE_MODIFIED")); //$NON-NLS-1$
-				case TASK_NAME_COLUMN_IDX:
-					Task task = (Task) value;
-					weekContributions.setTask(task);
-					List<Contribution> nonNullContributions = new ArrayList<>();
-					// Récupération des contributions
-					Contribution[] contributions = weekContributions
-							.getContributions();
-					// Suppression des contributions nulles
-					for (Contribution contribution : contributions) {
-						if (contribution != null)
-							nonNullContributions.add(contribution);
-					}
-					// Mise à jour des contributions
-					contributions = nonNullContributions
-							.toArray(new Contribution[nonNullContributions
-									.size()]);
-					modelMgr.changeContributionTask(contributions, task);
-					// Notification des listeners
-					notifyLabelProviderListener(new LabelProviderChangedEvent(
-							labelProvider, weekContributions));
-					notifyContributionsUpdated(contributions);
-					break;
-				case MONDAY_COLUMN_IDX:
-				case TUESDAY_COLUMN_IDX:
-				case WEDNESDAY_COLUMN_IDX:
-				case THURSDAY_COLUMN_IDX:
-				case FRIDAY_COLUMN_IDX:
-				case SATURDAY_COLUMN_IDX:
-				case SUNDAY_COLUMN_IDX:
-					Integer selectedIndex = (Integer) value;
-					Contribution contribution = weekContributions
-							.getContributions()[columnIndex - 2];
-					// Cas d'une suppression (choix de la valeur N° 0 de la
-					// liste)
-					if (selectedIndex.intValue() == 0) {
-						// Suppression effective en base si la contribution
-						// existait
-						if (contribution != null)
-							modelMgr.removeContribution(contribution, true);
-						weekContributions.getContributions()[columnIndex - 2] = null;
-						// Notification des listeners
-						notifyContributionsRemoved(new Contribution[] { contribution });
-					}
-					// Sinon création ou modification
-					else {
-						boolean create = contribution == null;
-						// Cas d'une création
-						if (create) {
-							Collaborator selectedCollaboprator = selectableCollaboratorPanel
-									.getSelectedCollaborator();
-							contribution = factory.newContribution();
-							contribution.setContributorId(selectedCollaboprator
-									.getId());
-							contribution.setTaskId(weekContributions.getTask()
-									.getId());
-							Calendar date = (Calendar) currentMonday.clone();
-							date.add(Calendar.DATE, columnIndex
-									- MONDAY_COLUMN_IDX);
-							contribution.setDate(date);
-							weekContributions.getContributions()[columnIndex - 2] = contribution;
-						}
-						// Mise à jour des champs
-						Duration duration = durations[selectedIndex.intValue() - 1];
-						contribution.setDurationId(duration.getId());
-						if (create) {
-							modelMgr.createContribution(contribution, true);
-							// Notification des listeners
-							notifyContributionAdded(contribution);
-						} else {
-							modelMgr.updateContribution(contribution, true);
-							// Notification des listeners
-							notifyContributionsUpdated(new Contribution[] { contribution });
-						}
-					}
-					// Notification des listeners
-					notifyLabelProviderListener(new LabelProviderChangedEvent(
-							labelProvider, weekContributions));
-					// Mise à jour des totaux
-					tableViewer.refresh(WeekContributionsSum.getInstance());
-					break;
-				case BLANK_COLUMN_IDX :
-				default:
-					throw new Error(
-							Strings.getString("ContributionsUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
+		SafeRunner.exec(parent.getShell(), () -> {
+			switch (columnIndex) {
+			case TASK_PATH_COLUMN_IDX:
+				throw new Error(
+						Strings.getString("ContributionsUI.errors.TASK_PATH_CANNOT_BE_MODIFIED")); //$NON-NLS-1$
+			case TASK_NAME_COLUMN_IDX:
+				Task task = (Task) value;
+				weekContributions.setTask(task);
+				List<Contribution> nonNullContributions = new ArrayList<>();
+				// Récupération des contributions
+				Contribution[] contributions = weekContributions
+						.getContributions();
+				// Suppression des contributions nulles
+				for (Contribution contribution : contributions) {
+					if (contribution != null)
+						nonNullContributions.add(contribution);
 				}
-				return null;
+				// Mise à jour des contributions
+				contributions = nonNullContributions
+						.toArray(new Contribution[nonNullContributions
+								.size()]);
+				modelMgr.changeContributionTask(contributions, task);
+				// Notification des listeners
+				notifyLabelProviderListener(new LabelProviderChangedEvent(
+						labelProvider, weekContributions));
+				notifyContributionsUpdated(contributions);
+				break;
+			case MONDAY_COLUMN_IDX:
+			case TUESDAY_COLUMN_IDX:
+			case WEDNESDAY_COLUMN_IDX:
+			case THURSDAY_COLUMN_IDX:
+			case FRIDAY_COLUMN_IDX:
+			case SATURDAY_COLUMN_IDX:
+			case SUNDAY_COLUMN_IDX:
+				Integer selectedIndex = (Integer) value;
+				Contribution contribution = weekContributions
+						.getContributions()[columnIndex - 2];
+				// Cas d'une suppression (choix de la valeur N° 0 de la
+				// liste)
+				if (selectedIndex.intValue() == 0) {
+					// Suppression effective en base si la contribution
+					// existait
+					if (contribution != null)
+						modelMgr.removeContribution(contribution, true);
+					weekContributions.getContributions()[columnIndex - 2] = null;
+					// Notification des listeners
+					notifyContributionsRemoved(new Contribution[] { contribution });
+				}
+				// Sinon création ou modification
+				else {
+					boolean create = contribution == null;
+					// Cas d'une création
+					if (create) {
+						Collaborator selectedCollaboprator = selectableCollaboratorPanel
+								.getSelectedCollaborator();
+						contribution = factory.newContribution();
+						contribution.setContributorId(selectedCollaboprator
+								.getId());
+						contribution.setTaskId(weekContributions.getTask()
+								.getId());
+						Calendar date = (Calendar) currentMonday.clone();
+						date.add(Calendar.DATE, columnIndex
+								- MONDAY_COLUMN_IDX);
+						contribution.setDate(date);
+						weekContributions.getContributions()[columnIndex - 2] = contribution;
+					}
+					// Mise à jour des champs
+					Duration duration = durations[selectedIndex.intValue() - 1];
+					contribution.setDurationId(duration.getId());
+					if (create) {
+						modelMgr.createContribution(contribution, true);
+						// Notification des listeners
+						notifyContributionAdded(contribution);
+					} else {
+						modelMgr.updateContribution(contribution, true);
+						// Notification des listeners
+						notifyContributionsUpdated(new Contribution[] { contribution });
+					}
+				}
+				// Notification des listeners
+				notifyLabelProviderListener(new LabelProviderChangedEvent(
+						labelProvider, weekContributions));
+				// Mise à jour des totaux
+				tableViewer.refresh(WeekContributionsSum.getInstance());
+				break;
+			case BLANK_COLUMN_IDX :
+			default:
+				throw new Error(
+						Strings.getString("ContributionsUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
 			}
-		};
-		// Exécution
-		safeRunner.run(parent.getShell());
+
+		}
+		);
 	}
 
 	/*
@@ -830,19 +807,12 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 				: normalFont;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang
-	 * .Object, int)
-	 */
+
 	@Override
 	public String getColumnText(final Object element, final int columnIndex) {
 		log.debug("ITableLabelProvider.getColumnText(" + element + ", " + columnIndex + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		SafeRunner safeRunner = new SafeRunner() {
-			@Override
-			public Object runUnsafe() throws Exception {
+		return SafeRunner.exec(parent.getShell(), "", //$NON-NLS-1$
+			()-> {
 				String text = null;
 				// Cas de la ligne des totaux
 				if (element == WeekContributionsSum.getInstance()) {
@@ -927,19 +897,11 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 					}
 				}
 				return text;
-			}
-		};
-		// Exécution
-		return (String) safeRunner.run(parent.getShell(), ""); //$NON-NLS-1$
+
+		});
+
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt
-	 * .events.SelectionEvent)
-	 */
 	@Override
 	public void widgetSelected(final SelectionEvent e) {
 		log.debug("SelectionListener.widgetSelected(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1044,18 +1006,20 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 	 */
 	private ITaskChooserValidator buildTaskChooserValidator() {
 		// Création du valideur
-		ITaskChooserValidator taskChooserValidator = selectedTask -> {
-try {
-		if (!modelMgr.isLeaf(selectedTask.getId()))
-			throw new DialogException(
-					Strings.getString("ContributionsUI.errors.PARENT_TASK_SELECTED"), null);//$NON-NLS-1$
-} catch (Throwable e) {
-		throw new DialogException(
-				e.getMessage(), null);
-}
-};
-		// Retour du résultat
-		return taskChooserValidator;
+		return selectedTask -> {
+			try {
+				if (!modelMgr.isLeaf(selectedTask.getId())) {
+					throw new DialogException(
+							Strings.getString("ContributionsUI.errors.PARENT_TASK_SELECTED"), //$NON-NLS-1$
+							null);
+				}
+			} catch (DialogException e) {
+				throw e;
+			} catch (Throwable e) {
+				throw new DialogException(e.getMessage(), null);
+			}
+		};
+
 	}
 
 	/**
@@ -1095,25 +1059,13 @@ try {
 		tableViewer.getTable().setFocus();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse
-	 * .swt.events.SelectionEvent)
-	 */
+
 	@Override
 	public void widgetDefaultSelected(SelectionEvent e) {
 		widgetSelected(e);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.swt.events.MenuListener#menuShown(org.eclipse.swt.events.
-	 * MenuEvent)
-	 */
+
 	@Override
 	public void menuShown(MenuEvent e) {
 		log.debug("menuShown(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1130,24 +1082,12 @@ try {
 		exportItem.setEnabled(collaboratorSelected && true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.swt.events.MenuListener#menuHidden(org.eclipse.swt.events
-	 * .MenuEvent)
-	 */
 	@Override
 	public void menuHidden(MenuEvent e) {
 		// Do nothing...
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseClosed()
-	 */
+
 	@Override
 	public void databaseClosed() {
 		// Suppression des items de collaborateurs
@@ -1182,34 +1122,18 @@ try {
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see jfb.tools.activitymgr.ui.util.ICollaboratorSelectionListener#
-	 * collaboratorSelected(jfb.tools.activitymgr.core.beans.Collaborator)
-	 */
 	@Override
 	public void collaboratorSelected(Collaborator selectedCollaborator) {
 		tableViewer.refresh();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.CollaboratorListener#
-	 * collaboratorAdded(jfb.tools.activitymgr.core.beans.Collaborator)
-	 */
+
 	@Override
 	public void collaboratorAdded(Collaborator collaborator) {
 		selectableCollaboratorPanel.collaboratorAdded(collaborator);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.CollaboratorListener#
-	 * collaboratorRemoved(jfb.tools.activitymgr.core.beans.Collaborator)
-	 */
+
 	@Override
 	public void collaboratorRemoved(Collaborator collaborator) {
 		selectableCollaboratorPanel.collaboratorRemoved(collaborator);
@@ -1225,12 +1149,7 @@ try {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see jfb.tools.activitymgr.ui.CollaboratorsUI.CollaboratorListener#
-	 * collaboratorUpdated(jfb.tools.activitymgr.core.beans.Collaborator)
-	 */
+
 	@Override
 	public void collaboratorUpdated(Collaborator collaborator) {
 		selectableCollaboratorPanel.collaboratorUpdated(collaborator);
@@ -1259,12 +1178,7 @@ try {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseOpened()
-	 */
+
 	@Override
 	public void databaseOpened() {
 		// Annulation de la sélection d'un collaborateur si une sélection
@@ -1274,15 +1188,6 @@ try {
 	}
 
 
-
-
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * jfb.tools.activitymgr.ui.TasksUI.TaskListener#taskAdded(jfb.tools.activitymgr
-	 * .core.beans.Task)
-	 */
 	@Override
 	public void taskAdded(Task task) {
 		// Transfert de la notification au popup de choix de tache
@@ -1292,79 +1197,66 @@ try {
 		// tâche ne pouvait forcément pas être déja affichée
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see jfb.tools.activitymgr.ui.TasksUI.TaskListener#taskRemoved(jfb.tools.
-	 * activitymgr.core.beans.Task)
-	 */
+
 	@Override
 	public void taskRemoved(final Task removedTask) {
-		new SafeRunner() {
-			@Override
-			protected Object runUnsafe() throws Exception {
-				// Transfert de la notification au popup de choix de tache
-				taskChooserDialog.taskRemoved(removedTask);
-				// Parcours des taches présentes dans le tableau
-				int itemCount = tableViewer.getTable().getItemCount();
-				int itemIdxToRemove = -1;
-				for (int i = 0; i < itemCount; i++) {
-					Object data = tableViewer.getElementAt(i);
-					if (data != WeekContributionsSum.getInstance()) {
-						TaskContributions weekContribution = (TaskContributions) data;
-						Task currentTask = weekContribution.getTask();
-						// Cas ou la tache supprimée est dans le tableau
-						// dans ce cas, on sauvegarde le N° pour effectuer
-						// la suppression par la suite
-						if (currentTask.getId() == removedTask.getId()) {
-							itemIdxToRemove = i;
-						}
-						// Autre cas : la tache supprimée est la soeur d'une des
-						// taches parent
-						// de la tache en cours ; c'est le cas si le chemin de
-						// la tache en cours
-						// commence par le chemin de la tache qui a été
-						// supprimée
-						else if (currentTask.getPath().startsWith(
-								removedTask.getPath())) {
-							String removedTaskFullpath = removedTask
-									.getFullPath();
-							String removedTaskSisterFullPath = currentTask
-									.getFullPath().substring(0,
-											removedTaskFullpath.length());
-							// La tache n'est impactée que si sa tache parent se
-							// trouvant être la soeur de
-							// celle qui a été supprimée possède un numéro
-							// supérieur à celui de la
-							// tache supprimée
-							if (removedTaskSisterFullPath
-									.compareTo(removedTaskFullpath) > 0) {
-								// Dans ce cas il faut mettre à jour le chemin
-								// de la tache
-								currentTask = modelMgr.getTask(currentTask
-										.getId());
-								weekContribution.setTask(currentTask);
-								tableViewer.refresh(weekContribution);
-							}
+		SafeRunner.exec(parent.getShell(),() -> {
+			// Transfert de la notification au popup de choix de tache
+			taskChooserDialog.taskRemoved(removedTask);
+			// Parcours des taches présentes dans le tableau
+			int itemCount = tableViewer.getTable().getItemCount();
+			int itemIdxToRemove = -1;
+			for (int i = 0; i < itemCount; i++) {
+				Object data = tableViewer.getElementAt(i);
+				if (data != WeekContributionsSum.getInstance()) {
+					TaskContributions weekContribution = (TaskContributions) data;
+					Task currentTask = weekContribution.getTask();
+					// Cas ou la tache supprimée est dans le tableau
+					// dans ce cas, on sauvegarde le N° pour effectuer
+					// la suppression par la suite
+					if (currentTask.getId() == removedTask.getId()) {
+						itemIdxToRemove = i;
+					}
+					// Autre cas : la tache supprimée est la soeur d'une des
+					// taches parent
+					// de la tache en cours ; c'est le cas si le chemin de
+					// la tache en cours
+					// commence par le chemin de la tache qui a été
+					// supprimée
+					else if (currentTask.getPath().startsWith(
+							removedTask.getPath())) {
+						String removedTaskFullpath = removedTask
+								.getFullPath();
+						String removedTaskSisterFullPath = currentTask
+								.getFullPath().substring(0,
+										removedTaskFullpath.length());
+						// La tache n'est impactée que si sa tache parent se
+						// trouvant être la soeur de
+						// celle qui a été supprimée possède un numéro
+						// supérieur à celui de la
+						// tache supprimée
+						if (removedTaskSisterFullPath
+								.compareTo(removedTaskFullpath) > 0) {
+							// Dans ce cas il faut mettre à jour le chemin
+							// de la tache
+							currentTask = modelMgr.getTask(currentTask
+									.getId());
+							weekContribution.setTask(currentTask);
+							tableViewer.refresh(weekContribution);
 						}
 					}
 				}
-				// Si on a trouvé l'item supprimé, on le supprime
-				if (itemIdxToRemove >= 0)
-					tableViewer.remove(tableViewer
-							.getElementAt(itemIdxToRemove));
-				return null;
+			}
+			// Si on a trouvé l'item supprimé, on le supprime
+			if (itemIdxToRemove >= 0) {
+				tableViewer.remove(tableViewer
+						.getElementAt(itemIdxToRemove));
 			}
 
-		}.run(parent.getShell());
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see jfb.tools.activitymgr.ui.TasksUI.TaskListener#taskUpdated(jfb.tools.
-	 * activitymgr.core.beans.Task)
-	 */
+
 	@Override
 	public void taskUpdated(final Task updatedTask) {
 		// Transfert de la notification au popup de choix de tache
@@ -1394,64 +1286,53 @@ try {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * jfb.tools.activitymgr.ui.TasksUI.ITaskListener#taskMoved(java.lang.String
-	 * , jfb.tools.activitymgr.core.beans.Task)
-	 */
+
 	@Override
 	public void taskMoved(final String oldTaskFullpath, final Task movedTask) {
-		new SafeRunner() {
-			@Override
-			protected Object runUnsafe() throws Exception {
-				// Transfert de la notification au popup de choix de tache
-				taskChooserDialog.taskMoved(oldTaskFullpath, movedTask);
-				// Déduction de l'ancien chemin de la tache à partir de l'ancien
-				// chemin complet
-				String oldTaskPath = oldTaskFullpath.substring(0,
-						oldTaskFullpath.length() - 2);
-				// Parcours des taches présentes dans le tableau
-				int itemCount = tableViewer.getTable().getItemCount();
-				for (int i = 0; i < itemCount; i++) {
-					Object data = tableViewer.getElementAt(i);
-					if (data != WeekContributionsSum.getInstance()) {
-						TaskContributions weekContribution = (TaskContributions) data;
-						Task currentTask = weekContribution.getTask();
-						// Cas ou la tache modifiée est dans le tableau
-						if (currentTask.getId() == movedTask.getId()) {
-							currentTask = modelMgr.getTask(currentTask.getId());
-							weekContribution.setTask(currentTask);
-							tableViewer.refresh(weekContribution);
-						}
-						// Autre cas : la tache a déplacée est une tache
-						// parent de la tache en cours
-						else if (currentTask.getPath().startsWith(
-								oldTaskFullpath)) {
-							// Il faut faire un refresh pour que le chemin de
-							// code de la tache
-							// soit mis à jour
-							currentTask = modelMgr.getTask(currentTask.getId());
-							weekContribution.setTask(currentTask);
-							tableViewer.refresh(weekContribution);
-						}
-						// Autre cas : la tache déplacée est la soeur d'une des
-						// taches parent
-						// de la tache en cours
-						else if (currentTask.getPath().startsWith(oldTaskPath)) {
-							// Dans ce cas il faut mettre à jour le chemin de la
-							// tache
-							currentTask = modelMgr.getTask(currentTask.getId());
-							weekContribution.setTask(currentTask);
-							tableViewer.refresh(weekContribution);
-						}
+		SafeRunner.exec(parent.getShell(),() -> {
+			// Transfert de la notification au popup de choix de tache
+			taskChooserDialog.taskMoved(oldTaskFullpath, movedTask);
+			// Déduction de l'ancien chemin de la tache à partir de l'ancien
+			// chemin complet
+			String oldTaskPath = oldTaskFullpath.substring(0,
+					oldTaskFullpath.length() - 2);
+			// Parcours des taches présentes dans le tableau
+			int itemCount = tableViewer.getTable().getItemCount();
+			for (int i = 0; i < itemCount; i++) {
+				Object data = tableViewer.getElementAt(i);
+				if (data != WeekContributionsSum.getInstance()) {
+					TaskContributions weekContribution = (TaskContributions) data;
+					Task currentTask = weekContribution.getTask();
+					// Cas ou la tache modifiée est dans le tableau
+					if (currentTask.getId() == movedTask.getId()) {
+						currentTask = modelMgr.getTask(currentTask.getId());
+						weekContribution.setTask(currentTask);
+						tableViewer.refresh(weekContribution);
+					}
+					// Autre cas : la tache a déplacée est une tache
+					// parent de la tache en cours
+					else if (currentTask.getPath().startsWith(
+							oldTaskFullpath)) {
+						// Il faut faire un refresh pour que le chemin de
+						// code de la tache
+						// soit mis à jour
+						currentTask = modelMgr.getTask(currentTask.getId());
+						weekContribution.setTask(currentTask);
+						tableViewer.refresh(weekContribution);
+					}
+					// Autre cas : la tache déplacée est la soeur d'une des
+					// taches parent
+					// de la tache en cours
+					else if (currentTask.getPath().startsWith(oldTaskPath)) {
+						// Dans ce cas il faut mettre à jour le chemin de la
+						// tache
+						currentTask = modelMgr.getTask(currentTask.getId());
+						weekContribution.setTask(currentTask);
+						tableViewer.refresh(weekContribution);
 					}
 				}
-				return null;
 			}
-
-		}.run(parent.getShell());
+		});
 	}
 
 	/**

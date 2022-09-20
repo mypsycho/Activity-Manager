@@ -91,7 +91,6 @@ import org.activitymgr.core.util.Strings;
 import org.activitymgr.core.util.WorkbookBuilder;
 import org.apache.commons.beanutils.BeanUtilsBean2;
 import org.apache.log4j.Logger;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor.HSSFColorPredefined;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -253,7 +252,7 @@ public class ModelMgrImpl implements IModelMgr {
 				if (contribsNb != 0)
 					throw new ModelException(
 							Strings.getString(
-									"ModelMgr.errors.TASK_USED_BY_CONTRIBUTIONS", task.getName(), new Long(contribsNb))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+									"ModelMgr.errors.TASK_USED_BY_CONTRIBUTIONS", task.getName(), contribsNb)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				if (task.getBudget() != 0)
 					throw new ModelException(
 							Strings.getString("ModelMgr.errors.NON_NULL_TASK_BUDGET", task.getName())); //$NON-NLS-1$
@@ -640,7 +639,7 @@ public class ModelMgrImpl implements IModelMgr {
 						.println(
 								out,
 								Strings.getString(
-										"ModelMgr.xmlexport.comment.ROOT_TASK", new Integer(i), rootTask.getCode(), rootTask.getName())); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+										"ModelMgr.xmlexport.comment.ROOT_TASK", i, rootTask.getCode(), rootTask.getName())); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 				XmlHelper
 						.println(
 								out,
@@ -692,7 +691,7 @@ public class ModelMgrImpl implements IModelMgr {
 			for (int i = 0; i < collaborators.length; i++) {
 				Collaborator collaborator = collaborators[i];
 				// Enregitrement du login dans le dictionnaire de logins
-				collaboratorsLoginsMap.put(new Long(collaborator.getId()),
+				collaboratorsLoginsMap.put(collaborator.getId(),
 						collaborator.getLogin());
 				XmlHelper
 						.startXmlNode(out, "    ", XmlHelper.COLLABORATOR_NODE); //$NON-NLS-1$
@@ -731,11 +730,11 @@ public class ModelMgrImpl implements IModelMgr {
 				XmlHelper.println(out, ">"); //$NON-NLS-1$
 				XmlHelper.printTextNode(out, INDENT,
 						XmlHelper.CONTRIBUTOR_REF_NODE,
-						(String) collaboratorsLoginsMap.get(new Long(
-								contribution.getContributorId())));
+						(String) collaboratorsLoginsMap.get(
+								contribution.getContributorId()));
 				XmlHelper.printTextNode(out, INDENT, XmlHelper.TASK_REF_NODE,
-						(String) tasksCodePathMap.get(new Long(contribution
-								.getTaskId())));
+						(String) tasksCodePathMap.get(contribution
+								.getTaskId()));
 				XmlHelper.endXmlNode(out, "    ", XmlHelper.CONTRIBUTION_NODE); //$NON-NLS-1$
 			}
 			XmlHelper.endXmlNode(out, "  ", XmlHelper.CONTRIBUTIONS_NODE); //$NON-NLS-1$
@@ -774,7 +773,7 @@ public class ModelMgrImpl implements IModelMgr {
 				XmlHelper.startXmlNode(out, "    ", XmlHelper.TASK_NODE); //$NON-NLS-1$
 				String taskCodePath = parentCodePath + "/" + task.getCode(); //$NON-NLS-1$
 				// Enregistrement du chemin dans le dictionnaire de chemins
-				taskCodesPathMap.put(new Long(task.getId()), taskCodePath);
+				taskCodesPathMap.put(task.getId(), taskCodePath);
 				XmlHelper.printTextNode(out, indent, XmlHelper.PATH_NODE,
 						taskCodePath);
 				XmlHelper.printTextNode(out, indent, XmlHelper.NAME_NODE,
@@ -882,7 +881,7 @@ public class ModelMgrImpl implements IModelMgr {
 		default:
 			throw new DAOException(
 					Strings.getString(
-							"DbMgr.errors.UNKNOWN_FIELD_INDEX", new Integer(orderByClauseFieldIndex)), null); //$NON-NLS-1$ //$NON-NLS-2$
+							"DbMgr.errors.UNKNOWN_FIELD_INDEX", orderByClauseFieldIndex), null); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		Object[] orderByClause = new Object[] { ascendantSort ? new AscendantOrderByClause(orderByClauseFieldName) : new DescendantOrderByClause(orderByClauseFieldName)};
 		return collaboratorDAO.select(whereClauseAttrNames, whereClauseAttrValues, orderByClause, -1);
@@ -1643,7 +1642,7 @@ public class ModelMgrImpl implements IModelMgr {
 		if (contribsNb != 0)
 			throw new ModelException(
 					Strings.getString(
-							"ModelMgr.errros.COLLABORATOR_WITH_CONTRIBUTIONS_CANNOT_BE_REMOVED", new Long(contribsNb))); //$NON-NLS-1$ //$NON-NLS-2$
+							"ModelMgr.errros.COLLABORATOR_WITH_CONTRIBUTIONS_CANNOT_BE_REMOVED", contribsNb)); //$NON-NLS-1$ //$NON-NLS-2$
 
 		// Suppression du collaborateur
 		collaboratorDAO.delete(new String[] { "id" }, new Object[] { collaborator.getId() });
@@ -1752,7 +1751,7 @@ public class ModelMgrImpl implements IModelMgr {
 		long contribsNb = getContributionsCount(null, task, null, null);
 		if (contribsNb != 0)
 			throw new ModelException(Strings.getString(
-					"ModelMgr.errors.TASK_HAS_SUBTASKS", new Long(contribsNb))); //$NON-NLS-1$ //$NON-NLS-2$
+					"ModelMgr.errors.TASK_HAS_SUBTASKS", contribsNb)); //$NON-NLS-1$ //$NON-NLS-2$
 
 		// Récupération de la tâche parent pour reconstruction des
 		// numéros de taches
@@ -2003,110 +2002,136 @@ public class ModelMgrImpl implements IModelMgr {
 	@Override
 	public byte[] exportToExcel(Long parentTaskId) throws IOException,
 			ModelException {
-		Workbook wbk = new HSSFWorkbook();
-		Sheet sheet = wbk.createSheet();
-		sheet.createFreezePane(0, 1);
-		// Header style
-		CellStyle headerCellStyle = wbk.createCellStyle();
-		headerCellStyle.setFillForegroundColor(HSSFColorPredefined.GREY_25_PERCENT.getIndex());
-		headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-		headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
-		headerCellStyle.setBorderBottom(BorderStyle.THIN);
-		headerCellStyle.setBorderLeft(headerCellStyle.getBorderBottom());
-		headerCellStyle.setBorderRight(headerCellStyle.getBorderBottom());
-		headerCellStyle.setBorderTop(headerCellStyle.getBorderBottom());
-		// Header
-		Row header = sheet.createRow(0);
-		int idx = 0;
-		for (String columnName : new String[] { PATH_ATTRIBUTE, CODE_ATTRIBUTE, "name", BUDGET_ATTRIBUTE, "initiallyConsumed", "todo", "comment" }) {
-			Cell cell = header.createCell(idx++);
-			cell.setCellStyle(headerCellStyle);
-			cell.setCellValue(columnName);
-		}
-		// Retrieve tasks
-		Task parentTask = parentTaskId != null ? getTask(parentTaskId) : null;
-		Task[] tasks = null;
-		if (parentTaskId == null) {
-			tasks = taskDAO.selectAll();
-		}
-		else {
-			tasks = taskDAO.select(new String[] { PATH_ATTRIBUTE }, new Object[] { new LikeStatement(parentTask.getFullPath() + "%") }, null, -1);
-		}
-		// Sort
-		Arrays.sort(tasks, new Comparator<Task>() {
-			@Override
-			public int compare(Task t1, Task t2) {
-				String path1 = t1.getFullPath();
-				String path2 = t2.getFullPath();
-				int len = Math.min(path1.length(), path2.length());
-				path1 = path1.substring(0, len);
-				path2 = path2.substring(0, len);
-				int c = path1.compareTo(path2);
-				if (c == 0) {
+		try (Workbook wbk = new HSSFWorkbook();) {
+	
+			Sheet sheet = wbk.createSheet();
+			sheet.createFreezePane(0, 1);
+			// Header style
+			CellStyle headerCellStyle = wbk.createCellStyle();
+			headerCellStyle.setFillForegroundColor(HSSFColorPredefined.GREY_25_PERCENT.getIndex());
+			headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+			headerCellStyle.setBorderBottom(BorderStyle.THIN);
+			headerCellStyle.setBorderLeft(headerCellStyle.getBorderBottom());
+			headerCellStyle.setBorderRight(headerCellStyle.getBorderBottom());
+			headerCellStyle.setBorderTop(headerCellStyle.getBorderBottom());
+			// Header
+			Row header = sheet.createRow(0);
+			int idx = 0;
+			for (String columnName : new String[] { 
+					PATH_ATTRIBUTE, 
+					CODE_ATTRIBUTE, 
+					"name", 
+					BUDGET_ATTRIBUTE, 
+					"initiallyConsumed", 
+					"todo", 
+					"comment" }) {
+				Cell cell = header.createCell(idx++);
+				cell.setCellStyle(headerCellStyle);
+				cell.setCellValue(columnName);
+			}
+			// Retrieve tasks
+			Task parentTask = parentTaskId != null ? getTask(parentTaskId) : null;
+			Task[] tasks = null;
+			if (parentTaskId == null) {
+				tasks = taskDAO.selectAll();
+			} else {
+				tasks = taskDAO.select(
+						new String[] { PATH_ATTRIBUTE }, 
+						new Object[] { new LikeStatement(parentTask.getFullPath() + "%") }, 
+						null, -1);
+			}
+			// Sort
+			Arrays.sort(tasks, new Comparator<Task>() {
+				@Override
+				public int compare(Task t1, Task t2) {
+					String path1 = t1.getFullPath();
+					String path2 = t2.getFullPath();
+					int len = Math.min(path1.length(), path2.length());
+					path1 = path1.substring(0, len);
+					path2 = path2.substring(0, len);
+					int c = path1.compareTo(path2);
+					if (c != 0) {
+						return c;
+					}
 					return t1.getFullPath().length() > t2.getFullPath().length() ? 1 : -1;
+
 				}
-				else {
-					return c;
+			});
+			
+			// Output
+			CellStyle bodyCellStyle = wbk.createCellStyle();
+			bodyCellStyle.setBorderBottom(BorderStyle.THIN);
+			bodyCellStyle.setBorderLeft(bodyCellStyle.getBorderBottom());
+			bodyCellStyle.setBorderRight(bodyCellStyle.getBorderBottom());
+			bodyCellStyle.setBorderTop(bodyCellStyle.getBorderBottom());
+			Map<String, String> pathToTaskCodePathMap = new HashMap<String, String>();
+			for (Task task : tasks) {
+				
+				// Compute task code path
+				String taskPath = task.getPath();
+				String parentTaskCodePath = pathToTaskCodePathMap.get(taskPath);
+				String taskCodePath = (parentTaskCodePath != null ? parentTaskCodePath + '/' : "") + task.getCode();
+				pathToTaskCodePathMap.put(task.getFullPath(), taskCodePath);
+				
+				// Append row
+				Row row = sheet.createRow(sheet.getLastRowNum() + 1);
+				idx = 0;
+				for (Object v : new Object[] {
+						(parentTaskCodePath != null ? parentTaskCodePath : ""),
+						task.getCode(), 
+						task.getName(), 
+						task.getBudget(),
+						task.getInitiallyConsumed(), 
+						task.getTodo(),
+						task.getComment() }) {
+					Cell cell = row.createCell(idx++);
+					if (v != null) {
+						if (v instanceof String) {
+							cell.setCellValue((String)v);
+						} else {
+							cell.setCellValue(((Long) v)/100d);
+						}
+					}
+					cell.setCellStyle(bodyCellStyle);
 				}
 			}
-		});
-		
-		// Output
-		CellStyle bodyCellStyle = wbk.createCellStyle();
-		bodyCellStyle.setBorderBottom(BorderStyle.THIN);
-		bodyCellStyle.setBorderLeft(bodyCellStyle.getBorderBottom());
-		bodyCellStyle.setBorderRight(bodyCellStyle.getBorderBottom());
-		bodyCellStyle.setBorderTop(bodyCellStyle.getBorderBottom());
-		Map<String, String> pathToTaskCodePathMap = new HashMap<String, String>();
-		for (Task task : tasks) {
-			
-			// Compute task code path
-			String taskPath = task.getPath();
-			String parentTaskCodePath = pathToTaskCodePathMap.get(taskPath);
-			String taskCodePath = (parentTaskCodePath != null ? parentTaskCodePath + '/' : "") + task.getCode();
-			pathToTaskCodePathMap.put(task.getFullPath(), taskCodePath);
-			
-			// Append row
-			Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-			idx = 0;
-			for (Object v : new Object[] {
-					(parentTaskCodePath != null ? parentTaskCodePath : ""),
-					task.getCode(), 
-					task.getName(), 
-					task.getBudget(),
-					task.getInitiallyConsumed(), 
-					task.getTodo(),
-					task.getComment() }) {
-				Cell cell = row.createCell(idx++);
-				if (v != null) {
-					if (v instanceof String) {
-						cell.setCellValue((String)v);
-					}
-					else {
-						cell.setCellValue(((Long) v)/100d);
-					}
-				}
-				cell.setCellStyle(bodyCellStyle);
+			for (int colIdx = 0 ; colIdx <= 6; colIdx++) {
+				sheet.autoSizeColumn(colIdx);
 			}
+			// Save the resource
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			wbk.write(out);
+			return out.toByteArray();
 		}
-		for (int colIdx = 0 ; colIdx <= 6; colIdx++) {
-			sheet.autoSizeColumn(colIdx);
+	}
+	
+	private static void setAttributeValue(Task task,
+			XLSCell cell, boolean numeric) throws ModelException {
+		try {
+			Object value = cell.getValue();
+			if (value != null) {
+				if (numeric) {
+					value = StringHelper.entryToHundredth(String.valueOf(value));
+				}
+				BeanUtilsBean2.getInstance().setProperty(task, cell.getColumnName(), value);
+			}
+		} catch (StringFormatException e) {
+			throw new XLSModelException(cell.getCell(), "bad format (" + e.getMessage() + ")");
+		} catch (IllegalAccessException e) {
+			throw new XLSModelException(cell.getCell(), "invalid content (" + e.getMessage() + ")");
+		} catch (InvocationTargetException e) {
+			throw new XLSModelException(cell.getCell(), "invalid content (" + e.getMessage() + ")");
 		}
-		// Save the resource
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		wbk.write(out);
-		return out.toByteArray();
 	}
 	
 	@Override
 	public void importFromExcel(Long parentTaskId, InputStream xls)
 			throws IOException, ModelException {
-		final List<String> numericFieldNames = Arrays.asList(new String[] { BUDGET_ATTRIBUTE, "initiallyConsumed", "todo" });
+		final List<String> numericFieldNames = Arrays.asList(BUDGET_ATTRIBUTE, "initiallyConsumed", "todo");
 		final TaskDAOCache taskCache = new TaskDAOCache(taskDAO);
 		final String parentTaskCodePath = parentTaskId == null ? "" : taskCache.getCodePath(parentTaskId);
-		XlsImportHelper.visit(xls, new IXLSHandler() {
-			@Override
-			public void handleRow(Map<String, XLSCell> cells) throws ModelException {
+		XlsImportHelper.visit(xls, cells -> {
 				
 				if (!cells.containsKey(CODE_ATTRIBUTE)) {
 					throw new ModelException("Sheet must contain a code column");
@@ -2129,8 +2154,7 @@ public class ModelMgrImpl implements IModelMgr {
 							}
 							theParentTaskCodePath += relativePath;
 						}
-					}
-					else {
+					} else {
 						boolean numeric = numericFieldNames.contains(columnName);
 						setAttributeValue(newTask, xlsCell, numeric);
 					}
@@ -2146,26 +2170,9 @@ public class ModelMgrImpl implements IModelMgr {
 				}
 			}
 
-			private void setAttributeValue(Task task,
-					XLSCell cell, boolean numeric) throws ModelException {
-				try {
-					Object value = cell.getValue();
-					if (value != null) {
-						if (numeric) {
-							value = StringHelper.entryToHundredth(String.valueOf(value));
-						}
-						BeanUtilsBean2.getInstance().setProperty(task, cell.getColumnName(), value);
-					}
-				} catch (StringFormatException e) {
-					throw new XLSModelException(cell.getCell(), "bad format (" + e.getMessage() + ")");
-				} catch (IllegalAccessException e) {
-					throw new XLSModelException(cell.getCell(), "invalid content (" + e.getMessage() + ")");
-				} catch (InvocationTargetException e) {
-					throw new XLSModelException(cell.getCell(), "invalid content (" + e.getMessage() + ")");
-				}
-			}
+
 			
-		});
+		);
 	}
 
 	/* (non-Javadoc)
