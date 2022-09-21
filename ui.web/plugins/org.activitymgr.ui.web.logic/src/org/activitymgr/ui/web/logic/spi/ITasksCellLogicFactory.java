@@ -23,8 +23,17 @@ public interface ITasksCellLogicFactory extends ICellLogicFactory {
 	String ETC_PROPERTY_ID = "ETC";
 	String DELTA_PROPERTY_ID = "DELTA";
 	String COMMENT_PROPERTY_ID = "COMMENT";
-	List<String> PROPERTY_IDS = Arrays.asList(new String[] { NAME_PROPERTY_ID, CODE_PROPERTY_ID, BUDGET_PROPERTY_ID, 
-			INITIAL_PROPERTY_ID, CONSUMMED_PROPERTY_ID, ETC_PROPERTY_ID, DELTA_PROPERTY_ID, COMMENT_PROPERTY_ID } );
+	
+	
+	List<String> PROPERTY_IDS = Arrays.asList(
+			NAME_PROPERTY_ID, 
+			CODE_PROPERTY_ID, 
+			BUDGET_PROPERTY_ID, 
+			INITIAL_PROPERTY_ID, 
+			CONSUMMED_PROPERTY_ID, 
+			ETC_PROPERTY_ID, 
+			DELTA_PROPERTY_ID, 
+			COMMENT_PROPERTY_ID );
 
 	ILogic<?> createCellLogic(AbstractLogicImpl<?> parentLogic, IUILogicContext context, String filter, TaskSums task,
 			String propertyId, boolean readonly);

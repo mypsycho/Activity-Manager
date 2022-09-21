@@ -6,10 +6,6 @@ import org.activitymgr.ui.web.logic.ITaskChooserLogic;
 import org.activitymgr.ui.web.logic.ITreeContentProviderCallback;
 import org.activitymgr.ui.web.view.impl.internal.util.TreeTableDatasource;
 
-import com.vaadin.data.Property;
-import com.vaadin.data.Property.ValueChangeEvent;
-import com.vaadin.event.FieldEvents;
-import com.vaadin.event.FieldEvents.TextChangeEvent;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
@@ -25,8 +21,8 @@ import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
 public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
-		extends AbstractDialog implements Button.ClickListener,
-		ITaskChooserLogic.View<LOGIC> {
+		extends AbstractDialog 
+		implements Button.ClickListener, ITaskChooserLogic.View<LOGIC> {
 
 	private Button ok = new Button("Ok", this);
 	private Button cancel = new Button("Cancel", this);
@@ -43,36 +39,26 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
         setHeight(550, Unit.PIXELS);
 
         // Global layout
-        VerticalLayout contentLayout = new VerticalLayout();
-        contentLayout.setSizeFull();
-        contentLayout.setMargin(new MarginInfo(true, true, true, true));
-        setContent(contentLayout);
+        VerticalLayout content = new VerticalLayout();
+        content.setSizeFull();
+        content.setMargin(new MarginInfo(true, true, true, true));
+        setContent(content);
         
         // Main part 
 		Component body = createBody();
-		contentLayout.addComponent(body);
+		content.addComponent(body);
         
         // Footer containing status & OK / Cancel buttons
 		Component footer = createFooter();
-		contentLayout.addComponent(footer);
+		content.addComponent(footer);
         
         // Set expand ratios
-		contentLayout.setExpandRatio(body, 95);
-		contentLayout.setExpandRatio(footer, 5);
+		content.setExpandRatio(body, 95);
+		content.setExpandRatio(footer, 5);
         
         // Register listeners
-        filterField.addTextChangeListener(new FieldEvents.TextChangeListener() {
-			@Override
-			public void textChange(TextChangeEvent event) {
-				logic.onTaskFilterChanged(event.getText());
-			}
-		});
-        taskTree.addValueChangeListener(new Property.ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-				logic.onSelectionChanged((Long) taskTree.getValue());
-			}
-		});
+        filterField.addTextChangeListener(event -> logic.onTaskFilterChanged(event.getText()));
+        taskTree.addValueChangeListener(evt -> logic.onSelectionChanged((Long) taskTree.getValue()));
 
         // Key listener
         addShortcutListener(new ShortcutListener("OK", ShortcutListener.KeyCode.ENTER, new int[] {}) {
@@ -83,8 +69,7 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
 			            close();
 			        }
 		        	logic.onOkButtonClicked((Long) taskTree.getValue());
-				}
-				else if (target == taskTree && taskTree.getValue() != null) {
+				} else if (target == taskTree && taskTree.getValue() != null) {
 					taskTree.expandItem(taskTree.getValue());
 				}
 			}
@@ -99,6 +84,7 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
         filterField.setWidth("100%");
         filterField.setImmediate(true);
         vl.addComponent(filterField);
+        // Grey text when empty
         filterField.setInputPrompt("Type a text to filter...");
        
         Panel treeContainer = new Panel();
@@ -112,8 +98,8 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
         taskTree.setHtmlContentAllowed(true);
 
         // Set expand ratios for left container
-        vl.setExpandRatio(treeContainer, 93);
         vl.setExpandRatio(filterField, 7);
+        vl.setExpandRatio(treeContainer, 93);
 
 		return vl;
 	}
@@ -141,10 +127,11 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
 
     @Override
 	public void setTasksTreeProviderCallback(
-			ITreeContentProviderCallback<Long> treeContentProviderCallback) {
-		TreeTableDatasource<Long> dataSource = new TreeTableDatasource<Long>(getResourceCache(), treeContentProviderCallback);
+			ITreeContentProviderCallback<Long> callback) {
+		TreeTableDatasource<Long> dataSource = 
+				new TreeTableDatasource<Long>(getResourceCache(), callback);
 		taskTree.setContainerDataSource(dataSource);
-		taskTree.setItemCaptionPropertyId(treeContentProviderCallback.getPropertyIds().iterator().next());
+		taskTree.setItemCaptionPropertyId(callback.getPropertyIds().iterator().next());
 	}
 	
 	@Override

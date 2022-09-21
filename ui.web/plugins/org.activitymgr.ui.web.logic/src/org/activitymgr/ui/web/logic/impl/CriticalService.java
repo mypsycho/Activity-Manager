@@ -27,29 +27,66 @@
  */
 package org.activitymgr.ui.web.logic.impl;
 
-import org.activitymgr.ui.web.logic.IUILogicContext;
+import java.util.concurrent.Callable;
 
-import com.google.inject.Inject;
+/**
+ * Common interface to handle critical call.
+ * 
+ * @author nperansin
+ *
+ */
+public interface CriticalService {
 
-public abstract class AbstractSafeCallback implements CriticalService{
+	/**
+	 * Interface supporting Exception.
+	 */
+	public interface Exec {
+	    void run() throws Exception;
+	}
 	
-	private AbstractLogicImpl<?> source;
+
+	/**
+	 * Executes a task and wrap exception.
+	 * 
+	 * @param task to run
+	 */
+	default void invoke(Exec task) {
+		try {
+			task.run();
+		} catch (Throwable t) {
+			doThrow(t);
+		}
+	}
 	
-	@Inject
-	private IUILogicContext context;
-
-	public AbstractSafeCallback(AbstractLogicImpl<?> source) {
-		this.source = source;
-		source.injectMembers(this);
+	/**
+	 * Executes a task and wrap exception or returns the result.
+	 * 
+	 * @param <T> type of result
+	 * @param task to run
+	 * @return result
+	 */
+	default <T> T invoke(Callable<T> task) {
+		try {
+			return task.call();
+		} catch (Throwable t) {
+			doThrow(t);
+			return null;
+		}
 	}
-
-	protected AbstractLogicImpl<?> getSource() {
-		return source;
+		
+	
+	/**
+	 * Wraps any error as critical.
+	 * 
+	 * @param t to wrap
+	 */
+	default void doThrow(Throwable t) {
+		if (t instanceof Error) {
+			throw (Error) t;
+		} else if (t instanceof RuntimeException) {
+			throw (RuntimeException) t;
+		} else {
+			throw new IllegalStateException(t);
+		}
 	}
-
-	protected IUILogicContext getContext() {
-		return context;
-	}
-
-
 }

@@ -8,9 +8,9 @@ import org.activitymgr.ui.web.view.IResourceCache;
 import com.vaadin.data.Container;
 
 @SuppressWarnings("serial")
-public class TreeTableDatasource<ITEMID_TYPE> extends
-		AbstractTableDatasource<ITEMID_TYPE, ITreeContentProviderCallback<ITEMID_TYPE>> implements
-		Container.Hierarchical {
+public class TreeTableDatasource<ITEMID_TYPE> 
+		extends AbstractTableDatasource<ITEMID_TYPE, ITreeContentProviderCallback<ITEMID_TYPE>> 
+		implements Container.Hierarchical {
 
 	public TreeTableDatasource(IResourceCache resourceCache,
 			ITreeContentProviderCallback<ITEMID_TYPE> cellProvider) {

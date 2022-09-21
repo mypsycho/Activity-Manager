@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -45,18 +45,16 @@ import org.activitymgr.core.util.Strings;
 import org.activitymgr.ui.rcp.DatabaseUI.IDbStatusListener;
 import org.activitymgr.ui.rcp.dialogs.ContributionsViewerDialog;
 import org.activitymgr.ui.rcp.dialogs.DialogException;
-import org.activitymgr.ui.rcp.dialogs.ITaskChooserValidator;
 import org.activitymgr.ui.rcp.dialogs.TaskChooserTreeWithHistoryDialog;
 import org.activitymgr.ui.rcp.util.AbstractTableMgrUI;
 import org.activitymgr.ui.rcp.util.SWTHelper;
-import org.activitymgr.ui.rcp.util.SafeRunner;
 import org.activitymgr.ui.rcp.util.TableOrTreeColumnsMgr;
 import org.activitymgr.ui.rcp.util.TaskFinderPanel;
 import org.activitymgr.ui.rcp.util.UITechException;
 import org.apache.log4j.Logger;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableColorProvider;
@@ -65,6 +63,7 @@ import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.DND;
@@ -76,13 +75,8 @@ import org.eclipse.swt.dnd.DropTargetAdapter;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
-import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
@@ -91,20 +85,18 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.swt.widgets.Widget;
 
 /**
  * IHM de gestion des tâches.
  */
-public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
-		ICellModifier, SelectionListener, MenuListener, ITreeContentProvider,
+public class TasksUI extends AbstractTableMgrUI
+		implements IDbStatusListener, ICellModifier, ITreeContentProvider,
 		ITableColorProvider, ContributionsUI.IContributionListener {
 
 	/** Logger */
@@ -119,10 +111,11 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 	public static final int TODO_COLUMN_IDX = 5;
 	public static final int DELTA_COLUMN_IDX = 6;
 	public static final int COMMENT_COLUMN_IDX = 7;
-	private static TableOrTreeColumnsMgr treeColsMgr;
-	
+	// public static final int CLOSED_COLUMN_IDX = 8;
+	private TableOrTreeColumnsMgr treeColsMgr;
+
 	/** Listeners */
-	private List<ITaskListener> listeners = new ArrayList<ITaskListener>();
+	private List<ITaskListener> listeners = new ArrayList<>();
 
 	/** Viewer */
 	private TreeViewer treeViewer;
@@ -136,15 +129,12 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 	private MenuItem moveAfterAnotherTaskItem;
 	private MenuItem moveToAnotherTaskItem;
 	private MenuItem moveToRootItem;
-	private MenuItem copyItem;
-	private MenuItem removeItem;
-	private MenuItem expandItem;
-	private MenuItem collapseItem;
-	private MenuItem listTaskContributionsItem;
-	private MenuItem refreshItem;
+
 	private MenuItem xlsExportItem;
 	private MenuItem xlsImportItem;
 	private MenuItem xlsSnapshotExportItem;
+
+	private List<TreeActionEnable> menuRefreshs = new ArrayList<>();
 
 	/** Composant parent */
 	private Composite parent;
@@ -169,7 +159,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Constructeur permettant de placer l'IHM dans un onglet.
-	 * 
+	 *
 	 * @param tabItem
 	 *            item parent.
 	 * @param modelMgr
@@ -182,7 +172,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 */
@@ -197,55 +187,455 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 		taskFinderPanel = new TaskFinderPanel(parent, modelMgr);
 		GridData gridData = new GridData(SWT.FILL, SWT.NONE, true, false);
 		taskFinderPanel.setLayoutData(gridData);
-		taskFinderPanel.addTaskListener(selectedTask-> {
+		taskFinderPanel.addTaskListener(selectedTask -> {
+			TaskSums selectedElement = safeExec(null, () -> {
+				TaskSums result = null;
+				for (Object element : treeViewer.getExpandedElements()) {
+					TaskSums sums = (TaskSums) element;
+					if (sums.getTask().equals(selectedTask)) {
+						result = sums;
+						break;
+					}
+				}
+				if (result == null) {
+					result = modelMgr.getTaskSums(selectedTask.getId(), null, null);
+				}
+				return result;
+			});
 
-				TaskSums selectedElement = safeExec(null, () -> {
-					TaskSums result = null;
-					for (Object element : treeViewer.getExpandedElements()) {
-						TaskSums sums = (TaskSums) element;
-						if (sums.getTask().equals(selectedTask)) {
-							result = sums;
-							break;
-						}
-					}
-					if (result == null) {
-						result = modelMgr.getTaskSums(selectedTask.getId(), null, null);
-					}
-					return result;
+			if (selectedElement != null) {
+				treeViewer.setSelection(new StructuredSelection(selectedElement));
+				treeViewer.getTree().setFocus();
+			}
+		});
+
+		initTree();
+		initTreeDnd();
+		initColumns();
+		initMenu();
+
+		// Initialisation des popups
+		taskChooserDialog = new TaskChooserTreeWithHistoryDialog(parent.getShell(), modelMgr);
+		contribsViewerDialog = new ContributionsViewerDialog(parent.getShell(), modelMgr);
+
+		bindKeys(parentComposite);
+
+		log.debug("UI initialization done"); //$NON-NLS-1$
+
+		// Ajout d'un listener permettant de détecter lorsque le
+		// composant est affiché (passage d'un onglet à l'autre)
+		parent.addPaintListener(paintevent -> {
+			if (needRefresh) {
+				needRefresh = false;
+				treeViewer.refresh();
+			}
+		});
+
+	}
+
+	private void bindKeys(Composite parentComposite) {
+		// Ajout de KeyListeners pour faciliter le déplacement vers le bas et
+		// vers le haut des taches
+		// (Rq: les accélérateurs sont ignorés dans les menus contextuels)
+		KeyListener keyListener = KeyListener.keyReleasedAdapter(evt -> {
+			if (evt.stateMask != SWT.CTRL) {
+				return;
+			}
+			TreeSelectionAction action;
+
+			switch (evt.keyCode) {
+			case SWT.ARROW_UP:
+				action = selection -> moveTask(selection, true);
+				break;
+			case SWT.ARROW_DOWN:
+				action = selection -> moveTask(selection, false);
+				break;
+			case 'c':
+				action = this::copyTask;
+				break;
+			default:
+				return;
+			}
+
+			TreeItem[] selection = treeViewer.getTree().getSelection();
+			safeExec(() -> action.accept(selection));
+		});
+		parentComposite.addKeyListener(keyListener);
+		treeViewer.getTree().addKeyListener(keyListener);
+	}
+
+	private void moveTask(TreeItem[] selection, boolean up) throws Exception {
+		TaskSums selected = (TaskSums) selection[0].getData();
+		Task selectedTask = selected.getTask();
+		String oldTaskFullpath = selectedTask.getFullPath();
+		if (up) {
+			modelMgr.moveUpTask(selectedTask);
+		} else {
+			modelMgr.moveDownTask(selectedTask);
+		}
+		// Mise à jour de l'IHM
+		treeViewer.refresh(selection[0].getParent().getData(), false);
+		// Notification des listeners
+		notifyTaskMoved(oldTaskFullpath, selectedTask);
+	}
+
+	private void copyTask(TreeItem[] selection) throws Exception {
+		// Implémentation en multi sélection => pour l'instant on ne
+		// veut gérer qu'une seule tache à la fois
+		// TreeItem[] selectedItems = treeViewer.getTree().getSelection();
+		// Clipboard clipboard = new Clipboard(parent.getDisplay());
+		// String[] taskCodePaths = new String[selectedItems.length];
+		// Transfer[] transfers = new Transfer[selectedItems.length];
+		// for (int i=0; i<selectedItems.length; i++) {
+		// Task task = (Task) selectedItems[i].getData();
+		// taskCodePaths[i] = modelMgr.getTaskCodePath(task);
+		// transfers[i] = TextTransfer.getInstance();
+		// }
+		// clipboard.setContents(taskCodePaths, transfers);
+		// clipboard.dispose();
+
+		// Implémentation en sélection simple
+		if (selection != null && selection.length > 0) {
+			TreeItem selectedItem = selection[0];
+			Clipboard clipboard = new Clipboard(parent.getDisplay());
+			TaskSums selected = (TaskSums) selectedItem.getData();
+			String taskCodePath = modelMgr.getTaskCodePath(selected.getTask());
+			clipboard.setContents(new String[] { taskCodePath },
+					new Transfer[] { TextTransfer.getInstance() });
+			clipboard.dispose();
+		}
+	}
+
+	private void createTreeMenuItem(Menu menu, String code,
+			TreeActionEnable enabler, TreeSelectionAction action) {
+		MenuItem item = new MenuItem(menu, SWT.CASCADE);
+		item.setText(Strings.getString("TasksUI.menuitems." + code)); //$NON-NLS-1$
+		item.addSelectionListener(onTreeSelection(action));
+		if (enabler != null) {
+			menuRefreshs.add((emptySelection, singleSelection) -> {
+				item.setEnabled(enabler.enable(emptySelection, needRefresh));
+				return false; // Useled
+			});
+		}
+	}
+
+	private void initMenu() {
+
+		// Configuration du menu popup
+		final Menu menu = new Menu(treeViewer.getTree());
+		menu.addMenuListener(MenuListener.menuShownAdapter(evt -> updateMenu()));
+
+		createNewMenu(menu);
+		createMoveMenu(menu);
+
+		createTreeMenuItem(menu, "COPY",  //$NON-NLS-1$
+				(emptySelection, singleSelection) -> !emptySelection,
+				this::copyTask);
+
+		createTreeMenuItem(menu, "REMOVE",  //$NON-NLS-1$
+				(emptySelection, singleSelection) -> singleSelection,
+				selection -> {
+					TreeItem selectedItem = selection[0];
+					TreeItem parentItem = selectedItem.getParentItem();
+					TaskSums selected = (TaskSums) selectedItem.getData();
+					Task selectedTask = selected.getTask();
+					Task parentTask = parentItem != null ? ((TaskSums) parentItem
+							.getData()).getTask() : null;
+					// Suppression
+					modelMgr.removeTask(selectedTask);
+					// Suppression dans l'arbre
+					treeViewer.remove(selected);
+					updateParentSums(parentItem);
+					// Mise à jour des taches soeurs
+					if (parentTask != null)
+						treeViewer.refresh(parentItem.getData());
+					else
+						treeViewer.refresh();
+					// Notification des listeners
+					notifyTaskRemoved(selectedTask);
 				});
 
-				if (selectedElement != null) {
-					treeViewer.setSelection(new StructuredSelection(selectedElement));
-					treeViewer.getTree().setFocus();
+		createTreeMenuItem(menu, "EXPAND_ALL",  //$NON-NLS-1$
+				(emptySelection, singleSelection) -> singleSelection,
+				selection -> {
+					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
+					treeViewer.expandToLevel(selectedItem.getData(),
+							AbstractTreeViewer.ALL_LEVELS);
+				});
+		createTreeMenuItem(menu, "COLLAPSE_ALL",  //$NON-NLS-1$
+				(emptySelection, singleSelection) -> singleSelection,
+				selection -> {
+					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
+					treeViewer.collapseToLevel(selectedItem.getData(),
+							AbstractTreeViewer.ALL_LEVELS);
+				});
+
+		createTreeMenuItem(menu, "LIST_CONTRIBUTIONS",  //$NON-NLS-1$
+				(emptySelection, singleSelection) -> singleSelection,
+				selection -> {
+					TaskSums selected = (TaskSums) selection[0].getData();
+					Task selectedTask = selected.getTask();
+					contribsViewerDialog.setFilter(selectedTask, null);
+					// Ouverture du dialogue
+					contribsViewerDialog.open();
+				});
+
+		createTreeMenuItem(menu, "REFRESH",  //$NON-NLS-1$
+				(emptySelection, singleSelection) -> singleSelection,
+				selection -> {
+					// Récupération du noeud parent
+					TreeItem selectedItem = selection[0];
+					TreeItem parentItem = selectedItem.getParentItem();
+					TaskSums parentTaskSums = parentItem != null
+							? (TaskSums) parentItem.getData()
+							: null;
+					// Mise à jour
+					if (parentTaskSums != null) {
+						treeViewer.refresh(parentTaskSums);
+					} else {
+						treeViewer.refresh();
+					}
+				});
+
+		createImportExportMenu(menu);
+		treeViewer.getTree().setMenu(menu);
+	}
+
+
+	private void createNewMenu(Menu menu) {
+		// Sous-menu 'Nouveau'
+		MenuItem newItem = new MenuItem(menu, SWT.CASCADE);
+		newItem.setText(Strings.getString("TasksUI.menuitems.NEW")); //$NON-NLS-1$
+		Menu newMenu = new Menu(newItem);
+		newItem.setMenu(newMenu);
+
+		newTaskItem = new MenuItem(newMenu, SWT.CASCADE);
+		newTaskItem.setText(Strings.getString("TasksUI.menuitems.NEW_TASK")); //$NON-NLS-1$
+		newTaskItem.addSelectionListener(onTreeSelection(selection -> {
+			// Récupération du noeud parent
+			TreeItem parentItem = selection.length > 0 ? selection[0]
+					.getParentItem() : null;
+			TaskSums parentSums = parentItem == null ? null
+					: (TaskSums) parentItem.getData();
+			// Création de la tache
+			Task newTask = newTask(parentSums);
+			// Notification des listeners
+			notifyTaskAdded(newTask);
+		}));
+		newSubtaskItem = new MenuItem(newMenu, SWT.CASCADE);
+		newSubtaskItem.setText(Strings
+				.getString("TasksUI.menuitems.NEW_SUBTASK")); //$NON-NLS-1$
+		newSubtaskItem.addSelectionListener(onTreeSelection(selection -> {
+			TaskSums selected = (TaskSums) selection[0].getData();
+			Task newTask = newTask(selected);
+			// Then remember that the parent task is not a leaf task
+			selected.setLeaf(false);
+			// Notification des listeners
+			notifyTaskAdded(newTask);
+		}));
+	}
+
+
+	private void createMoveMenu(Menu menu) {
+
+		// Sous-menu 'Déplacer'
+		MenuItem moveToItem = new MenuItem(menu, SWT.CASCADE);
+		moveToItem.setText(Strings.getString("TasksUI.menuitems.MOVE")); //$NON-NLS-1$
+		Menu moveToMenu = new Menu(moveToItem);
+		moveToItem.setMenu(moveToMenu);
+
+		moveUpItem = new MenuItem(moveToMenu, SWT.CASCADE);
+		moveUpItem.setText(Strings.getString("TasksUI.menuitems.MOVE_UP")); //$NON-NLS-1$
+		moveUpItem.addSelectionListener(onTreeSelection(selection -> moveTask(selection, true)));
+
+		moveDownItem = new MenuItem(moveToMenu, SWT.CASCADE);
+		moveDownItem.setText(Strings.getString("TasksUI.menuitems.MOVE_DOWN")); //$NON-NLS-1$
+		moveDownItem.addSelectionListener(onTreeSelection(selection ->
+			moveTask(selection, false)));
+
+		moveBeforeAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
+		moveBeforeAnotherTaskItem.setText(Strings
+				.getString("TasksUI.menuitems.MOVE_BEFORE_ANOTHER_TASK")); //$NON-NLS-1$
+		moveBeforeAnotherTaskItem.addSelectionListener(onTreeSelection(selection -> {
+			moveTaskItem(selection, true);
+		}));
+		moveAfterAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
+		moveAfterAnotherTaskItem.setText(Strings
+				.getString("TasksUI.menuitems.MOVE_AFTER_ANOTHER_TASK")); //$NON-NLS-1$
+		moveAfterAnotherTaskItem.addSelectionListener(onTreeSelection(selection -> {
+			moveTaskItem(selection, false);
+		}));
+		moveToAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
+		moveToAnotherTaskItem.setText(Strings
+				.getString("TasksUI.menuitems.MOVE_UNDER_ANOTHER_TASK")); //$NON-NLS-1$
+		moveToAnotherTaskItem.addSelectionListener(onTreeSelection(selection -> {
+			TaskSums selected = (TaskSums) selection[0].getData();
+			Task taskToMove = selected.getTask();
+			// Récupération du noeud parent
+			TreeItem parentItem = selection[0].getParentItem();
+			final Task srcParentTask = parentItem != null ? ((TaskSums) parentItem
+					.getData()).getTask() : null;
+			// Création du valideur
+			taskChooserDialog.setValidator(selectedTask -> {
+				if (srcParentTask != null && srcParentTask.equals(selectedTask))
+					throw new DialogException(
+							Strings.getString("TasksUI.errors.MOVE_TO_SAME_PARENT"), null); //$NON-NLS-1$
+				try {
+					modelMgr.checkAcceptsSubtasks(selectedTask);
+				} catch (ModelException e1) {
+					throw new DialogException(e1.getMessage(), null);
+				}
+			});
+			// Affichage du popup
+			if (taskChooserDialog.open() == Window.OK) {
+				Task newParentTask = (Task) taskChooserDialog.getValue();
+				doMoveToAnotherTask(taskToMove, newParentTask);
+			}
+		}));
+		moveToRootItem = new MenuItem(moveToMenu, SWT.CASCADE);
+		moveToRootItem.setText(Strings
+				.getString("TasksUI.menuitems.MOVE_UNDER_ROOT")); //$NON-NLS-1$
+		moveToRootItem.addSelectionListener(onTreeSelection(selection -> {
+			TaskSums selected = (TaskSums) selection[0].getData();
+			Task taskToMove = selected.getTask();
+			String oldTaskFullpath = taskToMove.getFullPath();
+			// Déplacement
+			modelMgr.moveTask(taskToMove, null);
+			treeViewer.refresh();
+			// Notification des listeners
+			notifyTaskMoved(oldTaskFullpath, taskToMove);
+		}));
+
+	}
+
+	private void createImportExportMenu(Menu menu) {
+
+		MenuItem exportItem = new MenuItem(menu, SWT.CASCADE);
+		exportItem.setText(Strings.getString("TasksUI.menuitems.EXPORT_IMPORT")); //$NON-NLS-1$
+		Menu exportMenu = new Menu(exportItem);
+		exportItem.setMenu(exportMenu);
+
+		xlsExportItem = new MenuItem(exportMenu, SWT.CASCADE);
+		xlsExportItem.setText(Strings.getString("TasksUI.menuitems.XLS_EXPORT")); //$NON-NLS-1$
+		xlsExportItem.addSelectionListener(onTreeSelection(selection -> {
+			Long parentTaskId = null;
+			if (selection.length > 0) {
+				TaskSums selected = (TaskSums) selection[0].getData();
+				parentTaskId = selected.getTask().getId();
+			}
+			FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.SAVE);
+			fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
+			fd.setOverwrite(true);
+			String fileName = fd.open();
+			// Si le nom est spécifié
+			if (fileName != null) {
+				try {
+					// Correction du nom du fichier si besoin
+					if (!fileName.endsWith(".xls")) //$NON-NLS-1$
+						fileName += ".xls"; //$NON-NLS-1$
+					// Sauvegarde du document
+					byte[] excel = modelMgr.exportToExcel(parentTaskId);
+					FileOutputStream out = new FileOutputStream(fileName);
+					out.write(excel);
+					out.close();
+				} catch (IOException e) {
+					log.error("I/O exception", e); //$NON-NLS-1$
+					throw new UITechException(
+							Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
 				}
 			}
-		);
+		}));
 
-		// Arbre tableau
-		final Tree tree = new Tree(parent, SWT.MULTI | SWT.FULL_SELECTION
-				| SWT.BORDER | SWT.HIDE_SELECTION);
-		gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		gridData.heightHint = 75;
-		tree.setLayoutData(gridData);
-		tree.setLinesVisible(true);
-		tree.setHeaderVisible(true);
-		tree.setEnabled(true);
+		xlsImportItem = new MenuItem(exportMenu, SWT.CASCADE);
+		xlsImportItem.setText(Strings.getString("TasksUI.menuitems.XLS_IMPORT")); //$NON-NLS-1$
+		xlsImportItem.addSelectionListener(onTreeSelection(selection -> {
+			Long parentTaskId = null;
+			TaskSums selected = null;
+			if (selection.length > 0) {
+				selected = (TaskSums) selection[0].getData();
+				parentTaskId = selected.getTask().getId();
+				// Expand the tree
+				treeViewer.expandToLevel(selected, 1);
+			}
+			FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.OPEN);
+			fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
+			String fileName = fd.open();
+			// Si le nom est spécifié
+			if (fileName != null) {
+				try {
+					FileInputStream in = new FileInputStream(fileName);
+					modelMgr.importFromExcel(parentTaskId, in);
+					in.close();
+					// Refresh the tree
+					treeViewer.refresh();
+				} catch (IOException e) {
+					log.error("I/O exception", e); //$NON-NLS-1$
+					throw new UITechException(
+							Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
+				}
+			}
+		}));
 
-		// Création du viewer
-		treeViewer = new TreeViewer(tree);
-		treeViewer.setCellModifier(this);
-		treeViewer.setContentProvider(this);
-		treeViewer.setLabelProvider(this);
-		
+		xlsSnapshotExportItem = new MenuItem(exportMenu, SWT.CASCADE);
+		xlsSnapshotExportItem.setText(Strings.getString("TasksUI.menuitems.XLS_SNAPSHOT_EXPORT")); //$NON-NLS-1$
+		xlsSnapshotExportItem.addSelectionListener(onTreeSelection(selection -> {
+			// Export du tableau
+			SWTHelper.exportToWorkBook(treeViewer.getTree());
+		}));
+
+	}
+
+	private void initColumns() {
+		Tree tree = treeViewer.getTree();
+
+		// Configuration des colonnes
+		treeColsMgr = new TableOrTreeColumnsMgr();
+		initColumn("NAME", 200, SWT.LEFT); //$NON-NLS-1$
+		initColumn("CODE", 70, SWT.LEFT); //$NON-NLS-1$
+		initColumn("BUDGET", 70, SWT.RIGHT); //$NON-NLS-1$
+		initColumn("INITIAL", 70, SWT.RIGHT); //$NON-NLS-1$
+		initColumn("CONSUMED", 70, SWT.RIGHT); //$NON-NLS-1$
+		initColumn("TODO", 70, SWT.RIGHT); //$NON-NLS-1$
+		initColumn("DELTA", 70, SWT.RIGHT); //$NON-NLS-1$
+		initColumn("COMMENT", 200, SWT.LEFT); //$NON-NLS-1$
+		initColumn("CLOSED", 70, SWT.CENTER); //$NON-NLS-1$
+
+		treeColsMgr.configureTree(treeViewer);
+
+		// Configuration des éditeurs de cellules
+		treeViewer.setCellEditors(new CellEditor[] {
+				new TextCellEditor(tree), // name
+				new TextCellEditor(tree), // code
+				new TextCellEditor(tree), // budget
+				new TextCellEditor(tree), // initial
+				null, // consumed
+				new TextCellEditor(tree), // Todo
+				null, // Delta
+				new TextCellEditor(tree), // comment
+				new CheckboxCellEditor(tree) // comment
+
+		});
+	}
+
+	private void initColumn(String columnCode, int columnWidth, int columnAlignment) {
+		treeColsMgr.addColumn(columnCode,
+				Strings.getString("TasksUI.columns.TASK_" + columnCode),  //$NON-NLS-1$
+				columnWidth, columnAlignment);
+	}
+
+
+	private void initTreeDnd() {
+		Tree tree = treeViewer.getTree();
+
 	    Transfer[] types = new Transfer[] { TextTransfer.getInstance() };
 	    int operations = DND.DROP_MOVE;
 	    final DragSource source = new DragSource(tree, operations);
-	    source.setTransfer(types);		
+	    source.setTransfer(types);
 	    source.addDragListener(new DragSourceAdapter() {
 			@Override
 			public void dragStart(DragSourceEvent event) {
 				IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
-				event.doit = (selection.size() == 1);
+				event.doit = selection.size() == 1;
 			}
 			@Override
 			public void dragSetData(DragSourceEvent event) {
@@ -253,6 +643,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 				event.data = String.valueOf(firstElement.getTask().getId());
 			}
 		});
+
 		DropTarget target = new DropTarget(tree, operations);
 		target.setTransfer(types);
 		target.addDropListener(new DropTargetAdapter() {
@@ -297,379 +688,212 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 				}
 			}
 		});
-		
+
+	}
+
+	private Tree initTree() {
+		// Arbre tableau
+		final Tree tree = new Tree(parent,
+				SWT.MULTI | SWT.FULL_SELECTION | SWT.BORDER | SWT.HIDE_SELECTION);
+		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		gridData.heightHint = 75;
+		tree.setLayoutData(gridData);
+		tree.setLinesVisible(true);
+		tree.setHeaderVisible(true);
+		tree.setEnabled(true);
+
+		// Création du viewer
+		treeViewer = new TreeViewer(tree);
+		treeViewer.setCellModifier(this);
+		treeViewer.setContentProvider(this);
+		treeViewer.setLabelProvider(this);
+
 		// Création des polices de caractère
 		disabledFGColor = tree.getDisplay().getSystemColor(
 				SWT.COLOR_TITLE_INACTIVE_FOREGROUND);
 
-		// Configuration des colonnes
-		treeColsMgr = new TableOrTreeColumnsMgr();
-		treeColsMgr
-				.addColumn(
-						"NAME", Strings.getString("TasksUI.column.TASK_NAME"), 200, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"CODE", Strings.getString("TasksUI.columns.TASK_CODE"), 70, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"BUDGET", Strings.getString("TasksUI.columns.TASK_BUDGET"), 70, SWT.RIGHT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"INI_CONS", Strings.getString("TasksUI.columns.TASK_INITIALLY_CONSUMED"), 70, SWT.RIGHT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"CONSUMED", Strings.getString("TasksUI.columns.TASK_CONSUMED"), 70, SWT.RIGHT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"TODO", Strings.getString("TasksUI.columns.TASK_ESTIMATED_TIME_TO_COMPLETE"), 70, SWT.RIGHT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"DELTA", Strings.getString("TasksUI.columns.TASK_DELTA"), 70, SWT.RIGHT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"COMMENT", Strings.getString("TasksUI.columns.TASK_COMMENT"), 200, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr.configureTree(treeViewer);
-
-		// Configuration des éditeurs de cellules
-		treeViewer.setCellEditors(new CellEditor[] {
-				new TextCellEditor(tree),
-				new TextCellEditor(tree),
-				new TextCellEditor(tree),
-				new TextCellEditor(tree),
-				null,
-				new TextCellEditor(tree),
-				null,
-				new TextCellEditor(tree)
-		});
-
-		// Initialisation des popups
-		taskChooserDialog = new TaskChooserTreeWithHistoryDialog(
-				parent.getShell(), modelMgr);
-		contribsViewerDialog = new ContributionsViewerDialog(parent.getShell(), modelMgr);
-
-		// Configuration du menu popup
-		final Menu menu = new Menu(tree);
-		menu.addMenuListener(this);
-		// Sous-menu 'Nouveau'
-		MenuItem newItem = new MenuItem(menu, SWT.CASCADE);
-		newItem.setText(Strings.getString("TasksUI.menuitems.NEW")); //$NON-NLS-1$
-		Menu newMenu = new Menu(newItem);
-		newItem.setMenu(newMenu);
-		newTaskItem = new MenuItem(newMenu, SWT.CASCADE);
-		newTaskItem.setText(Strings.getString("TasksUI.menuitems.NEW_TASK")); //$NON-NLS-1$
-		newTaskItem.addSelectionListener(this);
-		newSubtaskItem = new MenuItem(newMenu, SWT.CASCADE);
-		newSubtaskItem.setText(Strings
-				.getString("TasksUI.menuitems.NEW_SUBTASK")); //$NON-NLS-1$
-		newSubtaskItem.addSelectionListener(this);
-		// Sous-menu 'Déplacer'
-		MenuItem moveToItem = new MenuItem(menu, SWT.CASCADE);
-		moveToItem.setText(Strings.getString("TasksUI.menuitems.MOVE")); //$NON-NLS-1$
-		Menu moveToMenu = new Menu(moveToItem);
-		moveToItem.setMenu(moveToMenu);
-		moveUpItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveUpItem.setText(Strings.getString("TasksUI.menuitems.MOVE_UP")); //$NON-NLS-1$
-		moveUpItem.addSelectionListener(this);
-		moveDownItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveDownItem.setText(Strings.getString("TasksUI.menuitems.MOVE_DOWN")); //$NON-NLS-1$
-		moveDownItem.addSelectionListener(this);
-		moveBeforeAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveBeforeAnotherTaskItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_BEFORE_ANOTHER_TASK")); //$NON-NLS-1$
-		moveBeforeAnotherTaskItem.addSelectionListener(this);
-		moveAfterAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveAfterAnotherTaskItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_AFTER_ANOTHER_TASK")); //$NON-NLS-1$
-		moveAfterAnotherTaskItem.addSelectionListener(this);
-		moveToAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveToAnotherTaskItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_UNDER_ANOTHER_TASK")); //$NON-NLS-1$
-		moveToAnotherTaskItem.addSelectionListener(this);
-		moveToRootItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveToRootItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_UNDER_ROOT")); //$NON-NLS-1$
-		moveToRootItem.addSelectionListener(this);
-		copyItem = new MenuItem(menu, SWT.CASCADE);
-		copyItem.setText(Strings.getString("TasksUI.menuitems.COPY")); //$NON-NLS-1$
-		copyItem.addSelectionListener(this);
-		removeItem = new MenuItem(menu, SWT.CASCADE);
-		removeItem.setText(Strings.getString("TasksUI.menuitems.REMOVE")); //$NON-NLS-1$
-		removeItem.addSelectionListener(this);
-		expandItem = new MenuItem(menu, SWT.CASCADE);
-		expandItem.setText(Strings.getString("TasksUI.menuitems.EXPAND_ALL")); //$NON-NLS-1$
-		expandItem.addSelectionListener(this);
-		collapseItem = new MenuItem(menu, SWT.CASCADE);
-		collapseItem.setText(Strings
-				.getString("TasksUI.menuitems.COLLAPSE_ALL")); //$NON-NLS-1$
-		collapseItem.addSelectionListener(this);
-		listTaskContributionsItem = new MenuItem(menu, SWT.CASCADE);
-		listTaskContributionsItem.setText(Strings
-				.getString("TasksUI.menuitems.LIST_CONTRIBUTIONS")); //$NON-NLS-1$
-		listTaskContributionsItem.addSelectionListener(this);
-		refreshItem = new MenuItem(menu, SWT.CASCADE);
-		refreshItem.setText(Strings.getString("TasksUI.menuitems.REFRESH")); //$NON-NLS-1$
-		refreshItem.addSelectionListener(this);
-
-		MenuItem exportItem = new MenuItem(menu, SWT.CASCADE);
-		exportItem.setText(Strings.getString("TasksUI.menuitems.EXPORT_IMPORT")); //$NON-NLS-1$
-		Menu exportMenu = new Menu(exportItem);
-		exportItem.setMenu(exportMenu);
-
-		xlsExportItem = new MenuItem(exportMenu, SWT.CASCADE);
-		xlsExportItem.setText(Strings.getString("TasksUI.menuitems.XLS_EXPORT")); //$NON-NLS-1$
-		xlsExportItem.addSelectionListener(this);
-
-		xlsImportItem = new MenuItem(exportMenu, SWT.CASCADE);
-		xlsImportItem.setText(Strings.getString("TasksUI.menuitems.XLS_IMPORT")); //$NON-NLS-1$
-		xlsImportItem.addSelectionListener(this);
-
-		xlsSnapshotExportItem = new MenuItem(exportMenu, SWT.CASCADE);
-		xlsSnapshotExportItem.setText(Strings.getString("TasksUI.menuitems.XLS_SNAPSHOT_EXPORT")); //$NON-NLS-1$
-		xlsSnapshotExportItem.addSelectionListener(this);
-		tree.setMenu(menu);
-
-		log.debug("UI initialization done"); //$NON-NLS-1$
-		// Ajout de KeyListeners pour faciliter le déplacement vers le bas et
-		// vers le haut des taches
-		// (Rq: les accélérateurs sont ignorés dans les menus contextuels)
-		KeyListener keyListener = new KeyAdapter() {
-			public void keyReleased(KeyEvent e) {
-				Widget simulatedWidget = null;
-				if (e.stateMask == SWT.CTRL /* || e.stateMask == SWT.COMMAND */) {
-					if (e.keyCode == SWT.ARROW_UP)
-						simulatedWidget = moveUpItem;
-					else if (e.keyCode == SWT.ARROW_DOWN)
-						simulatedWidget = moveDownItem;
-					else if (e.keyCode == 'c')
-						simulatedWidget = copyItem;
-				}
-				if (simulatedWidget != null) {
-					Event event = new Event();
-					event.widget = simulatedWidget;
-					SelectionEvent se = new SelectionEvent(event);
-					widgetSelected(se);
-				}
-			}
-		};
-		parentComposite.addKeyListener(keyListener);
-		tree.addKeyListener(keyListener);
-
-		// Ajout d'un listener permettant de détecter lorsque le
-		// composant est affiché (passage d'un onglet à l'autre)
-		parent.addPaintListener(new PaintListener() {
-			public void paintControl(PaintEvent paintevent) {
-				if (needRefresh) {
-					needRefresh = false;
-					treeViewer.refresh();
-				}
-
-			}
-		});
-
+		return tree;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java
-	 * .lang.Object)
-	 */
+
+	@Override
 	public Object[] getElements(Object inputElement) {
 		return getChildren(null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.ICellModifier#canModify(java.lang.Object,
-	 * java.lang.String)
-	 */
+	@Override
 	public boolean canModify(Object element, String property) {
-		log.debug("ICellModifier.canModify(" + element + ", " + property + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		log.debug("ICellModifier.canModify(" + element //$NON-NLS-1$
+				+ ", " + property + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final TaskSums taskSums = (TaskSums) element;
 		final int propertyIdx = treeColsMgr.getColumnIndex(property);
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				boolean canModify = false;
-				switch (propertyIdx) {
-				case (NAME_COLUMN_IDX):
-				case (CODE_COLUMN_IDX):
-					canModify = true;
-					break;
-				case (INITIAL_FUND_COLUMN_IDX):
-				case (INITIALLY_CONSUMED_COLUMN_IDX):
-				case (TODO_COLUMN_IDX):
-					canModify = taskSums.isLeaf();
-					break;
-				case (CONSUMED_COLUMN_IDX):
-				case (DELTA_COLUMN_IDX):
-					canModify = false;
-					break;
-				case (COMMENT_COLUMN_IDX):
-					canModify = true;
-					break;
-				default:
-					throw new UITechException(
-							Strings.getString("TasksUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
-				}
-				return canModify ? Boolean.TRUE : Boolean.FALSE;
+		return safeExec(false, () -> {
+
+			switch (propertyIdx) {
+			case NAME_COLUMN_IDX:
+			case CODE_COLUMN_IDX:
+				return true;
+			case INITIAL_FUND_COLUMN_IDX:
+			case INITIALLY_CONSUMED_COLUMN_IDX:
+			case TODO_COLUMN_IDX:
+				return taskSums.isLeaf();
+			case CONSUMED_COLUMN_IDX:
+			case DELTA_COLUMN_IDX:
+				return false;
+			case COMMENT_COLUMN_IDX:
+//			case CLOSED_COLUMN_IDX:
+//				return true;
+
+			default:
+				throw new UITechException(
+						Strings.getString("TasksUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
 			}
-		};
-		// Retour du résultat
-		return ((Boolean) safeRunner.run(parent.getShell())).booleanValue();
+
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.ICellModifier#getValue(java.lang.Object,
-	 * java.lang.String)
-	 */
+	@Override
 	public Object getValue(Object element, String property) {
 		log.debug("ICellModifier.getValue(" + element + ", " + property + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		final TaskSums taskSums = (TaskSums) element;
 		final int propertyIdx = treeColsMgr.getColumnIndex(property);
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				String value = null;
-				switch (propertyIdx) {
-				case (NAME_COLUMN_IDX):
-					value = taskSums.getTask().getName();
-					break;
-				case (CODE_COLUMN_IDX):
-					value = taskSums.getTask().getCode();
-					break;
-				case (INITIAL_FUND_COLUMN_IDX):
-					value = StringHelper.hundredthToEntry(taskSums.getBudgetSum());
-					break;
-				case (INITIALLY_CONSUMED_COLUMN_IDX):
-					value = StringHelper.hundredthToEntry(taskSums.getInitiallyConsumedSum());
-					break;
-				case (CONSUMED_COLUMN_IDX):
-					value = StringHelper.hundredthToEntry(taskSums
-							.getContributionsSums().getConsumedSum()
-							+ taskSums.getInitiallyConsumedSum());
-					break;
-				case (TODO_COLUMN_IDX):
-					value = StringHelper.hundredthToEntry(taskSums.getTodoSum());
-					break;
-				case (DELTA_COLUMN_IDX):
-					long delta = taskSums.getBudgetSum()
-							- taskSums.getInitiallyConsumedSum()
-							- taskSums.getContributionsSums().getConsumedSum() - taskSums.getTodoSum();
-					value = StringHelper.hundredthToEntry(delta);
-					break;
-				case (COMMENT_COLUMN_IDX):
-					value = taskSums.getTask().getComment() != null ? taskSums.getTask().getComment() : ""; //$NON-NLS-1$
-					break;
-				default:
-					throw new UITechException(
-							Strings.getString("TasksUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
-				}
-				// Retour du résultat
-				return value;
+		return safeExec(null, () -> {
+
+			switch (propertyIdx) {
+			case NAME_COLUMN_IDX:
+				return taskSums.getTask().getName();
+			case CODE_COLUMN_IDX:
+				return taskSums.getTask().getCode();
+
+			case INITIAL_FUND_COLUMN_IDX:
+				return StringHelper.hundredthToEntry(taskSums.getBudgetSum());
+
+			case INITIALLY_CONSUMED_COLUMN_IDX:
+				return StringHelper.hundredthToEntry(taskSums.getInitiallyConsumedSum());
+
+			case CONSUMED_COLUMN_IDX:
+				return StringHelper.hundredthToEntry(taskSums
+						.getContributionsSums().getConsumedSum()
+						+ taskSums.getInitiallyConsumedSum());
+
+			case TODO_COLUMN_IDX:
+				return StringHelper.hundredthToEntry(taskSums.getTodoSum());
+
+			case DELTA_COLUMN_IDX:
+				long delta = taskSums.getBudgetSum()
+						- taskSums.getInitiallyConsumedSum()
+						- taskSums.getContributionsSums().getConsumedSum()
+						- taskSums.getTodoSum();
+				return StringHelper.hundredthToEntry(delta);
+
+			case COMMENT_COLUMN_IDX:
+				return taskSums.getTask().getComment() != null ? taskSums.getTask().getComment() : ""; //$NON-NLS-1$
+
+//			case CLOSED_COLUMN_IDX:
+//				return taskSums.getTask().isClosed();
+			default:
+				throw new UITechException(
+						Strings.getString("TasksUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
 			}
-		};
-		// Exécution
-		return safeRunner.run(parent.getShell());
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.ICellModifier#modify(java.lang.Object,
-	 * java.lang.String, java.lang.Object)
-	 */
+	@Override
 	public void modify(Object element, String property, final Object value) {
-		log.debug("ICellModifier.modify(" + element + ", " + property + ", " + value + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		log.debug("ICellModifier.modify(" + element //$NON-NLS-1$
+				+ ", " + property  //$NON-NLS-1$
+				+ ", " + value + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final TreeItem item = (TreeItem) element;
 		final TaskSums taskSums = (TaskSums) item.getData();
 		final Task task = taskSums.getTask();
 		final int columnIdx = treeColsMgr.getColumnIndex(property);
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				boolean parentsMustBeRefreshed = false;
-				switch (columnIdx) {
-				case (NAME_COLUMN_IDX):
-					task.setName((String) value);
-					break;
-				case (CODE_COLUMN_IDX):
-					task.setCode(((String) value).trim());
-					break;
-				case (INITIAL_FUND_COLUMN_IDX):
-					long newInitialFund = StringHelper
-							.entryToHundredth((String) value);
-					task.setBudget(newInitialFund);
-					taskSums.setBudgetSum(newInitialFund);
-					parentsMustBeRefreshed = true;
-					break;
-				case (INITIALLY_CONSUMED_COLUMN_IDX):
-					long newInitiallyConsumed = StringHelper
-							.entryToHundredth((String) value);
-					task.setInitiallyConsumed(newInitiallyConsumed);
-					taskSums.setInitiallyConsumedSum(newInitiallyConsumed);
-					parentsMustBeRefreshed = true;
-					break;
-				case (TODO_COLUMN_IDX):
-					long newTodo = StringHelper
-							.entryToHundredth((String) value);
-					task.setTodo(newTodo);
-					taskSums.setTodoSum(newTodo);
-					parentsMustBeRefreshed = true;
-					break;
-				case (COMMENT_COLUMN_IDX):
-					String comment = (String) value;
-					if (comment != null)
-						comment = comment.trim();
-					// Si le commentaire est vide, il devient nul
-					if ("".equals(comment)) //$NON-NLS-1$
-						comment = null;
-					task.setComment((String) value);
-					break;
-				case (CONSUMED_COLUMN_IDX):
-				case (DELTA_COLUMN_IDX):
-					throw new UITechException(
-							Strings.getString("TasksUI.errros.READ_ONLY_COLUMN")); //$NON-NLS-1$
-				default:
-					throw new UITechException(
-							Strings.getString("TasksUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
+		safeExec(()->{
+			boolean parentsMustBeRefreshed = false;
+			switch (columnIdx) {
+			case NAME_COLUMN_IDX:
+				task.setName((String) value);
+				break;
+			case CODE_COLUMN_IDX:
+				task.setCode(((String) value).trim());
+				break;
+			case INITIAL_FUND_COLUMN_IDX:
+				long newInitialFund = StringHelper
+						.entryToHundredth((String) value);
+				task.setBudget(newInitialFund);
+				taskSums.setBudgetSum(newInitialFund);
+				parentsMustBeRefreshed = true;
+				break;
+			case INITIALLY_CONSUMED_COLUMN_IDX:
+				long newInitiallyConsumed = StringHelper
+						.entryToHundredth((String) value);
+				task.setInitiallyConsumed(newInitiallyConsumed);
+				taskSums.setInitiallyConsumedSum(newInitiallyConsumed);
+				parentsMustBeRefreshed = true;
+				break;
+			case TODO_COLUMN_IDX:
+				long newTodo = StringHelper
+						.entryToHundredth((String) value);
+				task.setTodo(newTodo);
+				taskSums.setTodoSum(newTodo);
+				parentsMustBeRefreshed = true;
+				break;
+			case COMMENT_COLUMN_IDX:
+				String comment = (String) value;
+				if (comment != null) {
+					comment = comment.trim();
 				}
-				// Mise à jour en base
-				modelMgr.updateTask(task);
-				// Mise à jour des labels
-				if (parentsMustBeRefreshed) {
-					// Mise à jour des sommes des taches parentes
-					updateParentSums(item);
-				} else {
-					// Notification de la mise à jour uniquement pour la tache
-					notifyLabelProviderListener(taskSums);
+				// Si le commentaire est vide, il devient nul
+				if ("".equals(comment)) {//$NON-NLS-1$
+					comment = null;
 				}
-				// Notification de la mise à jour de la tache pour les listeners
-				notifyTaskUpdated(task);
-				return null;
+				task.setComment((String) value);
+				break;
+
+//			case CLOSED_COLUMN_IDX:
+//				task.setClosed((Boolean) value);
+//				break;
+
+			case CONSUMED_COLUMN_IDX:
+			case DELTA_COLUMN_IDX:
+				throw new UITechException(
+						Strings.getString("TasksUI.errros.READ_ONLY_COLUMN")); //$NON-NLS-1$
+			default:
+				throw new UITechException(
+						Strings.getString("TasksUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
 			}
-		};
-		// Exécution
-		safeRunner.run(parent.getShell());
+
+			// Mise à jour en base
+			modelMgr.updateTask(task);
+			// Mise à jour des labels
+			if (parentsMustBeRefreshed) {
+				// Mise à jour des sommes des taches parentes
+				updateParentSums(item);
+			} else {
+				// Notification de la mise à jour uniquement pour la tache
+				notifyLabelProviderListener(taskSums);
+			}
+			// Notification de la mise à jour de la tache pour les listeners
+			notifyTaskUpdated(task);
+
+		});
+
 	}
 
 	protected void notifyLabelProviderListener(TaskSums... sums) {
-		super.notifyLabelProviderListener(new LabelProviderChangedEvent(
-				this, sums));
+		super.notifyLabelProviderListener(new LabelProviderChangedEvent(this, sums));
 	}
-	
+
 	/**
 	 * Met à jour les sommes associés aux taches de la branche associée à l'item
 	 * spécifié.
-	 * 
+	 *
 	 * @param item
 	 *            l'item de tableau.
 	 * @throws ModelException
 	 *             levée en cas d'invalidité associée au modèle.
 	 */
 	private void updateParentSums(TreeItem item) throws ModelException {
-		List<TaskSums> list = new ArrayList<TaskSums>();
+		List<TaskSums> list = new ArrayList<>();
 		// Nettoyage du cache
 		TreeItem cursor = item;
 		while (cursor != null) {
@@ -682,379 +906,98 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 		}
 		// Notification de la mise à jour (ce qui recharge automatiquement
 		// le cache des sommes de taches)
-		notifyLabelProviderListener((TaskSums[]) list.toArray(new TaskSums[list.size()]));
+		notifyLabelProviderListener(list.toArray(new TaskSums[list.size()]));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.
-	 * Object)
-	 */
+
+	@Override
 	public boolean hasChildren(Object element) {
 		log.debug("ITreeContentProvider.getChildren(" + element + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		TaskSums sums = (TaskSums) element;
 		return !sums.isLeaf();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.
-	 * Object)
-	 */
+	@Override
 	public Object[] getChildren(Object parentElement) {
 		log.debug("ITreeContentProvider.getChildren(" + parentElement + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final TaskSums parentTaskSums = (TaskSums) parentElement;
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				List<TaskSums> subTasks = modelMgr.getSubTasksSums(parentTaskSums != null ? parentTaskSums.getTask() : null, null, null);
-				return subTasks.toArray();
-			}
-		};
-		Object[] result = (Object[]) safeRunner.run(parent.getShell(),
-				new Object[] {});
-		return result;
+		return safeExec(new Object[] {}, () -> {
+			Task parentTask = parentTaskSums != null ? parentTaskSums.getTask() : null;
+			return modelMgr.getSubTasksSums(parentTask, null, null).toArray();
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITreeContentProvider#getParent(java.lang.Object
-	 * )
-	 */
+	@Override
 	public Object getParent(Object element) {
 		log.debug("ITreeContentProvider.getParent(" + element + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final TaskSums sums = (TaskSums) element;
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				Task parentTask = modelMgr.getParentTask(sums.getTask());
-				return parentTask == null ? treeViewer.getInput() : modelMgr.getTaskSums(parentTask.getId(), null, null);
-			}
-		};
-		// Exécution du traitement
-		Object result = (Object) safeRunner.run(parent.getShell());
-		return result;
+		return safeExec(new Object[] {}, () -> {
+			Task parentTask = modelMgr.getParentTask(sums.getTask());
+			return parentTask == null ? treeViewer.getInput() : modelMgr.getTaskSums(parentTask.getId(), null, null);
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang
-	 * .Object, int)
-	 */
+	@Override
 	public String getColumnText(Object element, int columnIndex) {
 		log.debug("ITableLabelProvider.getColumnText(" + element + ", " + columnIndex + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		String value = (String) getValue(element,
+		Object value =
+				getValue(element,
 				treeColsMgr.getColumnCode(columnIndex));
 		log.debug("  =>" + value + ")"); //$NON-NLS-1$ //$NON-NLS-2$
-		return value;
+		return value != null ? String.valueOf(value) : "";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang
-	 * .Object, int)
-	 */
+
+	@Override
 	public Color getBackground(Object element, int columnIndex) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang
-	 * .Object, int)
-	 */
+	@Override
 	public Color getForeground(Object element, int columnIndex) {
 		return canModify(element, treeColsMgr.getColumnCode(columnIndex)) ? null : disabledFGColor;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt
-	 * .events.SelectionEvent)
-	 */
-	public void widgetSelected(final SelectionEvent e) {
-		log.debug("SelectionListener.widgetSelected(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
-		final Object source = e.getSource();
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				TreeItem[] selection = treeViewer.getTree().getSelection();
-				// Cas d'une création (même niveau)
-				if (newTaskItem.equals(source)) {
-					// Récupération du noeud parent
-					TreeItem parentItem = selection.length > 0 ? selection[0]
-							.getParentItem() : null;
-					TaskSums parentSums = parentItem == null ? null
-							: (TaskSums) parentItem.getData();
-					// Création de la tache
-					Task newTask = newTask(parentSums);
-					// Notification des listeners
-					notifyTaskAdded(newTask);
-				}
-				// Cas d'une création de sous tache
-				else if (newSubtaskItem.equals(source)) {
-					TaskSums selected = (TaskSums) selection[0].getData();
-					Task newTask = newTask(selected);
-					// Then remember that the parent task is not a leaf task
-					selected.setLeaf(false);
-					// Notification des listeners
-					notifyTaskAdded(newTask);
-				}
-				// Cas d'une demande de déplacement vers le haut
-				else if (moveUpItem.equals(source)) {
-					TaskSums selected = (TaskSums) selection[0].getData();
-					Task selectedTask = selected.getTask();
-					String oldTaskFullpath = selectedTask.getFullPath();
-					modelMgr.moveUpTask(selectedTask);
-					// Mise à jour de l'IHM
-					treeViewer.refresh(selection[0].getParent().getData(),
-							false);
-					// Notification des listeners
-					notifyTaskMoved(oldTaskFullpath, selectedTask);
-				}
-				// Cas d'une demande de déplacement vers le haut
-				else if (moveDownItem.equals(source)) {
-					TaskSums selected = (TaskSums) selection[0].getData();
-					Task selectedTask = selected.getTask();
-					String oldTaskFullpath = selectedTask.getFullPath();
-					modelMgr.moveDownTask(selectedTask);
-					// Mise à jour de l'IHM
-					treeViewer.refresh(selection[0].getParent().getData(),
-							false);
-					// Notification des listeners
-					notifyTaskMoved(oldTaskFullpath, selectedTask);
-				}
-				// Cas d'une demande de déplacement avant ou après une autre
-				// tache
-				else if (moveBeforeAnotherTaskItem.equals(source)
-						|| moveAfterAnotherTaskItem.equals(source)) {
-					TaskSums selected = (TaskSums) selection[0].getData();
-					Task selectedTask = selected.getTask();
-					final Task finalSelectedTask = selectedTask;
-					// Création du valideur
-					taskChooserDialog.setValidator(new ITaskChooserValidator() {
-						public void validateChoosenTask(Task choosenTask)
-								throws DialogException {
-							if (finalSelectedTask.equals(choosenTask))
-								throw new DialogException(
-										"Please select another task", null); //$NON-NLS-1$
-						}
-					});
-					taskChooserDialog.setValue(selectedTask);
-					if (taskChooserDialog.open() == Dialog.OK) {
-						boolean before = moveBeforeAnotherTaskItem.equals(source);
-						Task chosenTask = (Task) taskChooserDialog.getValue();
-						doMoveBeforeOrAfter(selectedTask, chosenTask, before);
-					}
-				}
-				// Cas d'une demande de déplacement vers une autre tache
-				else if (moveToAnotherTaskItem.equals(source)) {
-					TaskSums selected = (TaskSums) selection[0].getData();
-					Task taskToMove = selected.getTask();
-					// Récupération du noeud parent
-					TreeItem parentItem = selection[0].getParentItem();
-					final Task srcParentTask = (parentItem != null) ? ((TaskSums) parentItem
-							.getData()).getTask() : null;
-					// Création du valideur
-					taskChooserDialog.setValidator(new ITaskChooserValidator() {
-						public void validateChoosenTask(Task selectedTask)
-								throws DialogException {
-							if (srcParentTask != null
-									&& srcParentTask.equals(selectedTask))
-								throw new DialogException(
-										Strings.getString("TasksUI.errors.MOVE_TO_SAME_PARENT"), null); //$NON-NLS-1$
-							try {
-								modelMgr.checkAcceptsSubtasks(selectedTask);
-							} catch (ModelException e) {
-								throw new DialogException(e.getMessage(), null);
-							}
-						}
-					});
-					// Affichage du popup
-					if (taskChooserDialog.open() == Dialog.OK) {
-						Task newParentTask = (Task) taskChooserDialog.getValue();
-						doMoveToAnotherTask(taskToMove, newParentTask);
-					}
-				}
-				// Cas d'une demande de déplacement vers la racine
-				else if (moveToRootItem.equals(source)) {
-					TaskSums selected = (TaskSums) selection[0].getData();
-					Task taskToMove = selected.getTask();
-					String oldTaskFullpath = taskToMove.getFullPath();
-					// Déplacement
-					modelMgr.moveTask(taskToMove, null);
-					treeViewer.refresh();
-					// Notification des listeners
-					notifyTaskMoved(oldTaskFullpath, taskToMove);
-				}
-				// Cas d'une demande de copie des taches sélectionnées (on met
-				// dans le presse papier
-				// le chemin de la tache)
-				else if (copyItem.equals(source)) {
-					// Implémentation en multi sélection => pour l'instant on ne
-					// veut gérer qu'une seule tache à la fois
-					// TreeItem[] selectedItems =
-					// treeViewer.getTree().getSelection();
-					// Clipboard clipboard = new Clipboard(parent.getDisplay());
-					// String[] taskCodePaths = new
-					// String[selectedItems.length];
-					// Transfer[] transfers = new
-					// Transfer[selectedItems.length];
-					// for (int i=0; i<selectedItems.length; i++) {
-					// Task task = (Task) selectedItems[i].getData();
-					// taskCodePaths[i] = modelMgr.getTaskCodePath(task);
-					// transfers[i] = TextTransfer.getInstance();
-					// }
-					// clipboard.setContents(taskCodePaths, transfers);
-					// clipboard.dispose();
+	interface TreeSelectionAction {
+		void accept(TreeItem[] selecteds) throws Exception;
+	}
 
-					// Implémentation en sélection simple
-					if (selection != null && selection.length > 0) {
-						TreeItem selectedItem = selection[0];
-						Clipboard clipboard = new Clipboard(parent.getDisplay());
-						TaskSums selected = (TaskSums) selectedItem.getData();
-						String taskCodePath = modelMgr.getTaskCodePath(selected.getTask());
-						clipboard.setContents(new String[] { taskCodePath },
-								new Transfer[] { TextTransfer.getInstance() });
-						clipboard.dispose();
-					}
-				}
-				// Cas d'une suppression
-				else if (removeItem.equals(source)) {
-					TreeItem selectedItem = selection[0];
-					TreeItem parentItem = selectedItem.getParentItem();
-					TaskSums selected = (TaskSums) selectedItem.getData();
-					Task selectedTask = selected.getTask();
-					Task parentTask = (parentItem != null) ? ((TaskSums) parentItem
-							.getData()).getTask() : null;
-					// Suppression
-					modelMgr.removeTask(selectedTask);
-					// Suppression dans l'arbre
-					treeViewer.remove(selected);
-					updateParentSums(parentItem);
-					// Mise à jour des taches soeurs
-					if (parentTask != null)
-						treeViewer.refresh(parentItem.getData());
-					else
-						treeViewer.refresh();
-					// Notification des listeners
-					notifyTaskRemoved(selectedTask);
-				}
-				// Cas d'une demande d'expansion d'un noeud
-				else if (expandItem.equals(source)) {
-					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
-					treeViewer.expandToLevel(selectedItem.getData(),
-							AbstractTreeViewer.ALL_LEVELS);
-				}
-				// Cas d'une demande de fermeture d'un noeud
-				else if (collapseItem.equals(source)) {
-					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
-					treeViewer.collapseToLevel(selectedItem.getData(),
-							AbstractTreeViewer.ALL_LEVELS);
-				}
-				// Cas d'une demande de liste des contributions
-				else if (listTaskContributionsItem.equals(source)) {
-					TaskSums selected = (TaskSums) selection[0].getData();
-					Task selectedTask = selected.getTask();
-					contribsViewerDialog.setFilter(selectedTask, null);
-					// Ouverture du dialogue
-					contribsViewerDialog.open();
-				}
-				// Cas d'une demande de rafraichissement
-				else if (refreshItem.equals(source)) {
-					// Récupération du noeud parent
-					TreeItem selectedItem = selection[0];
-					TreeItem parentItem = selectedItem.getParentItem();
-					TaskSums parentTaskSums = (parentItem != null) ? (TaskSums) parentItem
-							.getData() : null;
-					// Mise à jour
-					if (parentTaskSums != null)
-						treeViewer.refresh(parentTaskSums);
-					else
-						treeViewer.refresh();
-				}
-				// Cas d'une demande d'export du tableau
-				else if (xlsExportItem.equals(source)) {
-					Long parentTaskId = null;
-					if (selection.length > 0) {
-						TaskSums selected = (TaskSums) selection[0].getData();
-						parentTaskId = selected.getTask().getId();
-					}
-					FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.SAVE);
-					fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
-					fd.setOverwrite(true);
-					String fileName = fd.open();
-					// Si le nom est spécifié
-					if (fileName != null) {
-						try {
-							// Correction du nom du fichier si besoin
-							if (!fileName.endsWith(".xls")) //$NON-NLS-1$
-								fileName += ".xls"; //$NON-NLS-1$
-							// Sauvegarde du document
-							byte[] excel = modelMgr.exportToExcel(parentTaskId);
-							FileOutputStream out = new FileOutputStream(fileName);
-							out.write(excel);
-							out.close();
-						} catch (IOException e) {
-							log.error("I/O exception", e); //$NON-NLS-1$
-							throw new UITechException(
-									Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
-						}
-					}
-				}
-				else if (xlsImportItem.equals(source)) {
-					Long parentTaskId = null;
-					TaskSums selected = null;
-					if (selection.length > 0) {
-						selected = (TaskSums) selection[0].getData();
-						parentTaskId = selected.getTask().getId();
-						// Expand the tree
-						treeViewer.expandToLevel(selected, 1);
-					}
-					FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.OPEN);
-					fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
-					String fileName = fd.open();
-					// Si le nom est spécifié
-					if (fileName != null) {
-						try {
-							FileInputStream in = new FileInputStream(fileName);
-							modelMgr.importFromExcel(parentTaskId, in);
-							in.close();
-							// Refresh the tree
-							treeViewer.refresh();
-						} catch (IOException e) {
-							log.error("I/O exception", e); //$NON-NLS-1$
-							throw new UITechException(
-									Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
-						}
-					}
-				}
-				else if (xlsSnapshotExportItem.equals(source)) {
-					// Export du tableau
-					SWTHelper.exportToWorkBook(treeViewer.getTree());
-				}
-				return null;
+	private SelectionListener onTreeSelection(TreeSelectionAction action) {
+		return new SelectionListener() {
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
 			}
 
-
+			@Override
+			public void widgetSelected(final SelectionEvent evt) {
+				TreeItem[] selection = treeViewer.getTree().getSelection();
+				safeExec(() -> action.accept(selection));
+			}
 		};
-		// Exécution
-		safeRunner.run(parent.getShell());
+
 	}
+
+	private void moveTaskItem(TreeItem[] selection, boolean before) throws ModelException {
+		TaskSums selected = (TaskSums) selection[0].getData();
+		Task selectedTask = selected.getTask();
+		final Task finalSelectedTask = selectedTask;
+		// Création du valideur
+		taskChooserDialog.setValidator(choosenTask -> {
+			if (finalSelectedTask.equals(choosenTask))
+				throw new DialogException("Please select another task", null); //$NON-NLS-1$
+			});
+		taskChooserDialog.setValue(selectedTask);
+		if (taskChooserDialog.open() == Window.OK) {
+			Task chosenTask = (Task) taskChooserDialog.getValue();
+			doMoveBeforeOrAfter(selectedTask, chosenTask, before);
+		}
+	}
+
 
 	/**
 	 * Move to another task.
+	 *
 	 * @param taskToMove the task to move.
 	 * @param newParentTask the new parent task.
 	 * @throws ModelException thrown if a model error is detected.
@@ -1099,12 +1042,11 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 		}
 		// Déplacement de la tache
 		int targetNumber = chosenTask.getNumber();
-		if (before
-				&& targetNumber > taskToMove.getNumber())
+		if (before && targetNumber > taskToMove.getNumber()) {
 			targetNumber--;
-		else if (!before
-				&& targetNumber < taskToMove.getNumber())
+		} else if (!before && targetNumber < taskToMove.getNumber()) {
 			targetNumber++;
+		}
 		if (targetNumber != taskToMove.getNumber()) {
 			modelMgr.moveTaskUpOrDown(taskToMove, targetNumber);
 			needRefresh = true;
@@ -1117,20 +1059,11 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 			treeViewer.refresh();
 		}
 	}
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse
-	 * .swt.events.SelectionEvent)
-	 */
-	public void widgetDefaultSelected(SelectionEvent e) {
-		widgetSelected(e);
-	}
+
 
 	/**
 	 * Ajoute une tache.
-	 * 
+	 *
 	 * @param parentSums
 	 *            les totaux de la tache parente ou null pour une tache racine.
 	 * @throws ModelException
@@ -1153,19 +1086,16 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 		return newTask;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.MenuListener#menuShown(org.eclipse.swt.events.
-	 * MenuEvent)
-	 */
-	public void menuShown(MenuEvent e) {
-		log.debug("menuShown(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+	private interface TreeActionEnable {
+		boolean enable(boolean emptySelection, boolean singleSelection);
+	}
+
+	private void updateMenu() {
 		TreeItem[] selection = treeViewer.getTree().getSelection();
 		boolean emptySelection = selection.length == 0;
 		boolean singleSelection = selection.length == 1;
-		boolean rootSingleSelection = singleSelection && (selection[0] == null);
+		boolean rootSingleSelection = singleSelection && selection[0] == null;
+
 		newTaskItem.setEnabled(emptySelection || singleSelection);
 		newSubtaskItem.setEnabled(singleSelection);
 		moveUpItem.setEnabled(singleSelection);
@@ -1174,55 +1104,32 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 		moveAfterAnotherTaskItem.setEnabled(singleSelection);
 		moveToAnotherTaskItem.setEnabled(singleSelection);
 		moveToRootItem.setEnabled(singleSelection && !rootSingleSelection);
-		copyItem.setEnabled(!emptySelection);
-		removeItem.setEnabled(singleSelection);
-		expandItem.setEnabled(singleSelection);
-		collapseItem.setEnabled(singleSelection);
-		listTaskContributionsItem.setEnabled(singleSelection);
-		refreshItem.setEnabled(singleSelection);
 		xlsSnapshotExportItem.setEnabled(true);
+
+		menuRefreshs.forEach(it -> it.enable(emptySelection, singleSelection));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.MenuListener#menuHidden(org.eclipse.swt.events
-	 * .MenuEvent)
-	 */
-	public void menuHidden(MenuEvent e) {
-		// Do nothing...
-	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseOpened()
-	 */
+	@Override
 	public void databaseOpened() {
 		// Création d'une racine fictive
 		treeViewer.setInput(ROOT_NODE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * jfb.tools.activitymgr.ui.DatabaseUI.DbStatusListener#databaseClosed()
-	 */
+
+	@Override
 	public void databaseClosed() {
 		Tree tree = treeViewer.getTree();
 		TreeItem[] items = tree.getItems();
-		for (int i = 0; i < items.length; i++) {
-			items[i].dispose();
+		for (TreeItem item : items) {
+			item.dispose();
 		}
 		taskChooserDialog.databaseClosed();
 	}
 
 	/**
 	 * Ajoute un listener.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -1232,7 +1139,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Ajoute un listener.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -1242,7 +1149,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Notifie les listeners qu'une tache a été ajoutée.
-	 * 
+	 *
 	 * @param newTask
 	 *            la tache ajouté.
 	 */
@@ -1258,7 +1165,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Notifie les listeners qu'une tache a été supprimée.
-	 * 
+	 *
 	 * @param task
 	 *            la tache supprimée.
 	 */
@@ -1274,7 +1181,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Notifie les listeners qu'une tache a été modifiée.
-	 * 
+	 *
 	 * @param task
 	 *            la tache modifiée.
 	 */
@@ -1290,7 +1197,7 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Notifie les listeners qu'une tache a été déplacée.
-	 * 
+	 *
 	 * @param task
 	 *            la tache modifiée.
 	 */
@@ -1306,30 +1213,33 @@ public class TasksUI extends AbstractTableMgrUI implements IDbStatusListener,
 
 	/**
 	 * Indique qu'une contribution a été ajoutée au référentiel.
-	 * 
+	 *
 	 * @param contribution
 	 *            la contribution ajoutée.
 	 */
+	@Override
 	public void contributionAdded(Contribution contribution) {
 		needRefresh = true;
 	}
 
 	/**
 	 * Indique que des contributions ont été supprimées du référentiel.
-	 * 
+	 *
 	 * @param contributions
 	 *            les contributions supprimées.
 	 */
+	@Override
 	public void contributionsRemoved(Contribution[] contributions) {
 		needRefresh = true;
 	}
 
 	/**
 	 * Indique que des contributions ont été modifiée dans le référentiel.
-	 * 
+	 *
 	 * @param contributions
 	 *            les contributions modifiées.
 	 */
+	@Override
 	public void contributionsUpdated(Contribution[] contributions) {
 		needRefresh = true;
 	}

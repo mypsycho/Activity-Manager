@@ -6,11 +6,9 @@ import org.activitymgr.ui.web.logic.IContributionTaskChooserLogic;
 import org.activitymgr.ui.web.view.impl.dialogs.AbstractTaskChooserDialog;
 import org.activitymgr.ui.web.view.impl.internal.util.MapBasedDatasource;
 
-import com.vaadin.data.Property;
-import com.vaadin.data.Property.ValueChangeEvent;
-import com.vaadin.event.FieldEvents;
-import com.vaadin.event.FieldEvents.TextChangeEvent;
 import com.vaadin.shared.ui.MarginInfo;
+import com.vaadin.shared.ui.label.ContentMode;
+import com.vaadin.ui.AbstractLayout;
 import com.vaadin.ui.AbstractTextField.TextChangeEventMode;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
@@ -22,114 +20,107 @@ import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
-public class ContributionTaskChooserDialog extends
-		AbstractTaskChooserDialog<IContributionTaskChooserLogic> implements
-		IContributionTaskChooserLogic.View {
+public class ContributionTaskChooserDialog 
+		extends AbstractTaskChooserDialog<IContributionTaskChooserLogic> 
+		implements IContributionTaskChooserLogic.View {
 
 	private ListSelect recentTasksSelect;
 	private CheckBox newSubTaskCheckbox;
 	private TextField newSubTaskCodeField;
-	private TextField newSubTaskNameField;
-	private VerticalLayout newTaskFormPanel;
-	private ComboBox newSubTaskCreationPatternField;
+	private TextField newTaskName;
+	private ComboBox newTaskPattern;
 
 	public ContributionTaskChooserDialog() {
-        super();
-        
-        recentTasksSelect.addValueChangeListener(new Property.ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-						getLogic().onRecentTaskClicked(
-								(Long) recentTasksSelect.getValue());
-			}
-		});
-        newSubTaskCheckbox.addValueChangeListener(new Property.ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-						getLogic().onNewTaskCheckboxClicked();
-			}
-		});
-        newSubTaskNameField.setTextChangeEventMode(TextChangeEventMode.EAGER);
-        newSubTaskNameField.addTextChangeListener(new FieldEvents.TextChangeListener() {
-			@Override
-			public void textChange(TextChangeEvent event) {
-						getLogic().onNewTaskNameChanged(event.getText());
-			}
-		});
-        newSubTaskCodeField.setTextChangeEventMode(TextChangeEventMode.EAGER);
-        newSubTaskCodeField.addTextChangeListener(new FieldEvents.TextChangeListener() {
-			@Override
-			public void textChange(TextChangeEvent event) {
-						getLogic().onNewTaskCodeChanged(event.getText());
-			}
-		});
     }
 
 	@Override
 	protected Component createBody() {
-		HorizontalLayout bodyLayout = new HorizontalLayout();
-        bodyLayout.setSizeFull();
+		return new HorizontalLayout() {{
+			setSizeFull();
+			// Task tree
+			addComponent(ContributionTaskChooserDialog.super.createBody());
+			
+			addComponent(new VerticalLayout() {{
+				setSizeFull();
+				setMargin(new MarginInfo(false, false, false, true));
+				
+		        recentTasksSelect = new ListSelect("Recent :") {{
+			        setSizeFull();
+			        setImmediate(true);
+			        setNullSelectionAllowed(false);
+			        addValueChangeListener(evt -> 
+						getLogic().onRecentTaskClicked((Long) getValue()));
+		        }};
 
-        // Task tree
-        Component leftContainerPanel = super.createBody();
-        bodyLayout.addComponent(leftContainerPanel);
+		        
+		        addComponent(recentTasksSelect);
+		        addComponent(new Label("&nbsp;", ContentMode.HTML)); // empty line
+		        
+		        AbstractLayout panel = createNewTaskPanel();
+		        addComponent(panel);
+		        
+		        // TODO Add close
+				
+		        setExpandRatio(recentTasksSelect, 60);
+		        setExpandRatio(panel, 40);
+			}});
+	        setExpandRatio(components.getFirst(), 40);
+	        setExpandRatio(components.getLast(), 60);
+			
+		}};
+	}
 
-        // Recent tasks
-        VerticalLayout rightContainerPanel = new VerticalLayout();
-        rightContainerPanel.setSizeFull();
-        // Left margin
-        rightContainerPanel.setMargin(new MarginInfo(false, false, false, true));
-        bodyLayout.addComponent(rightContainerPanel);
-        recentTasksSelect = new ListSelect("Recent :");
-        recentTasksSelect.setSizeFull();
-        recentTasksSelect.setImmediate(true);
-        recentTasksSelect.setNullSelectionAllowed(false);
-        rightContainerPanel.addComponent(recentTasksSelect);
-        newTaskFormPanel = new VerticalLayout();
-        rightContainerPanel.addComponent(newTaskFormPanel);
+	protected AbstractLayout createNewTaskPanel() {
+		VerticalLayout result = new VerticalLayout();
+
         newSubTaskCheckbox = new CheckBox("Create a new task");
         newSubTaskCheckbox.setImmediate(true);
-        newTaskFormPanel.addComponent(newSubTaskCheckbox);
-        newTaskFormPanel.addComponent(new Label("Task attributes"));
-        HorizontalLayout newTaskLayout = new HorizontalLayout();
-        newTaskFormPanel.addComponent(newTaskLayout);
+        result.addComponent(newSubTaskCheckbox);
+        newSubTaskCheckbox.addValueChangeListener(evt -> 
+			getLogic().onNewTaskCheckboxClicked());
+        
+        result.addComponent(new Label("Task attributes"));
+        
+        // Line to identify new task
+        HorizontalLayout idTaskLine = new HorizontalLayout();
+        result.addComponent(idTaskLine);
+        
         newSubTaskCodeField = new TextField();
         newSubTaskCodeField.setWidth("60px");
         newSubTaskCodeField.setImmediate(true);
         newSubTaskCodeField.setInputPrompt("Code");
-        newTaskLayout.addComponent(newSubTaskCodeField);
-        newSubTaskNameField = new TextField();
-        newSubTaskNameField.setWidth("150px");
-        newSubTaskNameField.setImmediate(true);
-        newSubTaskNameField.setInputPrompt("Name (required)");
-        newTaskLayout.addComponent(newSubTaskNameField);
+        idTaskLine.addComponent(newSubTaskCodeField);
+        newSubTaskCodeField.setTextChangeEventMode(TextChangeEventMode.EAGER);
+        newSubTaskCodeField.addTextChangeListener(evt -> 
+			getLogic().onNewTaskCodeChanged(evt.getText()));
+        
+        newTaskName = new TextField();
+        newTaskName.setWidth("150px");
+        newTaskName.setImmediate(true);
+        newTaskName.setInputPrompt("Name (required)");
+        idTaskLine.addComponent(newTaskName);
+        newTaskName.setTextChangeEventMode(TextChangeEventMode.EAGER);
+        newTaskName.addTextChangeListener(evt -> 
+			getLogic().onNewTaskNameChanged(evt.getText()));
         
         // Pattern
-		newSubTaskCreationPatternField = new ComboBox("Creation pattern");
-        newSubTaskCreationPatternField.setNullSelectionAllowed(false);
-        newSubTaskCreationPatternField.setImmediate(true);
-        newSubTaskCreationPatternField.setTextInputAllowed(false);
-        newSubTaskCreationPatternField.setVisible(false); // Hidden by default
-        newTaskFormPanel.addComponent(newSubTaskCreationPatternField);
+		newTaskPattern = new ComboBox("Creation pattern");
+        newTaskPattern.setNullSelectionAllowed(false);
+        newTaskPattern.setImmediate(true);
+        newTaskPattern.setTextInputAllowed(false);
+        newTaskPattern.setVisible(false); // Hidden by default
+        result.addComponent(newTaskPattern);
         
-        // Set expand ratios for right container
-        rightContainerPanel.setExpandRatio(recentTasksSelect, 60);
-        rightContainerPanel.setExpandRatio(newTaskFormPanel, 40);
-
-        // Set expand ratios for body itself
-        bodyLayout.setExpandRatio(leftContainerPanel, 40);
-        bodyLayout.setExpandRatio(rightContainerPanel, 60);
-
-        return bodyLayout;
+        return result;
 	}
-
+	
     @Override
     public void setCreationPatterns(Map<String, String> patterns) {
-    	newSubTaskCreationPatternField.setVisible(true);
+    	newTaskPattern.setVisible(true);
     	MapBasedDatasource<String> datasource = new MapBasedDatasource<String>(patterns);
-    	newSubTaskCreationPatternField.setContainerDataSource(datasource);
-    	newSubTaskCreationPatternField.setItemCaptionPropertyId(MapBasedDatasource.LABEL_PROPERTY_ID);
-    	newSubTaskCreationPatternField.setValue(patterns.keySet().iterator().next());
+    	newTaskPattern.setContainerDataSource(datasource);
+    	newTaskPattern.setItemCaptionPropertyId(MapBasedDatasource.LABEL_PROPERTY_ID);
+    	newTaskPattern.setValue(patterns.keySet().iterator().next());
     }
 
     @Override
@@ -142,13 +133,13 @@ public class ContributionTaskChooserDialog extends
 	@Override
 	public void setNewTaskFieldsEnabled(boolean enabled) {
 		newSubTaskCodeField.setEnabled(enabled);
-		newSubTaskNameField.setEnabled(enabled);
-		newSubTaskCreationPatternField.setEnabled(enabled);
+		newTaskName.setEnabled(enabled);
+		newTaskPattern.setEnabled(enabled);
 	}
 
 	@Override
 	public String getSelectedTaskCreationPatternId() {
-		return (String) newSubTaskCreationPatternField.getValue();
+		return (String) newTaskPattern.getValue();
 	}
 
 }

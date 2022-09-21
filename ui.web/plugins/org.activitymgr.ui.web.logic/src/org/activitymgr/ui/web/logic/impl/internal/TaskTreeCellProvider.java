@@ -30,7 +30,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 
-class TaskTreeCellProvider extends AbstractSafeTreeTableCellProviderCallback<Long> implements IEventListener<TaskUpdatedEvent> {
+class TaskTreeCellProvider 
+		extends AbstractSafeTreeTableCellProviderCallback<Long> 
+		implements IEventListener<TaskUpdatedEvent> {
 
 	@Inject
 	private IModelMgr modelMgr;
@@ -50,14 +52,17 @@ class TaskTreeCellProvider extends AbstractSafeTreeTableCellProviderCallback<Lon
 	private Map<Long, TaskSums> taskSumsCache = new HashMap<Long, TaskSums>();
 	private boolean readOnly;
 	
-	private LoadingCache<Long, LoadingCache<String, ILogic<?>>> cellLogics = CacheBuilder.newBuilder().build(new CacheLoader<Long, LoadingCache<String, ILogic<?>>>() {
+	private LoadingCache<Long, LoadingCache<String, ILogic<?>>> cellLogics = CacheBuilder
+			.newBuilder()
+			.build(new CacheLoader<Long, LoadingCache<String, ILogic<?>>>() {
 		@Override
 		public LoadingCache<String, ILogic<?>> load(final Long taskId) throws Exception {
 			return CacheBuilder.newBuilder().build(new CacheLoader<String, ILogic<?>>() {
 				@Override
 				public ILogic<?> load(String propertyId) throws Exception {
 					TaskSums taskSums = taskSumsCache.get(taskId);
-					return cellLogicFactory.createCellLogic((AbstractLogicImpl<?>) getSource(), context, filter, taskSums, propertyId, readOnly);
+					return cellLogicFactory.createCellLogic((AbstractLogicImpl<?>) getSource(), 
+							context, filter, taskSums, propertyId, readOnly);
 				}
 			});
 		}
@@ -145,8 +150,7 @@ class TaskTreeCellProvider extends AbstractSafeTreeTableCellProviderCallback<Lon
 	protected boolean unsafeHasChildren(Long taskId) {
 		if (taskSumsCache.containsKey(taskId)) {
 			return !taskSumsCache.get(taskId).isLeaf();
-		}
-		else {
+		} else {
 			return !modelMgr.isLeaf(taskId);
 		}
 	}
@@ -156,8 +160,7 @@ class TaskTreeCellProvider extends AbstractSafeTreeTableCellProviderCallback<Lon
 		Long parentTaskId = parentTaskCache.get(taskId);
 		if (parentTaskId != null) {
 			return parentTaskId;
-		}
-		else {
+		} else {
 			// The task may not have been yet loaded in cache (if we want to reveal a deep task for example)
 			Task parentTask = modelMgr.getParentTask(modelMgr.getTask(taskId));
 			return parentTask != null ? parentTask.getId() : null;

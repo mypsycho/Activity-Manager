@@ -10,7 +10,8 @@ import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 
 @SuppressWarnings("serial")
-public abstract class AbstractTableDatasource<ITEMID_TYPE, CELLPROVIDER_TYPE extends ITableCellProviderCallback<ITEMID_TYPE>>
+public abstract class AbstractTableDatasource<ITEMID_TYPE, CELLPROVIDER_TYPE 
+		extends ITableCellProviderCallback<ITEMID_TYPE>>
 		implements Container {
 
 	private IResourceCache resourceCache;
@@ -59,8 +60,7 @@ public abstract class AbstractTableDatasource<ITEMID_TYPE, CELLPROVIDER_TYPE ext
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public final Property<?> getContainerProperty(Object itemId,
-			Object propertyId) {
+	public final Property<?> getContainerProperty(Object itemId, Object propertyId) {
 		return (Property<?>) cellProvider.getCell((ITEMID_TYPE) itemId, (String) propertyId);
 	}
 
@@ -68,6 +68,7 @@ public abstract class AbstractTableDatasource<ITEMID_TYPE, CELLPROVIDER_TYPE ext
 	public Item getItem(final Object itemId) {
 		return new Item() {
 
+			@SuppressWarnings("rawtypes") // Interface
 			@Override
 			public Property getItemProperty(Object propertyId) {
 				return AbstractTableDatasource.this.getContainerProperty(itemId, propertyId);
@@ -78,6 +79,7 @@ public abstract class AbstractTableDatasource<ITEMID_TYPE, CELLPROVIDER_TYPE ext
 				return AbstractTableDatasource.this.getContainerPropertyIds();
 			}
 
+			@SuppressWarnings("rawtypes") // Interface
 			@Override
 			public boolean addItemProperty(Object id, Property property)
 					throws UnsupportedOperationException {

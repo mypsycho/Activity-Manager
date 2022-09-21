@@ -19,7 +19,7 @@ public class NewContributionTaskButtonLogic extends AbstractSafeContributionTabS
 
 	@Inject
 	public NewContributionTaskButtonLogic(IContributionsTabLogic parent) {
-		super(parent,"New task", "new", "CTRL+SHIFT+N");
+		super(parent, "New task", "new", "CTRL+SHIFT+N");
 	}
 
 	@Override
@@ -33,8 +33,7 @@ public class NewContributionTaskButtonLogic extends AbstractSafeContributionTabS
 		from.add(Calendar.DATE, -7);
 		Calendar to = (Calendar) monday.clone();
 		to.add(Calendar.DATE, 6);
-		Task[] recentTasks = getModelMgr().getContributedTasks(contributor,
-				from, to);
+		Task[] recentTasks = getModelMgr().getContributedTasks(contributor, from, to);
 
 		new ContributionTaskChooserLogicImpl(contributionTabLogic,
 				contributionTabLogic.getLastSelectedTaskId(),

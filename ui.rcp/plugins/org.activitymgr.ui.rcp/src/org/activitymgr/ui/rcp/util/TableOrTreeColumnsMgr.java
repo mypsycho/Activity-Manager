@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -48,11 +48,27 @@ public class TableOrTreeColumnsMgr {
 	private static Logger log = Logger.getLogger(TableOrTreeColumnsMgr.class);
 
 	/** Liste des colonnes */
-	private List<Column> columns = new ArrayList<Column>();
+	private List<Column> columns = new ArrayList<>();
+
+
+	private final String prefix;
+	public TableOrTreeColumnsMgr() {
+		this(null);
+	}
+
+	/**
+	 * Prefix for column name.
+	 *
+	 * @param prefix of String
+	 */
+	public TableOrTreeColumnsMgr(String prefix) {
+		this.prefix = prefix;
+	}
+
 
 	/**
 	 * Configure les colonnes de l'arbre.
-	 * 
+	 *
 	 * @param treeViewer
 	 *            le viewer de l'arbre.
 	 */
@@ -61,8 +77,7 @@ public class TableOrTreeColumnsMgr {
 		treeViewer.setColumnProperties(getColumnCodes());
 		Tree tree = treeViewer.getTree();
 		Column[] columns = getColumns();
-		for (int i = 0; i < columns.length; i++) {
-			Column column = columns[i];
+		for (Column column : columns) {
 			TreeColumn treeColumn = new TreeColumn(tree, column.alignment);
 			treeColumn.setText(column.name);
 			treeColumn.setWidth(column.width);
@@ -71,7 +86,7 @@ public class TableOrTreeColumnsMgr {
 
 	/**
 	 * Configure les colonnes d'un tableau.
-	 * 
+	 *
 	 * @param tableViewer
 	 *            le viewer du tableau.
 	 */
@@ -80,17 +95,40 @@ public class TableOrTreeColumnsMgr {
 		tableViewer.setColumnProperties(getColumnCodes());
 		Table table = tableViewer.getTable();
 		Column[] columns = getColumns();
-		for (int i = 0; i < columns.length; i++) {
-			Column column = columns[i];
+		for (Column column : columns) {
 			TableColumn tableColumn = new TableColumn(table, column.alignment);
 			tableColumn.setText(column.name);
 			tableColumn.setWidth(column.width);
 		}
 	}
 
+
+
 	/**
 	 * Ajoute une colonne.
-	 * 
+	 *
+	 * @param columnCode
+	 *            le code de colonne.
+	 * @param columnName
+	 *            le nom de la colonne.
+	 * @param columnWidth
+	 *            la largeur de la colonne.
+	 * @param columnAlignment
+	 *            l'alignement à appliquer à la colonne.
+	 */
+	public void addColumn(String columnCode, int columnWidth, int columnAlignment) {
+		String columnName = prefix != null
+				?  Strings.getString(prefix + columnCode)
+				: "#" + columnCode; // better than NPE
+
+		addColumn(columnCode, columnName, columnWidth, columnAlignment);
+
+	}
+
+
+	/**
+	 * Ajoute une colonne.
+	 *
 	 * @param columnCode
 	 *            le code de colonne.
 	 * @param columnName
@@ -119,7 +157,7 @@ public class TableOrTreeColumnsMgr {
 	 *            numéro de la colonne.
 	 */
 	public String getColumnCode(int columnIndex) {
-		String code = ((Column) columns.get(columnIndex)).code;
+		String code = columns.get(columnIndex).code;
 		log.debug("getColumnCode(" + columnIndex + ")=" + code); //$NON-NLS-1$ //$NON-NLS-2$
 		return code;
 	}
@@ -132,7 +170,7 @@ public class TableOrTreeColumnsMgr {
 	public int getColumnIndex(String columnCode) {
 		int index = -1;
 		for (int i = 0; i < columns.size() && index < 0; i++) {
-			Column column = (Column) columns.get(i);
+			Column column = columns.get(i);
 			if (column.code.equals(columnCode))
 				index = i;
 		}
@@ -155,7 +193,7 @@ public class TableOrTreeColumnsMgr {
 	 * @return Retourne la liste des colonnes.
 	 */
 	private Column[] getColumns() {
-		return (Column[]) columns.toArray(new Column[columns.size()]);
+		return columns.toArray(new Column[columns.size()]);
 	}
 
 }

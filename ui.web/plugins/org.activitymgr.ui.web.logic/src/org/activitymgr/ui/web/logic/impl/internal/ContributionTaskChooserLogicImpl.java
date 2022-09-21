@@ -24,8 +24,8 @@ import org.activitymgr.ui.web.logic.spi.ITaskCreationPatternHandler;
 
 import com.google.inject.Inject;
 
-public class ContributionTaskChooserLogicImpl extends
-		AbstractTaskChooserLogicImpl<IContributionTaskChooserLogic.View>
+public class ContributionTaskChooserLogicImpl
+		extends AbstractTaskChooserLogicImpl<IContributionTaskChooserLogic.View>
 		implements IContributionTaskChooserLogic {
 	
 	private Collection<Long> alreadySelectedTaskIds;
@@ -40,79 +40,81 @@ public class ContributionTaskChooserLogicImpl extends
 	private Set<IConstraintsValidator> constraintsValidators;
 
 	private TaskTreeCellProvider treeContentProvider;
-	
 	private String newTaskName;
-
 	private String newTaskCode;
-
 	private boolean newTaskChecked;
-
+	
 	public ContributionTaskChooserLogicImpl(AbstractLogicImpl<?> parent,
 			Long taskIdToExpand, Collection<Long> selectedTaskIds,
 			Task[] recentTasks) {
 		super(parent, taskIdToExpand);
+		
 		// Remember already selected task ids
 		this.alreadySelectedTaskIds = selectedTaskIds;
 		
 		// Retrieve recent tasks labels
-		try {
-			final Map<Long, Task> recentTasksMap = new HashMap<Long, Task>();
-			// Retrieve recent tasks
-			for (Task recentTask : recentTasks) {
-				recentTasksMap.put(recentTask.getId(), recentTask);
-			}
-			// Add selected ID (if missing)
-			for (Long selectedTaskId : alreadySelectedTaskIds) {
-				if (!recentTasksMap.containsKey(selectedTaskId)) {
-					recentTasksMap.put(selectedTaskId,
-							getModelMgr().getTask(selectedTaskId));
-				}
-			}
-			// Retrieve task code path
-			final Map<Long, String> tasksCodePathMap = new HashMap<Long, String>();
-			final List<Long> recentTasksIds = new ArrayList<Long>(recentTasksMap.keySet());
-			for (Long taskId : recentTasksIds) {
-				Task task = recentTasksMap.get(taskId);
-				String taskCodePath = getModelMgr().getTaskCodePath(task);
-				tasksCodePathMap.put(taskId, taskCodePath);
-			}
-			Collections.sort(recentTasksIds, new Comparator<Long>() {
-				@Override
-				public int compare(Long taskId1, Long taskId2) {
-					Task task1 = recentTasksMap.get(taskId1);
-					Task task2 = recentTasksMap.get(taskId2);
-					String fullPath1 = task1.getFullPath();
-					String fullPath2 = task2.getFullPath();
-					return fullPath1.compareTo(fullPath2);
-				}
-			});
-			Map<Long, String> recentTasksLabelsMap = new LinkedHashMap<Long, String>();
-			for (Long taskId : recentTasksIds) {
-				recentTasksLabelsMap.put(taskId, "[" + tasksCodePathMap.get(taskId) + "] " + recentTasksMap.get(taskId).getName());
-			}
-			getView().setRecentTasks(recentTasksLabelsMap);
 
-			// Pattern handler list
-			ArrayList<String> taskCreationPatternIds = new ArrayList<String>(taskCreationPatternHandlers.keySet());
-			Collections.sort(taskCreationPatternIds);
-			Map<String, String> taskCreationPatternHandlersLabelsMap = new HashMap<String, String>();
-			for (String patternId : taskCreationPatternIds) {
-				taskCreationPatternHandlersLabelsMap.put(patternId, taskCreationPatternHandlers.get(patternId).getLabel());
-			}
-			getView().setCreationPatterns(taskCreationPatternHandlersLabelsMap);
-
-			// Reset button state & status label
-			onSelectionChanged(taskIdToExpand);
+		Map<Long, Task> tasks = new HashMap<Long, Task>();
 		
-			// Open the window
-			getRoot().getView().openWindow(getView());
-
-			// Update state
-			updateUI();
+		// Retrieve recent tasks
+		for (Task recentTask : recentTasks) {
+			tasks.put(recentTask.getId(), recentTask);
+		}
+		// Add selected ID (if missing)
+		for (Long id : alreadySelectedTaskIds) {
+			if (!tasks.containsKey(id)) {
+				tasks.put(id, getModelMgr().getTask(id));
+			}
+		}
+		// Retrieve task code path
+		Map<Long, String> labels = new LinkedHashMap<Long, String>();
+		Map<Long, String> codes = new HashMap<Long, String>();
+		
+		try {
+			List<Long> recentTasksIds = new ArrayList<Long>(tasks.keySet());
+			for (Long taskId : recentTasksIds) {
+				Task task = tasks.get(taskId);
+				codes.put(taskId, getModelMgr().getTaskCodePath(task));
+			}
+			Collections.sort(recentTasksIds, createTaskSorter(tasks));
+			for (Long taskId : recentTasksIds) {
+				labels.put(taskId, 
+						"[" + codes.get(taskId) + "] " + tasks.get(taskId).getName());
+			}
 		} catch (ModelException e) {
+			// Is this critical ?
 			throw new IllegalStateException("Unexpected error while retrieving recent tasks", e);
 		}
+		
+		getView().setRecentTasks(labels);
 
+		// Pattern handler list
+		List<String> patternIds = new ArrayList<String>(taskCreationPatternHandlers.keySet());
+		Collections.sort(patternIds);
+		Map<String, String> patternLabels = new HashMap<String, String>();
+		for (String id : patternIds) {
+			patternLabels.put(id, taskCreationPatternHandlers.get(id).getLabel());
+		}
+		getView().setCreationPatterns(patternLabels);
+
+		// Reset button state & status label
+		onSelectionChanged(taskIdToExpand);
+	
+		// Open the window
+		getRoot().getView().openWindow(getView());
+
+		// Update state
+		updateUI();
+	}
+	
+	private Comparator<Long> createTaskSorter(Map<Long, Task> maps) {
+		return (Long taskId1, Long taskId2) -> {
+			Task task1 = maps.get(taskId1);
+			Task task2 = maps.get(taskId2);
+			String fullPath1 = task1.getFullPath();
+			String fullPath2 = task2.getFullPath();
+			return fullPath1.compareTo(fullPath2);
+		};
 	}
 	
 	@Override
@@ -123,7 +125,11 @@ public class ContributionTaskChooserLogicImpl extends
 		}
 		// Register the tree content provider
 		treeContentProvider = new TaskTreeCellProvider(this, filter, true);
-		getView().setTasksTreeProviderCallback(wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class));
+		
+		@SuppressWarnings("unchecked")
+		ITreeContentProviderCallback<Long> wrapLogicForView =  // no class for generics
+			wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
+		getView().setTasksTreeProviderCallback(wrapLogicForView);
 		if (!"".equals(filter)) {
 			Task task = getModelMgr().getFirstTaskMatching(filter);
 			if (task != null) {
@@ -156,31 +162,17 @@ public class ContributionTaskChooserLogicImpl extends
 		if (status.isError()) {
 			return status;
 		}
-		Task selectedTask = getSelectedTaskId() != null ? getModelMgr()
-				.getTask(getSelectedTaskId()) : null;
+		Task selectedTask = getSelectedTaskId() != null 
+				? getModelMgr().getTask(getSelectedTaskId()) 
+				: null;
 		String newStatus = null;
 		boolean newTaskFieldsEnabled = false;
 		if (selectedTask != null) {
 			boolean isLeaf = getModelMgr().isLeaf(selectedTask.getId());
 			if (newTaskChecked) {
 				newTaskFieldsEnabled = true;
-				// Check constraints
-				for (IConstraintsValidator cv : constraintsValidators) {
-					status = cv.canCreateSubTaskUnder(selectedTask);
-					if (status.isError()) {
-						newStatus = "It's not possible to create a sub task under the selected task :\n" + status.getErrorReason();
-						break;
-					}
-				}
-				// If constraints OK, check following rules
-				if (newStatus == null) {
-					if (newTaskCode != null && !"".equals(newTaskCode = newTaskCode.trim()) && getModelMgr().getTask(selectedTask.getFullPath(), newTaskCode) != null) {
-						newStatus = "This code is already in use";
-					}
-					else if (newTaskName == null || "".equals(newTaskName.trim())) {
-						newStatus = "Enter a task name";
-					}
-				}
+				newStatus = getNewTaskStatus(selectedTask);
+				
 			} else if (!isLeaf) {
 				newStatus = "You cannot select a container task";
 			} else if (alreadySelectedTaskIds != null
@@ -195,61 +187,85 @@ public class ContributionTaskChooserLogicImpl extends
 			return IConstraintsValidator.OK_STATUS;
 		}
 	}
+	
+	String getNewTaskStatus(Task selectedTask) throws ModelException {
+		// Check constraints
+		for (IConstraintsValidator cv : constraintsValidators) {
+			IStatus status = cv.canCreateSubTaskUnder(selectedTask);
+			if (status.isError()) {
+				return "It's not possible to create a sub task under the selected task :\n" 
+						+ status.getErrorReason();
+			}
+		}
+		// If constraints OK, check following rules
+	
+		if (newTaskCode != null 
+				&& !"".equals(newTaskCode = newTaskCode.trim()) 
+				&& getModelMgr().getTask(selectedTask.getFullPath(), newTaskCode) != null) {
+			return "This code is already in use";
+		} else if (newTaskName == null || "".equals(newTaskName.trim())) {
+			return "Enter a task name";
+		}
+		return null;
+	}
 
 	@Override
 	public void onOkButtonClicked(long taskId) {
 		try {
-			if (!newTaskChecked) {
-				((AbstractContributionTabLogicImpl) getParent()).addTasks(taskId);
-			}
-			else {
-				Task parent = getModelMgr().getTask(taskId);
-				Task newTask = dtoFactory.newTask();
-				newTask.setName(newTaskName.trim());
-				String code = newTaskCode != null ? newTaskCode.trim() : "";
-				if ("".equals(code)) {
-					code = newTask.getName().trim().replaceAll(" ", "").toUpperCase();
-					if (code.length() > 7) {
-						code = code.substring(0, 7);
-					}
-					code = '$' + code;
-				}
-				newTask.setCode(code);
-				getModelMgr().createTask(parent, newTask);
-				
-				// Init task to select list
-				List<Long> selectedTaskIds = new ArrayList<Long>();
-
- 				// Task creation pattern management
-				String patternId = getView().getSelectedTaskCreationPatternId();
-				if (patternId != null) {
-					ITaskCreationPatternHandler handler = taskCreationPatternHandlers.get(patternId);
-					List<Task> createdTasks = handler.handle(getContext(), newTask);
-					for (Task subTask : createdTasks) {
-						long id = subTask.getId();
-						if (!selectedTaskIds.contains(id)) {
-							selectedTaskIds.add(id);
-						}
-					}
-				}
-				// If no task has been selected (which may occur if the creation pattern handler doesn't return
-				// anything), auto select a task
-				if (selectedTaskIds.size() == 0) {
-					Task[] subTasks = getModelMgr().getSubTasks(newTask.getId());
-					selectedTaskIds.add(subTasks.length == 0 ? newTask.getId() : subTasks[0].getId());
-				}
-				// Turn the selection list into an array
-				long[] selectedTaskIdsArray = new long[selectedTaskIds.size()];
-				int i = 0;
-				for (long id : selectedTaskIds) {
-					selectedTaskIdsArray[i++] = id;
-				}
-				// Add task to the contribution tab
-				((AbstractContributionTabLogicImpl) getParent()).addTasks(selectedTaskIdsArray);
-			}
+			long[] selectedIds = !newTaskChecked
+					? new long[] { taskId }
+					: createNewTasks(taskId);
+			((AbstractContributionTabLogicImpl) getParent()).addTasks(selectedIds);
+		
 		} catch (ModelException e) {
 			doThrow(e);
 		}
+	}
+	
+	protected long[] createNewTasks(long taskId) throws ModelException {
+
+		Task parent = getModelMgr().getTask(taskId);
+		Task newTask = dtoFactory.newTask();
+		newTask.setName(newTaskName.trim());
+		String code = newTaskCode != null ? newTaskCode.trim() : "";
+		if ("".equals(code)) {
+			code = newTask.getName().trim().replaceAll(" ", "").toUpperCase();
+			if (code.length() > 7) {
+				code = code.substring(0, 7);
+			}
+			code = '$' + code;
+		}
+		newTask.setCode(code);
+		getModelMgr().createTask(parent, newTask);
+		
+		// Init task to select list
+		List<Long> selectedTaskIds = new ArrayList<Long>();
+
+		// Task creation pattern management
+		String patternId = getView().getSelectedTaskCreationPatternId();
+		if (patternId != null) {
+			ITaskCreationPatternHandler handler = taskCreationPatternHandlers.get(patternId);
+			List<Task> createdTasks = handler.handle(getContext(), newTask);
+			for (Task subTask : createdTasks) {
+				long id = subTask.getId();
+				if (!selectedTaskIds.contains(id)) {
+					selectedTaskIds.add(id);
+				}
+			}
+		}
+		// If no task has been selected (which may occur if the creation pattern handler doesn't return
+		// anything), auto select a task
+		if (selectedTaskIds.isEmpty()) {
+			Task[] subTasks = getModelMgr().getSubTasks(newTask.getId());
+			selectedTaskIds.add(subTasks.length == 0 ? newTask.getId() : subTasks[0].getId());
+		}
+		// Turn the selection list into an array
+		long[] selectedTaskIdsArray = new long[selectedTaskIds.size()];
+		int i = 0;
+		for (long id : selectedTaskIds) {
+			selectedTaskIdsArray[i++] = id;
+		}
+		return selectedTaskIdsArray;
 	}
 
 	@Override

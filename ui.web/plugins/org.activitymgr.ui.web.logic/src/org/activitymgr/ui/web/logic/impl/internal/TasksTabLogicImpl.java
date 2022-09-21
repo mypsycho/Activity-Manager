@@ -20,7 +20,10 @@ public class TasksTabLogicImpl extends AbstractTabLogicImpl<ITasksTabLogic.View>
 	public TasksTabLogicImpl(ITabFolderLogic parent) {
 		super(parent);
 		treeContentCallback = new TaskTreeCellProvider(this, null, false);
-		getView().setTreeContentProviderCallback(wrapLogicForView(treeContentCallback, ITreeContentProviderCallback.class));
+		@SuppressWarnings("unchecked") // no generic with *.class
+		ITreeContentProviderCallback<Long> cpCallback = 
+				wrapLogicForView(treeContentCallback, ITreeContentProviderCallback.class);
+		getView().setTreeContentProviderCallback(cpCallback);
 
 		// Add buttons
 		registerButtons(buttonFactories);

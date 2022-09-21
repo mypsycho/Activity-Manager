@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -43,8 +43,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Tree;
 
-public class TasksChooserTree extends AbstractTableMgr implements
-		ITreeContentProvider {
+public class TasksChooserTree extends AbstractTableMgr
+		implements ITreeContentProvider {
 
 	/** Logger */
 	private static Logger log = Logger.getLogger(TasksChooserTree.class);
@@ -52,7 +52,12 @@ public class TasksChooserTree extends AbstractTableMgr implements
 	/** Constantes associées aux colonnes */
 	public static final int NAME_COLUMN_IDX = 0;
 	public static final int CODE_COLUMN_IDX = 1;
-	private static TableOrTreeColumnsMgr treeColsMgr;
+	private static final TableOrTreeColumnsMgr COLUMNS_MGR =
+			new TableOrTreeColumnsMgr("TasksChooserTree.columns.TASK_"); //$NON-NLS-1$
+	static {
+		COLUMNS_MGR.addColumn("NAME", 200, SWT.LEFT); //$NON-NLS-1$
+		COLUMNS_MGR.addColumn("CODE", 70, SWT.LEFT); //$NON-NLS-1$
+	}
 
 	/** Viewer */
 	private TreeViewer treeViewer;
@@ -65,7 +70,7 @@ public class TasksChooserTree extends AbstractTableMgr implements
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 * @param modelMgr
@@ -93,46 +98,27 @@ public class TasksChooserTree extends AbstractTableMgr implements
 		treeViewer.setLabelProvider(this);
 
 		// Configuration des colonnes
-		treeColsMgr = new TableOrTreeColumnsMgr();
-		treeColsMgr
-				.addColumn(
-						"NAME", Strings.getString("TasksChooserTree.columns.TASK_NAME"), 200, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr
-				.addColumn(
-						"CODE", Strings.getString("TasksChooserTree.columns.TASK_CODE"), 70, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		treeColsMgr.configureTree(treeViewer);
+		COLUMNS_MGR.configureTree(treeViewer);
 
 		// Création d'une racine fictive
 		treeViewer.setInput(ROOT_NODE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java
-	 * .lang.Object)
-	 */
+
+	@Override
 	public Object[] getElements(Object inputElement) {
 		return getChildren(null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.ICellModifier#getValue(java.lang.Object,
-	 * java.lang.String)
-	 */
 	public Object getValue(Object element, String property) {
 		log.debug("ICellModifier.getValue(" + element + ", " + property + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		Task task = (Task) element;
 		String value = null;
-		int propertyIdx = treeColsMgr.getColumnIndex(property);
-		switch (propertyIdx) {
-		case (NAME_COLUMN_IDX):
+		switch (COLUMNS_MGR.getColumnIndex(property)) {
+		case NAME_COLUMN_IDX:
 			value = task.getName();
 			break;
-		case (CODE_COLUMN_IDX):
+		case CODE_COLUMN_IDX:
 			value = task.getCode();
 			break;
 		default:
@@ -142,67 +128,34 @@ public class TasksChooserTree extends AbstractTableMgr implements
 		return value;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.
-	 * Object)
-	 */
+
+	@Override
 	public boolean hasChildren(Object element) {
 		log.debug("ITreeContentProvider.getChildren(" + element + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		Task task = (Task) element;
 		return modelMgr.getSubTasksCount(task.getId()) > 0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.
-	 * Object)
-	 */
+	@Override
 	public Object[] getChildren(Object parentElement) {
 		log.debug("ITreeContentProvider.getChildren(" + parentElement + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final Task parentTask = (Task) parentElement;
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				return modelMgr.getSubTasks(parentTask != null ? parentTask.getId() : null);
-			}
-		};
-		Object[] result = (Object[]) safeRunner.run(parent.getShell(),
-				new Object[] {});
-		return result;
+		return SafeRunner.exec(parent.getShell(), new Object[0],
+				()-> modelMgr.getSubTasks(parentTask != null ? parentTask.getId() : null));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITreeContentProvider#getParent(java.lang.Object
-	 * )
-	 */
+	@Override
 	public Object getParent(Object element) {
 		log.debug("ITreeContentProvider.getParent(" + element + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		final Task task = (Task) element;
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				Task parentTask = modelMgr.getParentTask(task);
-				return parentTask == null ? treeViewer.getInput() : parentTask;
-			}
-		};
-		// Exécution du traitement
-		Object result = (Object) safeRunner.run(parent.getShell());
-		return result;
+
+		return SafeRunner.exec(parent.getShell(), null, () -> {
+			Task parentTask = modelMgr.getParentTask(task);
+			return parentTask == null ? treeViewer.getInput() : parentTask;
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang
-	 * .Object, int)
-	 */
+	@Override
 	public String getColumnText(Object element, int columnIndex) {
 		log.debug("ITableLabelProvider.getColumnText(" + element + ", " + columnIndex + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		Task task = (Task) element;
@@ -223,7 +176,7 @@ public class TasksChooserTree extends AbstractTableMgr implements
 
 	/**
 	 * Retourne le viewer associé à l'arbre.
-	 * 
+	 *
 	 * @return le viewer associé à l'arbre.
 	 */
 	public TreeViewer getTreeViewer() {

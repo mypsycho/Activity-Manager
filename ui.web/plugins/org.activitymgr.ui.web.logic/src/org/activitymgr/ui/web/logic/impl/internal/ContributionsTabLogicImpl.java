@@ -121,12 +121,10 @@ public class ContributionsTabLogicImpl extends AbstractContributionTabLogicImpl 
 	
 	@Override
 	public void onDateChange(Calendar value) {
-		try {
+		invoke(() -> {
 			contributionsProvider.changeFirstDayOfWeek(value);
 			updateUI();
-		} catch (ModelException e) {
-			throw new IllegalStateException(e);
-		}
+		});
 	}
 
 	private void updateUI() {
@@ -152,18 +150,16 @@ public class ContributionsTabLogicImpl extends AbstractContributionTabLogicImpl 
 	}
 
 	private void changeFirstDayOfWeekAndUpdateView(int amountType, int amount) {
-		try {
+		invoke(() -> {
 			contributionsProvider.changeFirstDayOfWeek(amountType, amount);
 			updateUI();
-		} catch (ModelException e) {
-			throw new IllegalStateException(e);
-		}
+		});
 	}
 
 
 	@Override
 	public void addTasks(long... taskIds) {
-		try {
+		invoke(() -> {
 			if (taskIds.length > 0) {
 				lastSelectedTaskId = taskIds[0];
 				for (long taskId : taskIds) {
@@ -180,10 +176,7 @@ public class ContributionsTabLogicImpl extends AbstractContributionTabLogicImpl 
 					}
 				}
 			}
-		}
-		catch (ModelException e) {
-			doThrow(e);
-		}
+		});
 	}
 
 	@Override
@@ -193,14 +186,11 @@ public class ContributionsTabLogicImpl extends AbstractContributionTabLogicImpl 
 
 	@Override
 	public void onSelectedCollaboratorChanged(long collaboratorId) {
-		try {
+		invoke(() -> {
 			contributionsProvider.changeContributor(getModelMgr().getCollaborator(collaboratorId));
 			getView().reloadContributionTableItems();
 			fireCollabratorOrWeekChangedEvent();
-		}
-		catch (ModelException e) {
-			doThrow(e);
-		}
+		});
 	}
 
 	@Override

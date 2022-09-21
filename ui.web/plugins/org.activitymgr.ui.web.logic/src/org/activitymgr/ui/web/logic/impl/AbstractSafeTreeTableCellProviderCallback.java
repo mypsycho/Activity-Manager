@@ -4,7 +4,9 @@ import java.util.Collection;
 
 import org.activitymgr.ui.web.logic.ITreeContentProviderCallback;
 
-public abstract class AbstractSafeTreeTableCellProviderCallback<ITEM_ID_TYPE> extends AbstractSafeTableCellProviderCallback<ITEM_ID_TYPE> implements ITreeContentProviderCallback<ITEM_ID_TYPE> {
+public abstract class AbstractSafeTreeTableCellProviderCallback<ITEM_ID_TYPE> 
+		extends AbstractSafeTableCellProviderCallback<ITEM_ID_TYPE> 
+		implements ITreeContentProviderCallback<ITEM_ID_TYPE> {
 	
 	public AbstractSafeTreeTableCellProviderCallback(AbstractLogicImpl<?> source) {
 		super(source);

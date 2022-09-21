@@ -39,7 +39,10 @@ public abstract class AbstractTaskChooserLogicImpl<VIEW extends ITaskChooserLogi
 		}
 		// Register the tree content provider
 		treeContentProvider = new TaskTreeCellProvider(this, filter, true);
-		getView().setTasksTreeProviderCallback(wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class));
+		
+		@SuppressWarnings("unchecked")
+		ITreeContentProviderCallback<Long> cpCallback = wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
+		getView().setTasksTreeProviderCallback(cpCallback);
 		if (!"".equals(filter)) {
 			Task task = getModelMgr().getFirstTaskMatching(filter);
 			if (task != null) {
@@ -65,18 +68,13 @@ public abstract class AbstractTaskChooserLogicImpl<VIEW extends ITaskChooserLogi
 	}
 
 	protected final void updateUI() {
-		try {
-			getView().setStatus("");
-			getView().setOkButtonEnabled(false);
+		invoke(() -> {
 			IStatus status = checkDialogRules();
-			if (!status.isError()) {
-				getView().setOkButtonEnabled(true);
-			} else {
-				getView().setStatus(status.getErrorReason());
-			}
-		} catch (ModelException e) {
-			doThrow(e);
-		}
+			getView().setOkButtonEnabled(!status.isError());
+			getView().setStatus(status.isError()
+					? status.getErrorReason() 
+					: "");
+		});
 	}
 
 	protected IStatus checkDialogRules() throws ModelException {

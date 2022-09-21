@@ -13,8 +13,8 @@ public interface IContributionTaskChooserLogic extends
 
 	void onNewTaskCodeChanged(String newCode);
 
-	public interface View extends
-			ITaskChooserLogic.View<IContributionTaskChooserLogic> {
+	public interface View 
+			extends ITaskChooserLogic.View<IContributionTaskChooserLogic> {
 
 		public void setTasksTreeProviderCallback(
 				ITreeContentProviderCallback<Long> callback);
