@@ -53,11 +53,6 @@ public class CoreDAOImpl extends AbstractDAOImpl implements ICoreDAO {
 	/** Logger */
 	private static Logger log = Logger.getLogger(CoreDAOImpl.class);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IDbMgr#tablesExist()
-	 */
 	@Override
 	public boolean tablesExist() throws DAOException {
 		boolean tablesExist = true;
@@ -68,44 +63,20 @@ public class CoreDAOImpl extends AbstractDAOImpl implements ICoreDAO {
 		return tablesExist;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IDbMgr#tableExists(java.lang.String)
-	 */
 	@Override
 	public boolean tableExists(String tableName) throws DAOException {
-		ResultSet rs = null;
-		try {
-			// Récupération de la connexion
-			Connection con = tx();
+		// Récupération de la connexion
+		Connection con = tx();
 
-			// Recherche de la table
-			rs = con
-					.getMetaData()
-					.getTables(null, null, tableName,
-					new String[] { "TABLE" }); //$NON-NLS-1$
-
-			// Récupération du résultat
-			boolean exists = rs.next();
-			rs.close();
-
-			// Retour du résultat
-			return exists;
+		String[] metatypes = { "TABLE" };
+		// Recherche de la table
+		try(ResultSet rs = con.getMetaData().getTables(null, null, tableName, metatypes)) {
+			return rs.next();
 		} catch (SQLException e) {
-			log.info("Incident SQL", e); //$NON-NLS-1$
-			throw new DAOException(Strings.getString(
-					"DbMgr.errors.SQL_TABLES_DETECTION_FAILURE", tableName), e); //$NON-NLS-1$ //$NON-NLS-2$
-		} finally {
-			lastAttemptClose(rs);
+			return critical(e, "SQL_TABLES_DETECTION_FAILURE");  //$NON-NLS-1$
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IDbMgr#createTables()
-	 */
 	@Override
 	public void createTables() throws DAOException {
 		// Lecture du fichier SQL de création de la BDD
@@ -114,9 +85,9 @@ public class CoreDAOImpl extends AbstractDAOImpl implements ICoreDAO {
 		executeScript(in);
 
 		// Test de l'existence des tables
-		if (!tablesExist())
-			throw new DAOException(
-					Strings.getString("DbMgr.errors.SQL_TABLE_CREATION_FAILURE"), null); //$NON-NLS-1$
+		if (!tablesExist()) {
+			critical(null, "SQL_TABLE_CREATION_FAILURE"); //$NON-NLS-1$
+		}
 	}
 
 	@Override
@@ -128,11 +99,6 @@ public class CoreDAOImpl extends AbstractDAOImpl implements ICoreDAO {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IDbMgr#executeScript(java.io.InputStream)
-	 */
 	@Override
 	public void executeScript(InputStream scriptContent) throws DAOException {
 		try {
@@ -142,28 +108,25 @@ public class CoreDAOImpl extends AbstractDAOImpl implements ICoreDAO {
 			// Execute the script
 			executeScript(sql);
 		} catch (IOException e) {
-			log.info("I/O error while loading table creation SQL script.", e); //$NON-NLS-1$
-			throw new DAOException(
-					Strings.getString("DbMgr.errors.SQL_SCRIPT_LOAD_FAILURE"), null); //$NON-NLS-1$
+			critical(e, "SQL_SCRIPT_LOAD_FAILURE"); //$NON-NLS-1$
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IDbMgr#executeScript(java.lang.String)
-	 */
 	@Override
 	public void executeScript(String scriptContent) throws DAOException {
-		Statement stmt = null;
-		try {
+
+		try(Statement stmt = tx().createStatement()) {
 			// Découpage et exécution du batch
-			stmt = tx().createStatement();
+
 			LineNumberReader lnr = new LineNumberReader(new StringReader(
 					scriptContent));
 			StringBuffer buf = new StringBuffer();
 			boolean proceed = true;
-			do {
+			do { 
+				// XXX Suspicious 
+				//  :: last statement is not executed if it does end with ";"
+				//  :: No escape for ';' character
+				
 				String line = null;
 				// On ne lit dans le flux que si la ligne courante n'est pas
 				// encore totalement traitée
@@ -181,9 +144,7 @@ public class CoreDAOImpl extends AbstractDAOImpl implements ICoreDAO {
 				// Si le flux est vide, on sort de la boucle
 				if (line == null) {
 					proceed = false;
-				}
-				// Sinon on traite la ligne
-				else {
+				} else { // Sinon on traite la ligne
 					line = line.trim();
 					// Si la ligne est un commentaire on l'ignore
 					if (line.startsWith("--")) { //$NON-NLS-1$
@@ -213,14 +174,9 @@ public class CoreDAOImpl extends AbstractDAOImpl implements ICoreDAO {
 
 			} while (proceed);
 
-			// Fermeture du statement
-			stmt.close();
-			stmt = null;
+
 		} catch (SQLException e) {
-			log.info("Incident SQL", e); //$NON-NLS-1$
-			throw new DAOException("Database table creation failure", e); //$NON-NLS-1$
-		} finally {
-			lastAttemptToClose(stmt);
+			 critical(e);
 		}
 	}
 

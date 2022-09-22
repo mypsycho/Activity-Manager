@@ -5,63 +5,46 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import org.activitymgr.core.dao.AbstractORMDAOImpl;
 import org.activitymgr.core.dao.DAOException;
 import org.activitymgr.core.dao.ICollaboratorDAO;
 import org.activitymgr.core.dto.Collaborator;
 import org.activitymgr.core.dto.Task;
-import org.activitymgr.core.util.Strings;
 import org.apache.log4j.Logger;
 
 public class CollaboratorDAOImpl extends AbstractORMDAOImpl<Collaborator> implements
 		ICollaboratorDAO {
 
-	/** Logger */
-	private static Logger log = Logger.getLogger(CollaboratorDAOImpl.class);
-
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.IDbMgr#getContributors(org.activitymgr.core.beans.Task, java.util.Calendar, java.util.Calendar)
-	 */
 	@Override
 	public Collaborator[] getContributors(Task task, Calendar fromDate,
 			Calendar toDate) throws DAOException {
-		PreparedStatement pStmt = null;
-		ResultSet rs = null;
-		try {
-			// Préparation de la requête
-			StringBuffer request = new StringBuffer();
-			request.append("select distinct (ctb_contributor), ");
-			request.append(getColumnNamesRequestFragment(null));
-			request.append(" from CONTRIBUTION, COLLABORATOR");
-			if (task != null) {
-				request.append(", TASK");
-			}
-			request.append("  where ctb_contributor=clb_id");
-			pStmt = buildIntervalRequest(request, null, task, fromDate,
-					toDate, false, "clb_login");
+		// Préparation de la requête
+		StringBuilder request = new StringBuilder("select distinct (ctb_contributor), ");
+		request.append(getColumnNamesRequestFragment(null));
+		request.append(" from CONTRIBUTION, COLLABORATOR");
+		if (task != null) {
+			request.append(", TASK");
+		}
+		request.append(" where ctb_contributor=clb_id");
+		
+		try(PreparedStatement pStmt = 
+				buildIntervalRequest(request, null /*no user*/, 
+						task, fromDate, toDate, false, "clb_login")) {
 
-			// Exécution de la requête
-			rs = pStmt.executeQuery();
+			ResultSet rs = pStmt.executeQuery();
 
 			// Recherche des sous-taches
-			ArrayList<Collaborator> list = new ArrayList<Collaborator>();
+			List<Collaborator> list = new ArrayList<>();
 			while (rs.next()) {
 				list.add(read(rs, 2));
 			}
 
-			// Fermeture du ResultSet
-			pStmt.close();
-			pStmt = null;
-
 			// Retour du résultat
-			return (Collaborator[]) list.toArray(new Collaborator[list.size()]);
+			return list.toArray(Collaborator[]::new);
 		} catch (SQLException e) {
-			log.info("Incident SQL", e); //$NON-NLS-1$
-			throw new DAOException(
-					Strings.getString("DbMgr.errors.TASK_SELECTION_BY_COLLABORATOR_FAILURE"), e); //$NON-NLS-1$
-		} finally {
-			lastAttemptToClose(pStmt);
+			return critical(e, "TASK_SELECTION_BY_COLLABORATOR_FAILURE"); //$NON-NLS-1$
 		}
 	}
 

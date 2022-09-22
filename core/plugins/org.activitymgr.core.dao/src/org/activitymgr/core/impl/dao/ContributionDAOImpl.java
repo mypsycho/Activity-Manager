@@ -117,14 +117,7 @@ public class ContributionDAOImpl extends AbstractORMDAOImpl<Contribution> implem
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IDbMgr#getContributionsCount(org.activitymgr.core
-	 * .beans.Collaborator, org.activitymgr.core.beans.Task, java.util.Calendar,
-	 * java.util.Calendar)
-	 */
+
 	@Override
 	public int getContributionsCount(Collaborator contributor, Task task,
 			Calendar fromDate, Calendar toDate) throws DAOException {
@@ -170,17 +163,16 @@ public class ContributionDAOImpl extends AbstractORMDAOImpl<Contribution> implem
 			IntervalRequestHelper interval = new IntervalRequestHelper(fromDate, toDate);
 			
 			// Prepare the request
-			StringBuffer request = new StringBuffer();
-			request.append("select pt.tsk_id, pt.tsk_number, sum(ctb_duration), count(ctb_duration) ");
-			request.append("from TASK pt left join (");
-			{
-				request.append("TASK lt left join CONTRIBUTION on (ctb_task=lt.tsk_id");
-				if (interval.hasIntervalCriteria()) {
-					request.append(" and ");
-					interval.appendIntervalCriteria(request);
-				}
-				request.append(")");
+			StringBuilder request = new StringBuilder(
+					"select pt.tsk_id, pt.tsk_number, sum(ctb_duration), count(ctb_duration) ");
+			request.append("from TASK");
+			request.append(" pt left join (TASK lt left join CONTRIBUTION on (ctb_task=lt.tsk_id");
+			if (interval.hasIntervalCriteria()) {
+				request.append(" and ");
+				interval.appendIntervalCriteria(request);
 			}
+			request.append(")");
+			
 			request.append(") on (pt.tsk_id=lt.tsk_id or lt.tsk_path like concat(pt.tsk_path, pt.tsk_number, '%'))");
 			request.append(" where ");
 			if (taskId != null) {
@@ -256,9 +248,9 @@ public class ContributionDAOImpl extends AbstractORMDAOImpl<Contribution> implem
 			Collaborator contributor, Calendar fromDate, Calendar toDate,
 			String fieldsToSelect, String orderBy) throws SQLException {
 		// Préparation de la requête
-		StringBuffer request = new StringBuffer("select ")
-				.append(fieldsToSelect);
-		request.append(" from CONTRIBUTION");
+		StringBuilder request = new StringBuilder("select ")
+				.append(fieldsToSelect)
+				.append(" from CONTRIBUTION");
 		if (task != null) {
 			request.append(", TASK");
 		}
@@ -266,35 +258,25 @@ public class ContributionDAOImpl extends AbstractORMDAOImpl<Contribution> implem
 				toDate, true, orderBy);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.dao.IContributionDAO#getContributionYears()
-	 */
+
 	@Override
 	public Collection<Integer> getContributionYears() {
-		Collection<Integer> years = new ArrayList<Integer>();
-		PreparedStatement pStmt = null;
-		ResultSet rs = null;
-		try {
-			// Build the SQL request
-			pStmt = tx().prepareStatement("select distinct(ctb_year) as year from CONTRIBUTION order by year");
+		
+		try(PreparedStatement pStmt = 
+				tx().prepareStatement("select distinct(ctb_year) as year from CONTRIBUTION order by year")) {
+
 
 			// Exécution de le requête et extraction du résultat
-			rs = pStmt.executeQuery();
+			ResultSet rs = pStmt.executeQuery();
+			
+			Collection<Integer> years = new ArrayList<Integer>();
 			while (rs.next()) {
 				years.add(rs.getInt(1));
 			}
-			pStmt.close();
-			pStmt = null;
 
-			// Retour du résultat
 			return years;
 		} catch (SQLException e) {
-			log.info("Incident SQL", e); //$NON-NLS-1$
-			throw new DAOException(
-					"Erreur lors de la récupération des années de contributions",
-					e);
-		} finally {
-			lastAttemptToClose(pStmt);
+			return critical(e);
 		}
 	}
 	

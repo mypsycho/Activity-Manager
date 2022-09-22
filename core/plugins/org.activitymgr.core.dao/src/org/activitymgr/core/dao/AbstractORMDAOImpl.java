@@ -192,7 +192,7 @@ public abstract class AbstractORMDAOImpl<TYPE> extends AbstractDAOImpl implement
 	 * @throws SQLException
 	 *             thrown if a SQL exception occurs.
 	 */
-	protected PreparedStatement buildIntervalRequest(StringBuffer request,
+	protected PreparedStatement buildIntervalRequest(StringBuilder request,
 			Collaborator contributor, Task task, Calendar fromDate,
 			Calendar toDate, 
 			boolean insertWhereClause, 
