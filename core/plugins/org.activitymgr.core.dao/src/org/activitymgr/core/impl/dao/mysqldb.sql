@@ -41,7 +41,7 @@ create table TASK (
 ) engine=innodb;
 
 -- ------------------------------------------------------------
--- Dur�es
+-- Durees
 -- ------------------------------------------------------------
 create table DURATION (
 	DUR_ID         integer(3) not null,
@@ -50,7 +50,7 @@ create table DURATION (
 ) engine=innodb;
 
 -- ------------------------------------------------------------
--- Taches
+-- Contributions
 -- ------------------------------------------------------------
 create table CONTRIBUTION (
 	CTB_YEAR          integer(4) not null,
