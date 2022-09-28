@@ -344,7 +344,7 @@ public class ModelMgrImpl implements IModelMgr {
 		// Vérification du login
 		verify("NON_UNIQUE_COLLABORATOR_LOGIN", //$NON-NLS-1$
 				existing == null || existing.equals(collaborator),
-				existing.getLogin());
+				collaborator.getLogin());
 	}
 
 	@Override
