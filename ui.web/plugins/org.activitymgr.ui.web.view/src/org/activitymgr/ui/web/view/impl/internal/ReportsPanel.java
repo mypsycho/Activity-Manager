@@ -84,9 +84,13 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		reportButtonsLayout = new HorizontalLayout();
 		reportButtonsLayout.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
 		addComponent(reportButtonsLayout);
+		reportButtonsLayout.setWidth(100, Unit.PERCENTAGE);
+		
 
 		setRowExpandRatio(15, 1);
-		setComponentAlignment(reportButtonsLayout, Alignment.BOTTOM_LEFT);
+		Label leftAlign = new Label("");
+		reportButtonsLayout.addComponent(leftAlign);
+		reportButtonsLayout.setExpandRatio(leftAlign, 100);
 
 		createStatusPanel();
 	}
@@ -283,7 +287,7 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 
 	@Override
 	public void addReportButton(IButtonLogic.View<?> view) {
-		reportButtonsLayout.addComponent((Button) view, 0);
+		reportButtonsLayout.addComponent((Button) view);
 	}
 
 	private void substituteBodyComponent(Component componentToSubstitute,

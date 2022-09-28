@@ -2,6 +2,7 @@ package org.activitymgr.ui.web.logic.impl.internal;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -17,6 +18,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 import org.activitymgr.core.dto.Collaborator;
 import org.activitymgr.core.dto.IDTOFactory;
@@ -25,7 +28,9 @@ import org.activitymgr.core.dto.report.ReportIntervalType;
 import org.activitymgr.core.model.ModelException;
 import org.activitymgr.core.util.DateHelper;
 import org.activitymgr.core.util.StringHelper;
+import org.activitymgr.ui.web.logic.IDownloadButtonLogic;
 import org.activitymgr.ui.web.logic.IReportsLogic;
+import org.activitymgr.ui.web.logic.IStandardButtonLogic;
 import org.activitymgr.ui.web.logic.impl.AbstractLogicImpl;
 import org.activitymgr.ui.web.logic.impl.AbstractSafeDownloadButtonLogicImpl;
 import org.activitymgr.ui.web.logic.impl.AbstractSafeStandardButtonLogicImpl;
@@ -144,13 +149,13 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 	
 	private boolean onlyKeepTaskWithContributions;
 
-	private AbstractSafeDownloadButtonLogicImpl downloadReportButtonLogic;
+	private IDownloadButtonLogic download;
 
 	private boolean advancedMode;
 
-	private AbstractSafeStandardButtonLogicImpl showPreviewDialogButtonLogic;
+	private IStandardButtonLogic dialogPreview;
 
-	private AbstractSafeStandardButtonLogicImpl showPreviewFullscreenButtonLogic;
+	private IStandardButtonLogic fullPreview;
 
 	private List<DTOAttribute> attributes;
 
@@ -200,91 +205,83 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 			getView().setCollaboratorsSelectionView(
 					collaboratorsSelectionLogic.getView());
 		}
-		try {
-			/*
-			 * Attributes twin select
-			 */
-			attributes = new ArrayList<DTOAttribute>();
-			appendDTOAttributes(attributes, dtoFactory.newTask(), TASK);
-			appendDTOAttributes(attributes, dtoFactory.newCollaborator(),
-					COLLABORATOR);
-			Collections.sort(attributes, new Comparator<DTOAttribute>() {
-				@Override
-				public int compare(DTOAttribute o1, DTOAttribute o2) {
-					return o1.getLabel().compareTo(o2.getLabel());
-				}
-			});
-			attributesMap = new HashMap<String, DTOAttribute>();
-			for (DTOAttribute att : attributes) {
-				attributesMap.put(att.getId(), att);
-			}
-			columnsSelectionLogic = new AbstractSafeTwinSelectFieldLogic<DTOAttribute>(
-					this, true, DTO_ATTRIBUTE_INFOS_PROVIDER,
-					attributes.toArray(new DTOAttribute[attributes.size()])) {
-				@Override
-				protected void unsafeOnValueChanged(Collection<String> newValue)
-						throws Exception {
-					updateUI();
-				}
-			};
-			if (advancedMode) {
-				getView().setColumnSelectionView(
-						columnsSelectionLogic.getView());
-			}
 
-		} catch (ReflectiveOperationException e) {
-			throw new IllegalStateException(e);
+		/*
+		 * Attributes twin select
+		 */
+		attributes = new ArrayList<DTOAttribute>();
+		appendDTOAttributes(attributes, dtoFactory.newTask(), TASK);
+		appendDTOAttributes(attributes, dtoFactory.newCollaborator(), COLLABORATOR);
+		Collections.sort(attributes, Comparator.comparing(it -> it.getLabel()));
+
+		attributesMap = new HashMap<String, DTOAttribute>();
+		for (DTOAttribute att : attributes) {
+			attributesMap.put(att.getId(), att);
 		}
-		getView().addReportButton(
-				new AbstractSafeStandardButtonLogicImpl(this, "Reset", null,
-						null) {
-					@Override
-					protected void unsafeOnClick() throws Exception {
-						loadFromJson(defaultConfigurationAsJson);
-					}
-
-				}.getView());
-		showPreviewFullscreenButtonLogic = new AbstractSafeStandardButtonLogicImpl(
-				this, "Preview (page)", null, null) {
+		columnsSelectionLogic = new AbstractSafeTwinSelectFieldLogic<DTOAttribute>(
+				this, true, DTO_ATTRIBUTE_INFOS_PROVIDER,
+				attributes.toArray(DTOAttribute[]::new)) {
 			@Override
-			protected void unsafeOnClick() throws Exception {
-				onShowPreviewFullscreenButtonClicked();
+			protected void unsafeOnValueChanged(Collection<String> newValue) throws Exception {
+				updateUI();
 			}
 		};
-		getView().addReportButton(showPreviewFullscreenButtonLogic.getView());
-		showPreviewDialogButtonLogic = new AbstractSafeStandardButtonLogicImpl(
-				this, "Preview (dialog)", null, null) {
-			@Override
-			protected void unsafeOnClick() throws Exception {
-				onShowPreviewDialogButtonClicked();
-			}
-		};
-		getView().addReportButton(
-				showPreviewDialogButtonLogic.getView());
-		downloadReportButtonLogic = new AbstractSafeDownloadButtonLogicImpl(
-				this, "Build report",
-				null, null) {
-			@Override
-			protected byte[] unsafeGetContent() throws Exception {
-				Workbook report = buildReport(false);
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				report.write(out);
-				return out.toByteArray();
-			}
+		if (advancedMode) {
+			getView().setColumnSelectionView(columnsSelectionLogic.getView());
+		}
 
-			@Override
-			protected String unsafeGetFileName() throws Exception {
-				SimpleDateFormat sdf = new SimpleDateFormat(
-						"yyyyMMdd-HHmmss-SSS");
-				return "am-report-" + sdf.format(new Date()) + ".xls";
-			}
+		
+		IStandardButtonLogic reset = createReportButton("Reset", 
+				() -> loadFromJson(defaultConfigurationAsJson));
 
-		};
-		getView().addReportButton(
-				downloadReportButtonLogic.getView());
+		fullPreview = createReportButton("Preview (page)", 
+				() -> showPreview(true));
+		dialogPreview = createReportButton("Preview (dialog)", 
+				() -> showPreview(false));
+		
+		download = createFileReportButton("Build report",
+				out -> buildReport(false).write(out),
+				() -> "am-report-" + new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date()) + ".xls");
+		
+		Stream.of(
+			download, 
+			dialogPreview, 
+			fullPreview, 
+			reset)
+		.forEach(it -> getView().addReportButton(it.getView()));
+
+		
+		
 		restoreDefaultValues();
 	}
 
+	private IStandardButtonLogic createReportButton(String label, Exec onClick) {
+		return new AbstractSafeStandardButtonLogicImpl(
+				this, label, null, null) {
+			@Override
+			protected void unsafeOnClick() throws Exception {
+				onClick.run();
+			}
+		};
+	}
+	
+	private IDownloadButtonLogic createFileReportButton(String label, ContextExec<OutputStream> task, Callable<String> filename) {
+		return new AbstractSafeDownloadButtonLogicImpl(
+				this, label, null, null) {
+			@Override
+			protected byte[] unsafeGetContent() throws Exception {
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				task.accept(out);
+				return out.toByteArray();
+			}
+			@Override
+			protected String unsafeGetFileName() throws Exception {
+				return filename.call();
+			}
+		};
+	}
+
+	
 	private void restoreDefaultValues() {
 		intervalType = ReportIntervalType.MONTH;
 		intervalBoundsMode = ReportIntervalBoundsMode.AUTOMATIC;
@@ -312,17 +309,21 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 	}
 
 	private static void appendDTOAttributes(List<DTOAttribute> attributes,
-			Object dto, String dtoLabel) throws ReflectiveOperationException {
-		for (Object property : BeanUtils.describe(dto).keySet()) {
-			if (!"class".equals(property)) {
-				DTOAttribute att = new DTOAttribute(dtoLabel + "." + property,
-						StringHelper.camelCaseToPhrase(String.valueOf(property))
-								+ " ("
-								+ dtoLabel + ")");
-				if (!DTO_ATTRIBUTE_IDS_BLACKLIST.contains(att.getId())) {
-					attributes.add(att);
+			Object dto, String dtoLabel) {
+		try {
+			for (Object property : BeanUtils.describe(dto).keySet()) {
+				if (!"class".equals(property)) {
+					DTOAttribute att = new DTOAttribute(dtoLabel + "." + property,
+							StringHelper.camelCaseToPhrase(String.valueOf(property))
+									+ " ("
+									+ dtoLabel + ")");
+					if (!DTO_ATTRIBUTE_IDS_BLACKLIST.contains(att.getId())) {
+						attributes.add(att);
+					}
 				}
 			}
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalStateException(e);
 		}
 	}
 
@@ -435,17 +436,17 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 		end.add(Calendar.DATE, -1);
 	}
 
-	private void onShowPreviewFullscreenButtonClicked() {
+	private void showPreview(boolean full) {
 		String url = buildRestServiceURL();
-		getRoot().getView().openExternalUrl(url);
+		if (full) {
+			getRoot().getView().openExternalUrl(url);
+		} else {
+			ExternalContentDialogLogicImpl popup = new ExternalContentDialogLogicImpl(
+					this, "Preview", url);
+			getRoot().getView().openWindow(popup.getView());
+		}
 	}
 
-	private void onShowPreviewDialogButtonClicked() {
-		String url = buildRestServiceURL();
-		ExternalContentDialogLogicImpl popup = new ExternalContentDialogLogicImpl(
-				this, "Preview", url);
-		getRoot().getView().openWindow(popup.getView());
-	}
 
 	private String buildRestServiceURL() {
 		String url = null;
@@ -695,9 +696,9 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 	}
 
 	private void setReportButtonsEnabled(boolean enabled) {
-		downloadReportButtonLogic.getView().setEnabled(enabled);
-		showPreviewDialogButtonLogic.getView().setEnabled(enabled);
-		showPreviewFullscreenButtonLogic.getView().setEnabled(enabled);
+		download.getView().setEnabled(enabled);
+		dialogPreview.getView().setEnabled(enabled);
+		fullPreview.getView().setEnabled(enabled);
 	}
 
 	private Workbook buildReport(boolean dryRun) throws ModelException {

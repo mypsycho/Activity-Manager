@@ -41,7 +41,25 @@ public interface CriticalService {
 	 * Interface supporting Exception.
 	 */
 	public interface Exec {
+	    /**
+	     * Task to perform.
+	     * 
+	     * @throws Exception to handle
+	     */
 	    void run() throws Exception;
+	}
+	
+	/**
+	 * Interface supporting Exception.
+	 */
+	public interface ContextExec<T> {
+	    /**
+	     * Task to perform.
+	     * 
+	     * @param param context
+	     * @throws Exception to handle
+	     */
+	    void accept(T param) throws Exception;
 	}
 	
 
