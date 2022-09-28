@@ -15,7 +15,7 @@ import org.activitymgr.ui.web.logic.impl.CollaboratorsCellLogicFatory;
  */
 public interface ICollaboratorsCellLogicFactory extends ICellLogicFactory {
 
-	String IS_ACTIVE_PROPERTY_NAME_ID = "IS_ACTIVE";
+	String IS_ACTIVE_PROPERTY_NAME_ID = "ACTIVE";
 	String LOGIN_PROPERTY_ID = "LOGIN";
 	String FIRST_PROPERTY_NAME_ID = "FIRST_NAME";
 	String LAST_PROPERTY_NAME_ID = "LAST_NAME";

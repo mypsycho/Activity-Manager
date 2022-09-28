@@ -18,6 +18,7 @@ import org.activitymgr.core.model.IModelMgr;
 import org.activitymgr.core.model.ModelException;
 import org.activitymgr.core.util.DateHelper;
 import org.activitymgr.core.util.StringHelper;
+import org.activitymgr.ui.web.logic.Align;
 import org.activitymgr.ui.web.logic.ILabelLogic;
 import org.activitymgr.ui.web.logic.ILogic;
 import org.activitymgr.ui.web.logic.ILogic.IView;
@@ -91,6 +92,11 @@ class ContributionsListTableCellProvider extends AbstractSafeTableCellProviderCa
 		return cellLogicFactory.getPropertyIds();
 	}
 
+	@Override
+	protected Align unsafeGetColumnAlign(String propertyId) {
+		return cellLogicFactory.getColumnAlign(propertyId);
+	}
+	
 	@Override
 	protected List<Long> unsafeGetRootElements() {
 		return taskIds;

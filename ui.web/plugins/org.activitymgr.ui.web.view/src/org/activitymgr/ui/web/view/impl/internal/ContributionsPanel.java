@@ -157,8 +157,7 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 	}
 
 	
-	private void registerBoundButton(Button button, String caption, 
-			Runnable task,
+	private void registerBoundButton(Button button, String caption, Runnable task,
 			int keyCode, int... modifierKeys) {
 		if (button != null) {
 			button.addClickListener(evt -> task.run());
@@ -212,26 +211,25 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 	}
 
 	@Override
-	public void setContributionsProvider(
-			final ITableCellProviderCallback<Long> contributionsProvider) {
-		this.contributionsProvider = contributionsProvider;
-		TableDatasource<Long> dataSource = new TableDatasource<Long>(getResourceCache(), contributionsProvider);
+	public void setContributionsProvider(final ITableCellProviderCallback<Long> provider) {
+		this.contributionsProvider = provider;
+		TableDatasource<Long> dataSource = new TableDatasource<Long>(getResourceCache(), provider);
 		contributionsTable.setContainerDataSource(dataSource);
+		
+		ColumnGenerator colGen = (source, itemId, propertyId1) -> 
+		provider.getCell((Long) itemId, (String) propertyId1);
 		for (String propertyId : dataSource.getContainerPropertyIds()) {
-			contributionsTable.addGeneratedColumn(propertyId, new Table.ColumnGenerator() {
-				@Override
-				public Object generateCell(Table source, Object itemId, Object propertyId) {
-					return contributionsProvider.getCell((Long) itemId, (String) propertyId);
-				}
-			});
-			int columnWidth = contributionsProvider.getColumnWidth(propertyId);
+			contributionsTable.addGeneratedColumn(propertyId, colGen);
+			
+			int columnWidth = provider.getColumnWidth(propertyId);
 			if (columnWidth > 0) {
 				contributionsTable.setColumnWidth(propertyId, columnWidth);
 			} else {
 				contributionsTable.setColumnExpandRatio(propertyId, -columnWidth/100.f);
 			}
 			
-			contributionsTable.setColumnAlignment(propertyId, AlignHelper.toVaadinAlign(contributionsProvider.getColumnAlign(propertyId)));
+			contributionsTable.setColumnAlignment(propertyId, 
+					AlignHelper.toVaadinAlign(provider.getColumnAlign(propertyId)));
 		}
 	}
 	
@@ -267,7 +265,8 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 			collaboratorsTable.addGeneratedColumn(propertyId, colGen);
 			int columnWidth = collaboratorsProvider.getColumnWidth(propertyId);
 			collaboratorsTable.setColumnExpandRatio(propertyId, columnWidth);
-			collaboratorsTable.setColumnAlignment(propertyId, AlignHelper.toVaadinAlign(collaboratorsProvider.getColumnAlign(propertyId)));
+			collaboratorsTable.setColumnAlignment(propertyId, 
+					AlignHelper.toVaadinAlign(collaboratorsProvider.getColumnAlign(propertyId)));
 		}
 	}
 

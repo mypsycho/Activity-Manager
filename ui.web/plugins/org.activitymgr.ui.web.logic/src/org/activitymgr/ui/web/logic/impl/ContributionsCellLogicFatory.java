@@ -173,6 +173,8 @@ public class ContributionsCellLogicFatory implements IContributionsCellLogicFact
 	}
 	
 	
+	
+	
 	@Override
 	public List<TaskContributions> loadContributions(Collaborator contributor, Calendar firstDayOfWeek) throws ModelException {
 		// Load week contributions:
@@ -234,6 +236,6 @@ public class ContributionsCellLogicFatory implements IContributionsCellLogicFact
 
 	@Override
 	public Align getColumnAlign(String propertyId) {
-		return null;
+		return DAY_COLUMNS_IDENTIFIERS.contains(propertyId) ? Align.CENTER : Align.LEFT;
 	}
 }
