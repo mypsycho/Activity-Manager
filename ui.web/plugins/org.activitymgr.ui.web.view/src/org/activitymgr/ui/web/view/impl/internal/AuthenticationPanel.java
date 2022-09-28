@@ -6,6 +6,7 @@ import org.activitymgr.ui.web.view.IResourceCache;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.google.inject.Inject;
 import com.vaadin.event.ShortcutListener;
+import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
@@ -43,16 +44,16 @@ public class AuthenticationPanel extends VerticalLayout
 
 		Component header = createHeader();
 		addComponent(header);
-		setExpandRatio(header, 100);
+		setExpandRatio(header, 50);
 		
 		Component formPanel = createForm();
 		addComponent(formPanel);
 		setExpandRatio(formPanel, 100);
-				
-
 		Component bottom = createBottom();
 		addComponent(bottom);
-		setExpandRatio(bottom, 100);
+		// setExpandRatio(bottom, 100);
+
+		setComponentAlignment(bottom, Alignment.BOTTOM_RIGHT);
 		
 		// Default focus management
 		userField.focus();
@@ -126,7 +127,11 @@ public class AuthenticationPanel extends VerticalLayout
 	}
 	
 	protected Component createBottom() {
-		return new Label("");	
+		Label result = new Label(
+				"<span style=\"color:#b7b7b7;text-align:right;\">"
+				 +Legals.BANNER_ORIGIN
+				+ "</span>", ContentMode.HTML);
+		return result;
 	}
 
 	
