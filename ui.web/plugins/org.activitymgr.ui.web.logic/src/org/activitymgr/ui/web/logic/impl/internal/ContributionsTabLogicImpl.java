@@ -53,10 +53,11 @@ public class ContributionsTabLogicImpl
 				this, false, true) {
 			@Override
 			protected Collection<String> unsafeGetPropertyIds() {
-				return Arrays.asList(new String[] {
+				return Arrays.asList(
 						ICollaboratorsCellLogicFactory.FIRST_PROPERTY_NAME_ID,
-						ICollaboratorsCellLogicFactory.LAST_PROPERTY_NAME_ID });
+						ICollaboratorsCellLogicFactory.LAST_PROPERTY_NAME_ID );
 			}
+			
 			@Override
 			protected Integer unsafeGetColumnWidth(String propertyId) {
 				return 100;

@@ -14,7 +14,6 @@ import org.activitymgr.ui.web.view.impl.internal.util.TableDatasource;
 import com.google.inject.Inject;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.event.ShortcutAction.ModifierKey;
-import com.vaadin.server.Sizeable.Unit;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
