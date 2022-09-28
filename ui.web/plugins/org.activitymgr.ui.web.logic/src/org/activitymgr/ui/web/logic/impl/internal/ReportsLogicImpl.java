@@ -83,11 +83,11 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 			.asList(new String[] { "collaborator.id", "task.id",
 					"task.fullPath", "task.number", "task.numberAsHex" });
 
-	static enum ReportIntervalBoundsMode {
+	enum ReportIntervalBoundsMode {
 		AUTOMATIC, LOWER_BOUND, BOTH_BOUNDS
 	}
 	
-	static enum ReportCollaboratorsSelectionMode {
+	enum ReportCollaboratorsSelectionMode {
 		ME, ALL_COLLABORATORS, SELECT_COLLABORATORS
 	}
 
@@ -365,22 +365,26 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 		new AbstractTaskChooserLogic(this, selectedTask) {
 			@Override
 			public void onOkButtonClicked(long taskId) {
-				Task task = getModelMgr().getTask(taskId);
-				try {
-					String taskCodePath = getModelMgr().getTaskCodePath(task);
-					ReportsLogicImpl.this.taskScopePath = taskCodePath;
-					ReportsLogicImpl.this.getView().setTaskScopePath(
-							taskCodePath);
-					ReportsLogicImpl.this.updateUI();
-				} catch (ModelException e) {
-					ByteArrayOutputStream out = new ByteArrayOutputStream();
-					e.printStackTrace(new PrintWriter(out));
-					getRoot().getView().showErrorNotification(
-							"Unexpeced error while retrieving task path",
-							new String(out.toByteArray()));
-				}
+				updateScopeTask(taskId);
 			}
-		};
+		}.showDialog();
+	}
+	
+	protected void updateScopeTask(long taskId) {
+		Task task = getModelMgr().getTask(taskId);
+		try {
+			String taskCodePath = getModelMgr().getTaskCodePath(task);
+			ReportsLogicImpl.this.taskScopePath = taskCodePath;
+			ReportsLogicImpl.this.getView().setTaskScopePath(
+					taskCodePath);
+			ReportsLogicImpl.this.updateUI();
+		} catch (ModelException e) {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			e.printStackTrace(new PrintWriter(out));
+			getRoot().getView().showErrorNotification(
+					"Unexpeced error while retrieving task path",
+					new String(out.toByteArray()));
+		}
 	}
 
 	@Override
@@ -509,18 +513,19 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 			}
 			url = sw.toString();
 		} catch (ModelException e) {
-			// Shouldn't occur (if a ModelException is raised, the button
-			// should be disabled)
+			// Shouldn't occur (if a ModelException is raised, the button should be disabled)
 			throw new IllegalStateException(e);
 		}
 		return url;
 	}
 
+	@SafeVarargs
 	private static <O> void appendUrlParam(StringWriter sw, String param,
 			O... values) {
 		appendUrlParam(sw, false, param, values);
 	}
 
+	@SafeVarargs
 	private static <O> void appendUrlParam(StringWriter sw, boolean first,
 			String param, O... values) {
 		sw.append(first ? "?" : "&");
@@ -696,29 +701,23 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 	}
 
 	private Workbook buildReport(boolean dryRun) throws ModelException {
-		ReportParameters reportParameters = prepareReportParameters();
+		ReportParameters params = prepareReportParameters();
 		Workbook report = getModelMgr().buildReport(
-				start, // Start date
-				reportParameters.getIntervalType(), // Interval type
-				reportParameters.getIntervalCount(), // Interval count
-				reportParameters.getRootTaskId(), // Root task id
-				reportParameters.getTaskDepth(), // Task tree
-				// depth
-				reportParameters.isOnlyKeepTasksWithContributions(), // Only
-																		// keep
-																		// tasks
-																		// with
-				// contributions
-				reportParameters.isByContributor(), // Include
-													// collaborators
-				reportParameters.isContributorCentricMode(), // Collaborators
-																// centric
-																// mode
-				reportParameters.getContributorIds(), // Contributor ids
-				reportParameters.getColumnIds().toArray(
-						new String[reportParameters.getColumnIds().size()]), // Column
-																				// ids
-				true, dryRun);
+			start, // Start date
+			params.getIntervalType(), // Interval type
+			params.getIntervalCount(), // Interval count
+			params.getRootTaskId(), // Root task id
+			params.getTaskDepth(), // Task tree depth
+			// Only keep tasks  with contributions
+			params.isOnlyKeepTasksWithContributions(),
+			 // Include collaborators
+			params.isByContributor(),
+			 // Collaborators centric  mode
+			params.isContributorCentricMode(),
+			params.getContributorIds(), // Contributor ids
+			// Column ids
+			params.getColumnIds().toArray(String[]::new), 
+			true, dryRun);
 		return report;
 	}
 
@@ -728,15 +727,15 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 			reportParameters.setStart(ReportsLogicImpl.this.start);
 		}
 		reportParameters.setIntervalType(intervalType);
-		reportParameters
-				.setIntervalCount(intervalBoundsMode != ReportIntervalBoundsMode.AUTOMATIC ? intervalCount
-						: null);
+		reportParameters.setIntervalCount(
+			intervalBoundsMode != ReportIntervalBoundsMode.AUTOMATIC 
+				? intervalCount
+				: null);
 
 		if (taskScopePath != null && taskScopePath.trim().length() > 0) {
-			Task selectedTask = getModelMgr().getTaskByCodePath(
-					taskScopePath.trim());
-			reportParameters.setRootTaskId(selectedTask != null ? selectedTask
-					.getId() : null);
+			Task selectedTask = getModelMgr().getTaskByCodePath(taskScopePath.trim());
+			reportParameters.setRootTaskId(selectedTask != null 
+					? selectedTask.getId() : null);
 		}
 
 		List<DTOAttribute> selectedColumns = columnsSelectionLogic.getValue();

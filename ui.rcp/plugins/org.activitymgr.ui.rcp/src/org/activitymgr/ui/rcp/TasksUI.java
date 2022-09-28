@@ -111,7 +111,7 @@ public class TasksUI extends AbstractTableMgrUI
 	public static final int TODO_COLUMN_IDX = 5;
 	public static final int DELTA_COLUMN_IDX = 6;
 	public static final int COMMENT_COLUMN_IDX = 7;
-	// public static final int CLOSED_COLUMN_IDX = 8;
+	public static final int CLOSED_COLUMN_IDX = 8;
 	private TableOrTreeColumnsMgr treeColsMgr;
 
 	/** Listeners */
@@ -741,8 +741,8 @@ public class TasksUI extends AbstractTableMgrUI
 			case DELTA_COLUMN_IDX:
 				return false;
 			case COMMENT_COLUMN_IDX:
-//			case CLOSED_COLUMN_IDX:
-//				return true;
+			case CLOSED_COLUMN_IDX:
+				return true;
 
 			default:
 				throw new UITechException(
@@ -787,10 +787,11 @@ public class TasksUI extends AbstractTableMgrUI
 				return StringHelper.hundredthToEntry(delta);
 
 			case COMMENT_COLUMN_IDX:
-				return taskSums.getTask().getComment() != null ? taskSums.getTask().getComment() : ""; //$NON-NLS-1$
+				String comment = taskSums.getTask().getComment();
+				return comment != null ? comment : ""; //$NON-NLS-1$
 
-//			case CLOSED_COLUMN_IDX:
-//				return taskSums.getTask().isClosed();
+			case CLOSED_COLUMN_IDX:
+				return taskSums.getTask().isClosed();
 			default:
 				throw new UITechException(
 						Strings.getString("TasksUI.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
@@ -849,9 +850,9 @@ public class TasksUI extends AbstractTableMgrUI
 				task.setComment((String) value);
 				break;
 
-//			case CLOSED_COLUMN_IDX:
-//				task.setClosed((Boolean) value);
-//				break;
+			case CLOSED_COLUMN_IDX:
+				task.setClosed((Boolean) value);
+				break;
 
 			case CONSUMED_COLUMN_IDX:
 			case DELTA_COLUMN_IDX:

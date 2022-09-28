@@ -26,6 +26,7 @@ public class ContributionTaskChooserDialog
 
 	private ListSelect recentTasksSelect;
 	private CheckBox newSubTaskCheckbox;
+	private Label newTaskFieldsGroup;
 	private TextField newSubTaskCodeField;
 	private TextField newTaskName;
 	private ComboBox newTaskPattern;
@@ -79,7 +80,8 @@ public class ContributionTaskChooserDialog
         newSubTaskCheckbox.addValueChangeListener(evt -> 
 			getLogic().onNewTaskCheckboxClicked());
         
-        result.addComponent(new Label("Task attributes"));
+        newTaskFieldsGroup = new Label("Task attributes");
+        result.addComponent(newTaskFieldsGroup);
         
         // Line to identify new task
         HorizontalLayout idTaskLine = new HorizontalLayout();
@@ -111,6 +113,8 @@ public class ContributionTaskChooserDialog
         newTaskPattern.setVisible(false); // Hidden by default
         result.addComponent(newTaskPattern);
         
+        setNewTaskFieldsEnabled(newSubTaskCheckbox.getValue());
+        
         return result;
 	}
 	
@@ -132,6 +136,7 @@ public class ContributionTaskChooserDialog
     
 	@Override
 	public void setNewTaskFieldsEnabled(boolean enabled) {
+		newTaskFieldsGroup.setEnabled(enabled);
 		newSubTaskCodeField.setEnabled(enabled);
 		newTaskName.setEnabled(enabled);
 		newTaskPattern.setEnabled(enabled);

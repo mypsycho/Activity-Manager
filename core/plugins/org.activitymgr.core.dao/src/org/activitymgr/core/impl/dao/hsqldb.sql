@@ -30,6 +30,7 @@ create table TASK (
 	TSK_INITIAL_CONS integer      not null,
 	TSK_TODO         integer      not null,
 	TSK_COMMENT      varchar(255),
+	TSK_CLOSED       boolean      not null,
     constraint TSK_PK primary key (TSK_ID)
 );
 create index TSK_PATH_IDX on TASK (TSK_PATH);

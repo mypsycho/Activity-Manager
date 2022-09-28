@@ -1,7 +1,6 @@
 package org.activitymgr.ui.web.view.impl.internal;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 
 import org.activitymgr.ui.web.logic.IContributionsTabLogic;
@@ -13,19 +12,24 @@ import org.activitymgr.ui.web.view.impl.internal.util.AlignHelper;
 import org.activitymgr.ui.web.view.impl.internal.util.TableDatasource;
 
 import com.google.inject.Inject;
-import com.vaadin.data.Property;
-import com.vaadin.data.Property.ValueChangeEvent;
+import com.vaadin.event.ShortcutAction.KeyCode;
+import com.vaadin.event.ShortcutAction.ModifierKey;
+import com.vaadin.server.Sizeable.Unit;
 import com.vaadin.event.ShortcutListener;
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.ComponentContainer;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.PopupDateField;
 import com.vaadin.ui.Table;
+import com.vaadin.ui.Table.ColumnGenerator;
 
 @SuppressWarnings("serial")
-public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic> implements IContributionsTabLogic.View, Button.ClickListener {
+public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic> 
+		implements IContributionsTabLogic.View {
 
 	private PopupDateField dateField;
 
@@ -58,49 +62,64 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 
 	@Override
 	protected Component createHeaderComponent() {
-		GridLayout controlsContainer = new GridLayout(12, 1);
-		addComponent(controlsContainer);
+		HorizontalLayout result = new HorizontalLayout();		
+		// addComponent(result);
+		
+		HorizontalLayout left = new HorizontalLayout();
+		result.addComponent(left);
+		result.setExpandRatio(left, LEFT_SIDE_RATIO);
+		
 		selectMeButton = new Button("Me");
-		controlsContainer.addComponent(selectMeButton);
-
-		appendEmptyLabel(controlsContainer, 200);
+		selectMeButton.setWidth(100, Unit.PERCENTAGE);
+		left.addComponent(selectMeButton);
+		left.setWidth(100, Unit.PERCENTAGE);
+		
+		addSpaceComponent(result, 5); // separator
+		
+		GridLayout dateLayout = new GridLayout(12, 1);
+		result.addComponent(dateLayout);
+		result.setExpandRatio(dateLayout, CENTER_RATIO);
+		result.setComponentAlignment(dateLayout, Alignment.MIDDLE_CENTER);
 		
 		previousYearButton = new Button("<<< Year");
 		previousYearButton.setDescription("Ctrl+Shift+Alt+Left");
-		controlsContainer.addComponent(previousYearButton);
+		dateLayout.addComponent(previousYearButton);
 		previousMonthButton = new Button("<< Month");
 		previousMonthButton.setDescription("Ctrl+Shift+Left");
-		controlsContainer.addComponent(previousMonthButton);
+		dateLayout.addComponent(previousMonthButton);
 		previousWeekButton = new Button("< Week");
 		previousWeekButton.setDescription("Ctrl+Left");
-		controlsContainer.addComponent(previousWeekButton);
+		dateLayout.addComponent(previousWeekButton);
 
-		appendEmptyLabel(controlsContainer, 20);
+		addSpaceComponent(dateLayout, 20);
 		
 		todayButton = new Button("Today");
-		controlsContainer.addComponent(todayButton);
+		dateLayout.addComponent(todayButton);
 		dateField = new PopupDateFieldWithParser();
 		dateField.setImmediate(true);
 		dateField.setDateFormat("E dd/MM/yyyy");
 		dateField.setShowISOWeekNumbers(true);
 		dateField.setStyleName("monday-date-field");
-		controlsContainer.addComponent(dateField);
+		dateLayout.addComponent(dateField);
 		
-		appendEmptyLabel(controlsContainer, 20);
+		addSpaceComponent(dateLayout, 20);
 
 		nextWeekButton = new Button("Week >");
 		nextWeekButton.setDescription("Ctrl+Right");
-		controlsContainer.addComponent(nextWeekButton);
+		dateLayout.addComponent(nextWeekButton);
 		nextMonthButton = new Button("Month >>");
 		nextMonthButton.setDescription("Ctrl+Shift+Right");
-		controlsContainer.addComponent(nextMonthButton);
+		dateLayout.addComponent(nextMonthButton);
 		nextYearButton = new Button("Year >>>");
 		nextYearButton.setDescription("Ctrl+Shift+Alt+Right");
-		controlsContainer.addComponent(nextYearButton);
-		return controlsContainer;
+		dateLayout.addComponent(nextYearButton);
+		
+		addSpaceComponent(result, 5 + 50); // separator + Actions Column
+		
+		return result;
 	}
 
-	private void appendEmptyLabel(GridLayout container, int width) {
+	private void addSpaceComponent(ComponentContainer container, int width) {
 		Label emptyLabel = new Label();
 		emptyLabel.setWidth(width, Unit.PIXELS);
 		container.addComponent(emptyLabel);
@@ -116,6 +135,7 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		collaboratorsTable.setImmediate(true);
 		collaboratorsTable.setNullSelectionAllowed(false);
 		collaboratorsTable.setSizeFull();
+
 		return collaboratorsTable;
 	}
 
@@ -136,77 +156,59 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		registerListeners();
 	}
 
+	
+	private void registerBoundButton(Button button, String caption, 
+			Runnable task,
+			int keyCode, int... modifierKeys) {
+		if (button != null) {
+			button.addClickListener(evt -> task.run());
+		}
+		addShortcutListener(new ShortcutListener(caption, keyCode, modifierKeys) {
+			@Override
+			public void handleAction(Object sender, Object target) {
+				task.run();
+			}
+		});
+	}
+	
 	private void registerListeners() {
-		collaboratorsTable.addValueChangeListener(new Property.ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-				getLogic().onSelectedCollaboratorChanged((Long) collaboratorsTable.getValue());
-			}
-		});
-		todayButton.addClickListener(this);
-		selectMeButton.addClickListener(this);
-		previousYearButton.addClickListener(this);
-		previousMonthButton.addClickListener(this);
-		previousWeekButton.addClickListener(this);
-		nextWeekButton.addClickListener(this);
-		nextMonthButton.addClickListener(this);
-		nextYearButton.addClickListener(this);
-		dateField.addValueChangeListener(new Property.ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-				Calendar cal = new GregorianCalendar();
-				cal.setTime(dateField.getValue()!= null ? dateField.getValue() : new Date());
-				getLogic().onDateChange(cal);
-			}
-		});
-		addShortcutListener(new ShortcutListener("Previous year",
-				ShortcutListener.KeyCode.ARROW_LEFT,
-				new int[] { ShortcutListener.ModifierKey.CTRL, ShortcutListener.ModifierKey.SHIFT, ShortcutListener.ModifierKey.ALT }) {
-			@Override
-			public void handleAction(Object sender, Object target) {
-				getLogic().onPreviousYear();
-			}
-		});
-		addShortcutListener(new ShortcutListener("Previous month",
-				ShortcutListener.KeyCode.ARROW_LEFT,
-				new int[] { ShortcutListener.ModifierKey.CTRL, ShortcutListener.ModifierKey.SHIFT }) {
-			@Override
-			public void handleAction(Object sender, Object target) {
-				getLogic().onPreviousMonth();
-			}
-		});
-		addShortcutListener(new ShortcutListener("Previous week",
-				ShortcutListener.KeyCode.ARROW_LEFT,
-				new int[] { ShortcutListener.ModifierKey.CTRL }) {
-			@Override
-			public void handleAction(Object sender, Object target) {
-				getLogic().onPreviousWeek();
-			}
-		});
-		addShortcutListener(new ShortcutListener("Next week",
-				ShortcutListener.KeyCode.ARROW_RIGHT,
-				new int[] { ShortcutListener.ModifierKey.CTRL }) {
-			@Override
-			public void handleAction(Object sender, Object target) {
-				getLogic().onNextWeek();
-			}
-		});
-		addShortcutListener(new ShortcutListener("Next month",
-				ShortcutListener.KeyCode.ARROW_RIGHT,
-				new int[] { ShortcutListener.ModifierKey.CTRL, ShortcutListener.ModifierKey.SHIFT }) {
-			@Override
-			public void handleAction(Object sender, Object target) {
-				getLogic().onNextMonth();
-			}
-		});
-		addShortcutListener(new ShortcutListener("Next year",
-				ShortcutListener.KeyCode.ARROW_RIGHT,
-				new int[] { ShortcutListener.ModifierKey.CTRL, ShortcutListener.ModifierKey.SHIFT, ShortcutListener.ModifierKey.ALT  }) {
-			@Override
-			public void handleAction(Object sender, Object target) {
-				getLogic().onNextYear();
-			}
-		});
+		collaboratorsTable.addValueChangeListener(evt -> 
+				getLogic().onSelectedCollaboratorChanged((Long) collaboratorsTable.getValue()));
+
+		todayButton.addClickListener(evt -> getLogic().onDateChange(new GregorianCalendar()));
+		selectMeButton.addClickListener(evt -> getLogic().onSelectMe());
+		
+		registerBoundButton(previousYearButton, "Previous year",
+				() -> getLogic().onPreviousYear(),
+				KeyCode.ARROW_LEFT,
+				ModifierKey.CTRL, ModifierKey.SHIFT, ModifierKey.ALT);
+
+		registerBoundButton(previousMonthButton, "Previous month",
+				() -> getLogic().onPreviousWeek(),
+				KeyCode.ARROW_LEFT,
+				ModifierKey.CTRL, ModifierKey.SHIFT);
+
+		registerBoundButton(previousWeekButton, "Previous week",
+				() -> getLogic().onPreviousWeek(),
+				KeyCode.ARROW_LEFT,
+				ModifierKey.CTRL);
+
+		registerBoundButton(nextYearButton, "next year",
+				() -> getLogic().onNextYear(),
+				KeyCode.ARROW_LEFT,
+				ModifierKey.CTRL, ModifierKey.SHIFT, ModifierKey.ALT);
+
+		registerBoundButton(nextMonthButton, "Next month",
+				() -> getLogic().onNextWeek(),
+				KeyCode.ARROW_LEFT,
+				ModifierKey.CTRL, ModifierKey.SHIFT);
+
+		registerBoundButton(nextWeekButton, "Next week",
+				() -> getLogic().onNextWeek(),
+				KeyCode.ARROW_LEFT,
+				ModifierKey.CTRL);
+
+
 	}
 
 	@Override
@@ -223,7 +225,12 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 				}
 			});
 			int columnWidth = contributionsProvider.getColumnWidth(propertyId);
-			contributionsTable.setColumnWidth(propertyId, columnWidth);
+			if (columnWidth > 0) {
+				contributionsTable.setColumnWidth(propertyId, columnWidth);
+			} else {
+				contributionsTable.setColumnExpandRatio(propertyId, -columnWidth/100.f);
+			}
+			
 			contributionsTable.setColumnAlignment(propertyId, AlignHelper.toVaadinAlign(contributionsProvider.getColumnAlign(propertyId)));
 		}
 	}
@@ -246,49 +253,22 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		dateField.setValue(date.getTime());
 	}
 
-	@Override
-	public void buttonClick(ClickEvent event) {
-		if (event.getSource() == selectMeButton) {
-			getLogic().onSelectMe();
-		} else if (event.getSource() == todayButton) {
-			getLogic().onToday();
-		} else if (event.getSource() == previousYearButton) {
-			getLogic().onPreviousYear();
-		} else if (event.getSource() == previousMonthButton) {
-			getLogic().onPreviousMonth();
-		} else if (event.getSource() == previousWeekButton) {
-			getLogic().onPreviousWeek();
-		} else if (event.getSource() == nextWeekButton) {
-			getLogic().onNextWeek();
-		} else if (event.getSource() == nextMonthButton) {
-			getLogic().onNextMonth();
-		} else if (event.getSource() == nextYearButton) {
-			getLogic().onNextYear();
-		}
-		else {
-			throw new IllegalArgumentException("Unexpected button click");
-		}
-	}
+
 
 	@Override
 	public void setCollaboratorsProvider(
-			final ITableCellProviderCallback<Long> collaboratorsProvider) {
+			ITableCellProviderCallback<Long> collaboratorsProvider) {
 		TableDatasource<Long> dataSource = new TableDatasource<Long>(getResourceCache(), collaboratorsProvider);
 		collaboratorsTable.setContainerDataSource(dataSource);
-		int tableWidth = 10;
+		
+		ColumnGenerator colGen = (source, itemId, propertyId) -> 
+			collaboratorsProvider.getCell((Long) itemId, (String) propertyId);
 		for (String propertyId : dataSource.getContainerPropertyIds()) {
-			collaboratorsTable.addGeneratedColumn(propertyId, new Table.ColumnGenerator() {
-				@Override
-				public Object generateCell(Table source, Object itemId, Object propertyId) {
-					return collaboratorsProvider.getCell((Long) itemId, (String) propertyId);
-				}
-			});
+			collaboratorsTable.addGeneratedColumn(propertyId, colGen);
 			int columnWidth = collaboratorsProvider.getColumnWidth(propertyId);
-			tableWidth += columnWidth + 10;
-			collaboratorsTable.setColumnWidth(propertyId, columnWidth);
+			collaboratorsTable.setColumnExpandRatio(propertyId, columnWidth);
 			collaboratorsTable.setColumnAlignment(propertyId, AlignHelper.toVaadinAlign(collaboratorsProvider.getColumnAlign(propertyId)));
 		}
-		collaboratorsTable.setWidth(tableWidth + "px");
 	}
 
 	@Override

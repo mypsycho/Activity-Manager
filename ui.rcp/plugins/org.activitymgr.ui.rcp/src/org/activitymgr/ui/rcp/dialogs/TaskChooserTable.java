@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -66,7 +66,7 @@ public class TaskChooserTable extends AbstractTableMgr {
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 * @param layoutData
@@ -113,51 +113,36 @@ public class TaskChooserTable extends AbstractTableMgr {
 		tableViewer.setInput(tasks);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang
-	 * .Object, int)
-	 */
+	@Override
 	public String getColumnText(final Object element, final int columnIndex) {
-		log.debug("ITableLabelProvider.getColumnText(" + element + ", " + columnIndex + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				Task task = (Task) element;
-				String text = null;
-				switch (columnIndex) {
-				case (TASK_PATH_COLUMN_IDX):
-					text = modelMgr.getTaskCodePath(task);
-					break;
-				case (TASK_COLUMN_IDX):
-					text = task.getName();
-					break;
-				default:
-					throw new Error(
-							Strings.getString("TaskChooserTable.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
-				}
-				return text;
+		log.debug("ITableLabelProvider.getColumnText(" + element //$NON-NLS-1$
+				+ ", " + columnIndex + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+		return SafeRunner.exec(parent.getShell(), "", () ->{
+			Task task = (Task) element;
+			String text = null;
+			switch (columnIndex) {
+			case TASK_PATH_COLUMN_IDX:
+				text = modelMgr.getTaskCodePath(task);
+				break;
+			case TASK_COLUMN_IDX:
+				text = task.getName();
+				break;
+			default:
+				throw new Error(
+						Strings.getString("TaskChooserTable.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
 			}
-		};
-		// Exécution
-		return (String) safeRunner.run(parent.getShell(), ""); //$NON-NLS-1$
+			return text;
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java
-	 * .lang.Object)
-	 */
+	@Override
 	public Object[] getElements(final Object inputElement) {
 		return (Task[]) inputElement;
 	}
 
 	/**
 	 * Retourne le viewer associé au tableau.
-	 * 
+	 *
 	 * @return le viewer associé au tableau.
 	 */
 	public TableViewer getTableViewer() {

@@ -38,8 +38,7 @@ public class CollaboratorsCellLogicFatory implements ICollaboratorsCellLogicFact
 					}
 				};
 			}
-		}
-		else if (LOGIN_PROPERTY_ID.equals(propertyId)) {
+		} else if (LOGIN_PROPERTY_ID.equals(propertyId)) {
 			if (readonly) {
 				logic = new LabelLogicImpl(parentLogic, collaborator.getLogin());
 			} else {
@@ -52,8 +51,7 @@ public class CollaboratorsCellLogicFatory implements ICollaboratorsCellLogicFact
 					}
 				};
 			}
-		}
-		else if (FIRST_PROPERTY_NAME_ID.equals(propertyId)) {
+		} else if (FIRST_PROPERTY_NAME_ID.equals(propertyId)) {
 			if (readonly) {
 				logic = new LabelLogicImpl(parentLogic, collaborator.getFirstName());
 			} else {
@@ -66,8 +64,7 @@ public class CollaboratorsCellLogicFatory implements ICollaboratorsCellLogicFact
 					}
 				};
 			}
-		}
-		else if (LAST_PROPERTY_NAME_ID.equals(propertyId)) {
+		} else if (LAST_PROPERTY_NAME_ID.equals(propertyId)) {
 			if (readonly) {
 				logic = new LabelLogicImpl(parentLogic, collaborator.getLastName());
 			} else {
@@ -80,46 +77,34 @@ public class CollaboratorsCellLogicFatory implements ICollaboratorsCellLogicFact
 					}
 				};
 			}
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException(propertyId);
 		}
 		return logic;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.impl.ICollaboratorsCellLogicFactory#getPropertyIds()
-	 */
 	@Override
 	public Collection<String> getPropertyIds() {
 		return PROPERTY_IDS;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.impl.ICollaboratorsCellLogicFactory#getColumnWidth(java.lang.String)
-	 */
 	@Override
 	public Integer getColumnWidth(String propertyId) {
-		if (IS_ACTIVE_PROPERTY_NAME_ID.equals(propertyId)) {
+		switch (propertyId) {
+		case IS_ACTIVE_PROPERTY_NAME_ID:
 			return 30;
-		}
-		else if (LOGIN_PROPERTY_ID.equals(propertyId)) {
+		case LOGIN_PROPERTY_ID:
 			return 150;
-		}
-		else if (FIRST_PROPERTY_NAME_ID.equals(propertyId)) {
+		case FIRST_PROPERTY_NAME_ID:
+		case LAST_PROPERTY_NAME_ID:
 			return 200;
-		}
-		else if (LAST_PROPERTY_NAME_ID.equals(propertyId)) {
-			return 200;
-		}
-		else {
+		default:
 			return 70;
 		}
+
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.spi.ICellLogicFactory#getColumnAlign(java.lang.String)
-	 */
+
 	@Override
 	public Align getColumnAlign(String propertyId) {
 		return Align.LEFT;

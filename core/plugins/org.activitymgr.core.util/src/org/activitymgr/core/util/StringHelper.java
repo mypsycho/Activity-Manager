@@ -191,9 +191,10 @@ public class StringHelper extends StringUtils {
 					Strings.getString("StringHelper.errors.WRONG_NUMBER_FORMAT")); //$NON-NLS-1$
 		}
 		decimal = decimal.movePointRight(2);
-		if (decimal.scale() > 0)
+		if (decimal.scale() > 0) {
 			throw new StringFormatException(
 					Strings.getString("StringHelper.errors.TOO_MANY_DIGITS")); //$NON-NLS-1$
+		}
 		return decimal.longValue();
 	}
 

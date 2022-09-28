@@ -172,7 +172,7 @@ public class LogicModule extends AbstractModule {
 		tabsBinder.addBinding().toInstance(new ITabFactory() {
 			@Override
 			public int getTabOrderPriority() {
-				return 71;
+				return 65;
 			}
 
 			@Override

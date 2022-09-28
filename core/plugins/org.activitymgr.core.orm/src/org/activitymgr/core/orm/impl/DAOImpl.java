@@ -521,7 +521,9 @@ public class DAOImpl<TYPE> implements IDAO<TYPE> {
 		}
 	}
 
-	private String builSelectRequest(String[] whereClauseAttributeNames, Object[] whereClauseAttributeValues, Object[] orderByClauseItems, int maxRows) throws SQLException {
+	private String builSelectRequest(String[] whereClauseAttributeNames, 
+			Object[] whereClauseAttributeValues, 
+			Object[] orderByClauseItems, int maxRows) throws SQLException {
 		StringBuffer buf = new StringBuffer(selectAllRequest);
 		appendCustomWhereClause(buf, whereClauseAttributeNames, whereClauseAttributeValues);
 		// Ajout de la clause 'order by'
@@ -561,7 +563,10 @@ public class DAOImpl<TYPE> implements IDAO<TYPE> {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public TYPE[] select(Connection con, String[] whereClauseAttributeNames, Object[] whereClauseAttributeValues, Object[] orderByClauseItems, int maxRows) throws SQLException {
+	public TYPE[] select(Connection con, 
+			String[] whereClauseAttributeNames, 
+			Object[] whereClauseAttributeValues, 
+			Object[] orderByClauseItems, int maxRows) throws SQLException {
 		String request = builSelectRequest(whereClauseAttributeNames, whereClauseAttributeValues, orderByClauseItems, maxRows);
 		PreparedStatement pStmt = null;
 		try {

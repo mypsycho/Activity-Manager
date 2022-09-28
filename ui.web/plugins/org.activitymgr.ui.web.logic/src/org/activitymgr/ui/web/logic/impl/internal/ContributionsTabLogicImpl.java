@@ -23,7 +23,9 @@ import org.activitymgr.ui.web.logic.spi.ITabButtonFactory;
 
 import com.google.inject.Inject;
 
-public class ContributionsTabLogicImpl extends AbstractContributionTabLogicImpl implements IEventListener<ContributionChangeEvent> {
+public class ContributionsTabLogicImpl 
+		extends AbstractContributionTabLogicImpl 
+		implements IEventListener<ContributionChangeEvent> {
 	
 	@Inject(optional = true)
 	private Set<ITabButtonFactory<IContributionsTabLogic>> buttonFactories;
@@ -105,18 +107,12 @@ public class ContributionsTabLogicImpl extends AbstractContributionTabLogicImpl 
 	public void onNextYear() {
 		changeFirstDayOfWeekAndUpdateView(Calendar.YEAR, 1);
 	}
-
-	@Override
-	public void onToday() {
-		onDateChange(new GregorianCalendar());
-	}
 	
 	@Override
 	public void onSelectMe() {
-		getView().selectCollaborator(
-				getContext().getConnectedCollaborator().getId());
-		onSelectedCollaboratorChanged(getContext().getConnectedCollaborator()
-				.getId());
+		long collabId = getContext().getConnectedCollaborator().getId();
+		getView().selectCollaborator(collabId);
+		onSelectedCollaboratorChanged(collabId);
 	}
 	
 	@Override

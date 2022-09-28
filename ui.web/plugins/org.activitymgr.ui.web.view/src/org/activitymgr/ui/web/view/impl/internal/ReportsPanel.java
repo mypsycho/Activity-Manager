@@ -9,12 +9,10 @@ import org.activitymgr.ui.web.view.IResourceCache;
 import org.activitymgr.ui.web.view.impl.dialogs.PopupDateFieldWithParser;
 
 import com.google.inject.Inject;
-import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.GridLayout;
@@ -54,8 +52,9 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		super(2, 16);
 		setSpacing(true);
 		setWidth("650px");
-		setColumnExpandRatio(0, 30);
-		setColumnExpandRatio(0, 70);
+		setColumnExpandRatio(0, 100);
+//		setColumnExpandRatio(0, 30);
+//		setColumnExpandRatio(1, 70);
 		this.resourceCache = resourceCache;
 	}
 
@@ -66,16 +65,28 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 
 	@Override
 	public void initialize(boolean advancedMode) {
+		// TODO-better: Swap with Vertical layout
+		
 		createIntervalConfigurationPanel();
 		createScopeConfigurationPanel(advancedMode);
 		createHeaderColumnsContentConfigurationPanel(
 				advancedMode);
 		createRowsContentConfigurationPanel(
 				advancedMode);
+		
+		// On line space
+		addComponent(new Label("&nbsp;", ContentMode.HTML));
+		addComponent(new Label("", ContentMode.HTML));
+
 		// Report buttons
 		addComponent(new Label("")); // Empty cell
+		
 		reportButtonsLayout = new HorizontalLayout();
+		reportButtonsLayout.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
 		addComponent(reportButtonsLayout);
+
+		setRowExpandRatio(15, 1);
+		setComponentAlignment(reportButtonsLayout, Alignment.BOTTOM_LEFT);
 
 		createStatusPanel();
 	}
@@ -115,47 +126,30 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		intervalBoundsPanel.addComponent(new Label(")"));
 
 		// Register listeners
-		intervalUnitGroup.addValueChangeListener(new ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-						logic.onIntervalTypeChanged(event.getProperty()
-								.getValue());
-			}
-		});
-		intervalBoundsModeGroup
-				.addValueChangeListener(new ValueChangeListener() {
-			@Override
-					public void valueChange(ValueChangeEvent event) {
-						logic.onIntervalBoundsModeChanged(event.getProperty()
-								.getValue());
-			}
-		});
-		ValueChangeListener dateBoundsChangeListener = new ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-				logic.onIntervalBoundsChanged(startDateField.getValue(),
-						endDateField.getValue());
-			}
-		};
+		intervalUnitGroup.addValueChangeListener(event -> 
+			logic.onIntervalTypeChanged(event.getProperty().getValue()));
+		
+		intervalBoundsModeGroup.addValueChangeListener(event -> 
+			logic.onIntervalBoundsModeChanged(event.getProperty().getValue()));
+		
+		ValueChangeListener dateBoundsChangeListener = event -> 
+			logic.onIntervalBoundsChanged(
+					startDateField.getValue(),
+					endDateField.getValue());
 		startDateField.addValueChangeListener(dateBoundsChangeListener);
 		endDateField.addValueChangeListener(dateBoundsChangeListener);
-		intervalCountTextField
-				.addValueChangeListener(new ValueChangeListener() {
-					@Override
-					public void valueChange(ValueChangeEvent event) {
-						try {
-							logic.onIntervalCountChanged(
-									Integer.parseInt(intervalCountTextField
-											.getValue()));
-						} catch (NumberFormatException e) {
-							logic.onIntervalCountChanged(1);
-						}
-					}
-				});
+		intervalCountTextField.addValueChangeListener(event -> {
+			int count;
+			try {
+				count = Integer.parseInt(intervalCountTextField.getValue());
+			} catch (NumberFormatException e) {
+				count = 1;
+			}
+			logic.onIntervalCountChanged(count);
+		});
 	}
 
-	private void createScopeConfigurationPanel(
-			boolean advancedMode) {
+	private void createScopeConfigurationPanel(boolean advancedMode) {
 		addTitle("Scope configuration");
 
 		addComponent(new Label("Root task :"));
@@ -184,28 +178,11 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		}
 
 		// Register listeners
-		browseTaskButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				logic.onBrowseTaskButtonCLicked();
-			}
-		});
-		rootTaskTextField
-.addValueChangeListener(new ValueChangeListener() {
-					@Override
-			public void valueChange(ValueChangeEvent event) {
-						logic.onTaskScopePathChanged(
-								(String) event.getProperty().getValue());
-					}
-				});
-		collaboratorsModeUnitGroup
-				.addValueChangeListener(new ValueChangeListener() {
-					@Override
-					public void valueChange(ValueChangeEvent event) {
-						logic.onCollaboratorsSelectionModeChanged(
-								event.getProperty().getValue());
-					}
-				});
+		browseTaskButton.addClickListener(event -> logic.onBrowseTaskButtonCLicked());
+		rootTaskTextField.addValueChangeListener(event -> 
+			logic.onTaskScopePathChanged((String) event.getProperty().getValue()));
+		collaboratorsModeUnitGroup.addValueChangeListener(event -> 
+			logic.onCollaboratorsSelectionModeChanged(event.getProperty().getValue()));
 	}
 
 	private void createHeaderColumnsContentConfigurationPanel(
@@ -250,40 +227,20 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 			addComponent(onlyKeepTasksWithContribsCheckbox);
 		}
 
-		decreaseTaskDepthButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				increaseOrDecreaseTaskTreeDepth(-1);
+		decreaseTaskDepthButton.addClickListener(event -> increaseOrDecreaseTaskTreeDepth(-1));
+		taskDepthTextField.addValueChangeListener(event -> {
+			try {
+				logic.onTaskTreeDepthChanged(
+						Integer.parseInt(taskDepthTextField
+								.getValue()));
+			} catch (NumberFormatException e) {
+				logic.onTaskTreeDepthChanged(0);
 			}
 		});
-		taskDepthTextField
-.addValueChangeListener(new ValueChangeListener() {
-					@Override
-			public void valueChange(ValueChangeEvent event) {
-						try {
-							logic.onTaskTreeDepthChanged(
-									Integer.parseInt(taskDepthTextField
-											.getValue()));
-						} catch (NumberFormatException e) {
-							logic.onTaskTreeDepthChanged(0);
-						}
-					}
-				});
-		increaseTaskDepthButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				increaseOrDecreaseTaskTreeDepth(1);
-			}
-		});
-		onlyKeepTasksWithContribsCheckbox
-				.addValueChangeListener(new ValueChangeListener() {
-					@Override
-					public void valueChange(ValueChangeEvent event) {
-						logic.onOnlyKeepTaskWithContributionsCheckboxChanged(
-										onlyKeepTasksWithContribsCheckbox
-												.getValue());
-					}
-				});
+		increaseTaskDepthButton.addClickListener(event -> increaseOrDecreaseTaskTreeDepth(1));
+		onlyKeepTasksWithContribsCheckbox.addValueChangeListener(event -> 
+			logic.onOnlyKeepTaskWithContributionsCheckboxChanged(
+					onlyKeepTasksWithContribsCheckbox.getValue()));
 	}
 
 	private void createStatusPanel() {
@@ -349,8 +306,7 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		return label;
 	}
 
-	private void addComponentWithHorizontalSpan(
-			Component component) {
+	private void addComponentWithHorizontalSpan(Component component) {
 		addComponent(component);
 		Area area = getComponentArea(component);
 		removeComponent(component);

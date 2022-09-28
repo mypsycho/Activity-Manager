@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -28,7 +28,6 @@
 package org.activitymgr.ui.rcp.util;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.activitymgr.core.dto.Task;
@@ -36,12 +35,11 @@ import org.activitymgr.core.dto.misc.TaskSearchFilter;
 import org.activitymgr.core.model.IModelMgr;
 import org.activitymgr.core.util.Strings;
 import org.activitymgr.ui.rcp.dialogs.TaskChooserDialog;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -94,7 +92,7 @@ public class TaskFinderPanel extends Composite {
 	private Button findButton = null;
 
 	/** Objet à l'écoute de la sélectiond d'une tache */
-	private List<ITaskSelectionListener> taskSelectionListeners = new ArrayList<ITaskSelectionListener>(); // @jve:decl-index=0:
+	private List<ITaskSelectionListener> taskSelectionListeners = new ArrayList<>(); // @jve:decl-index=0:
 
 	/** Dialogue permettant de sélectionner une tache parmi une liste */
 	private TaskChooserDialog taskChooserDialog = null;
@@ -102,7 +100,7 @@ public class TaskFinderPanel extends Composite {
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parent
 	 *            le composant parent.
 	 * @param modelMgr
@@ -114,7 +112,7 @@ public class TaskFinderPanel extends Composite {
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parent
 	 *            le composant parent.
 	 * @param style
@@ -148,12 +146,12 @@ public class TaskFinderPanel extends Composite {
 		// Ajout du KeyListener permettant de valider la saisie sur
 		// l'utilisation de
 		// la touche entrée
-		KeyListener listener = new KeyAdapter() {
-			public void keyReleased(KeyEvent e) {
-				if (e.keyCode == SWT.CR)
-					buttonPressed();
+		KeyListener listener = KeyListener.keyReleasedAdapter(evt -> {
+			if (evt.keyCode == SWT.CR) {
+				buttonPressed();
 			}
-		};
+		});
+
 		searchFieldCombo.addKeyListener(listener);
 		searchCriteriaCombo.addKeyListener(listener);
 		searchText.addKeyListener(listener);
@@ -168,7 +166,7 @@ public class TaskFinderPanel extends Composite {
 	 */
 	private void initialize() {
 		GridLayout gridLayout = new GridLayout();
-		this.setLayout(gridLayout);
+		setLayout(gridLayout);
 		createGroup();
 	}
 
@@ -176,57 +174,45 @@ public class TaskFinderPanel extends Composite {
 	 * Lance le traitement de recherche de tache à partir du filtre spécifié.
 	 */
 	private void buttonPressed() {
-		// Chargement des données
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				// Recherche en base de données
-				TaskSearchFilter filter = new TaskSearchFilter();
-				filter.setFieldIndex(searchFieldCombo.getSelectionIndex());
-				filter.setCriteriaIndex(searchCriteriaCombo.getSelectionIndex());
-				filter.setFieldValue(searchText.getText());
-				Task[] tasks = modelMgr.getTasks(filter);
+		SafeRunner.exec(getShell(), () -> {
+			// Recherche en base de données
+			TaskSearchFilter filter = new TaskSearchFilter();
+			filter.setFieldIndex(searchFieldCombo.getSelectionIndex());
+			filter.setCriteriaIndex(searchCriteriaCombo.getSelectionIndex());
+			filter.setFieldValue(searchText.getText());
+			Task[] tasks = modelMgr.getTasks(filter);
 
-				// Traitement du résultat
-				Task selectedTask = null;
-				switch (tasks.length) {
-				case 0:
-					MessageDialog
-							.openInformation(
-									getShell(),
-									Strings.getString("TaskFinderPanel.titles.SEARCH_STATUS"), Strings.getString("TaskFinderPanel.errors.NOTHING_FOUND")); //$NON-NLS-1$ //$NON-NLS-2$
-					break;
-				case 1:
-					selectedTask = tasks[0];
-					break;
-				default:
-					taskChooserDialog.setTasks(tasks);
-					if (taskChooserDialog.open() == Dialog.OK) {
-						selectedTask = (Task) taskChooserDialog.getValue();
-					}
-					break;
+			// Traitement du résultat
+			Task selectedTask = null;
+			switch (tasks.length) {
+			case 0:
+				MessageDialog.openInformation(getShell(),
+					Strings.getString("TaskFinderPanel.titles.SEARCH_STATUS"), //$NON-NLS-1$
+					Strings.getString("TaskFinderPanel.errors.NOTHING_FOUND")); //$NON-NLS-1$
+				return;
+			case 1:
+				selectedTask = tasks[0];
+				break;
+			default:
+				taskChooserDialog.setTasks(tasks);
+				if (taskChooserDialog.open() == Window.OK) {
+					selectedTask = (Task) taskChooserDialog.getValue();
 				}
-
-				// Notification de la sélection
-				if (selectedTask != null) {
-					Iterator<ITaskSelectionListener> it = taskSelectionListeners
-							.iterator();
-					while (it.hasNext()) {
-						ITaskSelectionListener listener = it.next();
-						listener.taskSelected(selectedTask);
-					}
-				}
-
-				// Pas de retour
-				return null;
+				break;
 			}
-		};
-		// Exécution
-		safeRunner.run(getShell());
+
+			// Notification de la sélection
+			if (selectedTask != null) {
+				for (ITaskSelectionListener listener : taskSelectionListeners) {
+					listener.taskSelected(selectedTask);
+				}
+			}
+		});
 	}
 
 	/**
 	 * This method initializes searchCriteriaCombo
-	 * 
+	 *
 	 */
 	private void createSearchCriteriaCombo() {
 		searchCriteriaCombo = new Combo(group, SWT.READ_ONLY);
@@ -234,7 +220,7 @@ public class TaskFinderPanel extends Composite {
 
 	/**
 	 * This method initializes searchFieldCombo
-	 * 
+	 *
 	 */
 	private void createSearchFieldCombo() {
 		searchFieldCombo = new Combo(group, SWT.READ_ONLY);
@@ -242,7 +228,7 @@ public class TaskFinderPanel extends Composite {
 
 	/**
 	 * Ajoute un objet à l'écoute de la sélectiond d'une tache.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -252,7 +238,7 @@ public class TaskFinderPanel extends Composite {
 
 	/**
 	 * Supprime un listener.
-	 * 
+	 *
 	 * @param listener
 	 *            le listener.
 	 */
@@ -262,7 +248,7 @@ public class TaskFinderPanel extends Composite {
 
 	/**
 	 * This method initializes group
-	 * 
+	 *
 	 */
 	private void createGroup() {
 		GridData gridData1 = new GridData();
@@ -283,13 +269,8 @@ public class TaskFinderPanel extends Composite {
 		searchText.setLayoutData(gridData);
 		findButton = new Button(group, SWT.NONE);
 		findButton.setText(Strings.getString("TaskFinderPanel.buttons.FIND")); //$NON-NLS-1$
-		findButton
-				.addSelectionListener(new org.eclipse.swt.events.SelectionAdapter() {
-					public void widgetSelected(
-							org.eclipse.swt.events.SelectionEvent e) {
-						buttonPressed();
-					}
-				});
+		findButton.addSelectionListener(SelectionListener.widgetSelectedAdapter(evt ->
+						buttonPressed()));
 	}
 
 } // @jve:decl-index=0:visual-constraint="10,10"

@@ -12,6 +12,7 @@ import elemental.json.JsonArray;
 import elemental.json.JsonValue;
 import elemental.json.impl.JreJsonString;
 
+@SuppressWarnings("serial")
 @JavaScript({ "SignWithGoogleButton.js" })
 public class SignWithGoogleButton extends AbstractJavaScriptComponent {
 

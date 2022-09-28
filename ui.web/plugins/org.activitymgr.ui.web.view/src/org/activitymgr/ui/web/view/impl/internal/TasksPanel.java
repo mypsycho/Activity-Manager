@@ -31,12 +31,8 @@ public class TasksPanel extends AbstractTabPanel<ITasksTabLogic> implements ITas
 		taskTree.setImmediate(true);
 		taskTree.setMultiSelect(false);
 		taskTree.setSizeFull();
-		taskTree.addValueChangeListener(new ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-				getLogic().onTaskSelected(event.getProperty().getValue());
-			}
-		});
+		taskTree.addValueChangeListener(event ->
+				getLogic().onTaskSelected(event.getProperty().getValue()));
 		return taskTree;
 	}
 	
@@ -46,12 +42,8 @@ public class TasksPanel extends AbstractTabPanel<ITasksTabLogic> implements ITas
 		TreeTableDatasource<Long> dataSource = new TreeTableDatasource<Long>(getResourceCache(), tasksProvider);
 		taskTree.setContainerDataSource(dataSource);
 		for (String propertyId : dataSource.getContainerPropertyIds()) {
-			taskTree.addGeneratedColumn(propertyId, new Table.ColumnGenerator() {
-				@Override
-				public Object generateCell(Table source, Object itemId, Object propertyId) {
-					return tasksProvider.getCell((Long) itemId, (String) propertyId);
-				}
-			});
+			taskTree.addGeneratedColumn(propertyId, (source, itemId, prop) 
+					-> tasksProvider.getCell((Long) itemId, (String) prop));
 			int columnWidth = tasksProvider.getColumnWidth(propertyId);
 			taskTree.setColumnWidth(propertyId, columnWidth);
 			taskTree.setColumnAlignment(propertyId, AlignHelper.toVaadinAlign(tasksProvider.getColumnAlign(propertyId)));

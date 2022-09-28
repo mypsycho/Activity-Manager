@@ -371,7 +371,7 @@ public interface IModelMgr {
 	 * @param contributor
 	 *            le collaborateur associé aux contributions.
 	 * @param task
-	 *            la tache associée aux contributions.
+	 *            la tache associée aux contributions (optionel).
 	 * @param fromDate
 	 *            la date de départ.
 	 * @param toDate
@@ -433,12 +433,28 @@ public interface IModelMgr {
 	Task getFirstTaskMatching(String filter);
 
 	/**
+	 * Fetches 1 task using its ID.
+	 * 
 	 * @param taskId
 	 *            l'identifiant de la tache recherchée.
 	 * @return la tache dont l'identifiant est spécifié.
 	 */
 	Task getTask(long taskId);
 
+	
+	/**
+	 * Fetches several tasks using its IDs.
+	 * <p>
+	 * If some tasks cannot be found, they are ignored.
+	 * </p>
+	 * 
+	 * @param tasksIds
+	 *            ids of tasks
+	 * @return found tasks
+	 */
+	Task[] getTasks(long[] tasksIds);
+
+		
 	/**
 	 * @param taskPath
 	 *            le chemin de la tache recherchée.
@@ -493,6 +509,7 @@ public interface IModelMgr {
 	 * @throws ModelException
 	 *             levé dans le cas ou une tache n'existe pas.
 	 */
+	@Deprecated // never used
 	Task[] getTasksByCodePath(String[] codePaths) throws ModelException;
 
 	/**

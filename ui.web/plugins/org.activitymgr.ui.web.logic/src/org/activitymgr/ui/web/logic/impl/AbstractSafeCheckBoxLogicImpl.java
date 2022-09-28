@@ -13,8 +13,7 @@ public abstract class AbstractSafeCheckBoxLogicImpl extends AbstractLogicImpl<IC
 	public final void onValueChanged(Boolean newValue) {
 		try {
 			unsafeOnValueChanged(newValue);
-		}
-		catch (Throwable t) {
+		} catch (Throwable t) {
 			getView().focus();
 			doThrow(t);
 		}

@@ -30,6 +30,7 @@ create table TASK (
 	TSK_INITIAL_CONS integer(   8) not null,
 	TSK_TODO         integer(   8) not null,
 	TSK_COMMENT      text,
+	TSK_CLOSED       integer(   1) not null,
     index TSK_PATH_IDX (TSK_PATH),
     index TSK_FULLPATH_IDX (TSK_PATH, TSK_NUMBER),
     index TSK_PATH_CODE_IDX (TSK_PATH, TSK_CODE),

@@ -19,7 +19,9 @@ public class DefaultConstraintsValidator implements IConstraintsValidator {
 	@Override
 	public IStatus canCreateSubTaskUnder(Task task) {
 		try {
-			return !modelMgr.isLeaf(task.getId()) || modelMgr.getContributionsSum(null, task, null, null) == 0 ? OK_STATUS : USED_TASK_ERROR_STATUS;
+			return !modelMgr.isLeaf(task.getId()) 
+					|| modelMgr.getContributionsSum(null, task, null, null) == 0 
+				? OK_STATUS : USED_TASK_ERROR_STATUS;
 		}
 		catch (ModelException e) {
 			throw new IllegalStateException(e);

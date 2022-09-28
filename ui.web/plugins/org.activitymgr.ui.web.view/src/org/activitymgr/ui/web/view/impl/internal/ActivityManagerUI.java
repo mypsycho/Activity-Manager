@@ -12,6 +12,7 @@ import org.activitymgr.ui.web.view.impl.dialogs.YesNoDialog;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.vaadin.annotations.Theme;
+import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinService;
 import com.vaadin.ui.Component;
@@ -65,8 +66,12 @@ public class ActivityManagerUI extends UI implements IRootLogic.View {
 
 	@Override
 	public void showErrorNotification(String message, String description) {
-		Notification.show(message, description != null ? "<br>" + description
+		Notification notif = 
+				new Notification(message,
+						description != null ? "<br>" + description
 				: null, Type.ERROR_MESSAGE);
+		notif.setHtmlContentAllowed(true);
+		notif.show(Page.getCurrent());
 	}
 
 	@Override

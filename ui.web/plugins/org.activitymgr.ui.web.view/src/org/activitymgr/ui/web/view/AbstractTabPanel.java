@@ -14,6 +14,7 @@ import com.google.inject.Inject;
 import com.vaadin.event.Action;
 import com.vaadin.event.LayoutEvents;
 import com.vaadin.event.LayoutEvents.LayoutClickEvent;
+import com.vaadin.server.Sizeable.Unit;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Component;
@@ -23,6 +24,11 @@ import com.vaadin.ui.VerticalLayout;
 @SuppressWarnings("serial")
 public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends VerticalLayout implements ITabLogic.View<LOGIC>{
 
+	protected int LEFT_SIDE_RATIO = 20;
+	protected int CENTER_RATIO = 100 - LEFT_SIDE_RATIO;
+	
+	
+	
 	public static class ButtonBasedShortcutListener extends ShortcutListener {
 		
 		private StandardButtonView buttonView;
@@ -74,6 +80,7 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 		Component headerComponent = createHeaderComponent();
 		if (headerComponent != null) {
 			addComponent(headerComponent);
+			headerComponent.setWidth(100, Unit.PERCENTAGE);
 		}
 		
 		// Horizontal layout
@@ -86,39 +93,36 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 		Component leftComponent = createLeftComponent();
 		if (leftComponent != null) {
 			hl.addComponent(leftComponent);
+			// leftComponent.addStyleName("main-selector");
 		}
 
 		// Body
 		bodyComponent = createBodyComponent();
 		hl.addComponent(bodyComponent);
+		bodyComponent.setSizeFull();
 
 		// Add actions panel
 		actionsContainer = new VerticalLayout();
 		hl.addComponent(actionsContainer);
-		
+		actionsContainer.setWidthUndefined();
+
 		// Set expand ratios
 		if (headerComponent != null) {
-			setExpandRatio(headerComponent, 5);
-			setExpandRatio(hl, 95);
+			// setExpandRatio(headerComponent, 5);
+			setExpandRatio(hl, 100);
 		}
 		if (leftComponent != null) {
-			hl.setExpandRatio(leftComponent, 20);
-			hl.setExpandRatio(bodyComponent, 75);
-			hl.setExpandRatio(actionsContainer, 5);
+			hl.setExpandRatio(leftComponent, LEFT_SIDE_RATIO);
+			hl.setExpandRatio(bodyComponent, CENTER_RATIO);
+		} else {
+			hl.setExpandRatio(bodyComponent, 100);
 		}
-		else {
-			hl.setExpandRatio(bodyComponent, 95);
-			hl.setExpandRatio(actionsContainer, 5);
-		}
+		// No Expand Ratio for actions : default size.
 		
-		// Click listener
-		addLayoutClickListener(new LayoutEvents.LayoutClickListener() {
-			@Override
-			public void layoutClick(LayoutClickEvent event) {
-				if (event.isDoubleClick() && event.getClickedComponent() instanceof TextFieldView) {
-					TextFieldView txtField = (TextFieldView) event.getClickedComponent();
-					txtField.onDoubleClick();
-				}
+		// Forward doucle click in fields
+		addLayoutClickListener(event -> {
+			if (event.isDoubleClick() && event.getClickedComponent() instanceof TextFieldView) {
+				((TextFieldView) event.getClickedComponent()).onDoubleClick();
 			}
 		});
 	}

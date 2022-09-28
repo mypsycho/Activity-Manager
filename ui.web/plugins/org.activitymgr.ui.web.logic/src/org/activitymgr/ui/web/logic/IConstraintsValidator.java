@@ -44,9 +44,24 @@ public interface IConstraintsValidator {
 	
 	/**
 	 * Tells whether the given task can accept sub tasks.
+	 * 
 	 * @param task the task.
 	 * @return <code>true</code> if the task can accept sub tasks.
 	 */
-	IStatus canCreateSubTaskUnder(Task task) throws ModelException;
+	default IStatus canCreateSubTaskUnder(Task task) throws ModelException {
+		return OK_STATUS;
+	}
+	
+	/**
+	 * Indicates a task can be edit by web.
+	 * 
+	 * @param task to evaluate.
+	 * @return <code>true</code> if the task can be modified.
+	 */
+	default boolean canEditTask(Task task) {
+		return true;
+	}
+	
+
 
 }

@@ -38,10 +38,11 @@ public abstract class AbstractTaskChooserLogicImpl<VIEW extends ITaskChooserLogi
 			treeContentProvider.dispose();
 		}
 		// Register the tree content provider
-		treeContentProvider = new TaskTreeCellProvider(this, filter, true);
+		treeContentProvider = createFilteredContentProvider(filter);
 		
 		@SuppressWarnings("unchecked")
-		ITreeContentProviderCallback<Long> cpCallback = wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
+		ITreeContentProviderCallback<Long> cpCallback = 
+			wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
 		getView().setTasksTreeProviderCallback(cpCallback);
 		if (!"".equals(filter)) {
 			Task task = getModelMgr().getFirstTaskMatching(filter);
@@ -49,6 +50,10 @@ public abstract class AbstractTaskChooserLogicImpl<VIEW extends ITaskChooserLogi
 				getView().expandToTask(task.getId());
 			}
 		}
+	}
+	
+	protected TaskTreeCellProvider createFilteredContentProvider(String filter) {
+		return new TaskTreeCellProvider(this, filter, true);
 	}
 
 	@Override
@@ -78,11 +83,9 @@ public abstract class AbstractTaskChooserLogicImpl<VIEW extends ITaskChooserLogi
 	}
 
 	protected IStatus checkDialogRules() throws ModelException {
-		if (selectedTaskId == null) {
-			return EMPTY_SELECTION_STATUS;
-		} else {
-			return IConstraintsValidator.OK_STATUS;
-		}
+		return selectedTaskId == null 
+				? EMPTY_SELECTION_STATUS
+				: IConstraintsValidator.OK_STATUS;
 	}
 
 }

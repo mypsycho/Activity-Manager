@@ -32,7 +32,7 @@ public class IntervalRequestHelper {
 	
 	public void appendIntervalCriteria(StringBuilder request) {
 		if (hasIntervalCriteria()) {
-			request.append(" (ctb_year*10000 + ( ctb_month*100 + ctb_day ))");
+			request.append("(ctb_year*10000 + ( ctb_month*100 + ctb_day ))");
 			// If both dates are specified
 			if (fromDate != null && toDate != null) {
 				if (!fromDateStr.equals(toDateStr)) {

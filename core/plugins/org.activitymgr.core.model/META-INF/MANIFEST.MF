@@ -12,6 +12,7 @@ Require-Bundle: org.activitymgr.core.util,
  org.apache.poi;bundle-version="3.9.0",
  org.apache.commons.beanutils;bundle-version="1.8.0",
  org.apache.commons.lang;bundle-version="2.6.0"
-Export-Package: org.activitymgr.core.model
+Export-Package: org.activitymgr.core.model,
+ org.activitymgr.core.model.util
 Bundle-ClassPath: .
 Automatic-Module-Name: org.activitymgr.core.model

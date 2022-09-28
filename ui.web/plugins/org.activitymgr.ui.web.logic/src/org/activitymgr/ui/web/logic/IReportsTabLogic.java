@@ -15,7 +15,7 @@ public interface IReportsTabLogic extends ITabLogic<IReportsTabLogic.View> {
 		
 		void setReportsView(IReportsLogic.View view);
 		
-		void setLongReportsList(boolean longList);
+		// void setLongReportsList(boolean longList);
 
 		void addReportConfigurationButton(
 				org.activitymgr.ui.web.logic.IStandardButtonLogic.View view);

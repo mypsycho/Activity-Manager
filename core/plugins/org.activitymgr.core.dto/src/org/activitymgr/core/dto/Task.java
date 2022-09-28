@@ -67,6 +67,10 @@ public class Task extends SimpleIdentityBean {
 	/** Commentaire sur la tache */
 	private String comment;
 
+	/** Si cloturé */
+	private boolean closed;
+	
+	
 	/**
 	 * Default constructor.
 	 * <p>
@@ -211,9 +215,7 @@ public class Task extends SimpleIdentityBean {
 	 * @return le chemin complet de la tâche.
 	 */
 	public String getFullPath() {
-		StringBuffer result = new StringBuffer(path != null ? path : ""); //$NON-NLS-1$
-		result.append(getNumberAsHex());
-		return result.toString();
+		return (path != null ? path : "") + getNumberAsHex(); //$NON-NLS-1$
 	}
 
 	/**
@@ -233,6 +235,25 @@ public class Task extends SimpleIdentityBean {
 	 */
 	public void setComment(String comment) {
 		this.comment = comment;
+	}
+	
+	/**
+	 * Retourne 'true' si cloturé.
+	 * 
+	 * @return cloturé
+	 */
+	public boolean isClosed() {
+		return closed;
+	}
+	
+	/**
+	 * Définit si la tache est cloturé.
+	 * 
+	 * @param comment
+	 *            le nouveau commentaire.
+	 */
+	public void setClosed(boolean closed) {
+		this.closed = closed;
 	}
 
 	/*
@@ -259,16 +280,9 @@ public class Task extends SimpleIdentityBean {
 		return String.valueOf(getId()).hashCode();
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
-		boolean equals = false;
-		if (obj instanceof Task) {
-			equals = ((Task) obj).getId() == getId();
-		}
-		return equals;
+		return obj instanceof Task && ((Task) obj).getId() == getId();
 	}
 
 }

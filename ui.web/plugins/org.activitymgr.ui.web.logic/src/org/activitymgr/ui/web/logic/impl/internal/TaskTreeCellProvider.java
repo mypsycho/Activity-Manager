@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.activitymgr.core.dto.Task;
 import org.activitymgr.core.dto.misc.TaskSums;
@@ -46,13 +48,14 @@ class TaskTreeCellProvider
 	@Inject
 	private IEventBus eventBus;
 
-	private String filter;
-	private Map<Long, Long> parentTaskCache = new HashMap<Long, Long>();
-	private Map<Long, List<Long>> taskChildrenCache = new HashMap<Long, List<Long>>();
-	private Map<Long, TaskSums> taskSumsCache = new HashMap<Long, TaskSums>();
-	private boolean readOnly;
+	private final String filter;
+	private final Map<Long, Long> parentTaskCache = new HashMap<Long, Long>();
+	private final Map<Long, List<Long>> taskChildrenCache = new HashMap<Long, List<Long>>();
+	private final Map<Long, TaskSums> taskSumsCache = new HashMap<Long, TaskSums>();
+	private final boolean readOnly;
+	private final boolean onlyOpened;
 	
-	private LoadingCache<Long, LoadingCache<String, ILogic<?>>> cellLogics = CacheBuilder
+	private final LoadingCache<Long, LoadingCache<String, ILogic<?>>> cellLogics = CacheBuilder
 			.newBuilder()
 			.build(new CacheLoader<Long, LoadingCache<String, ILogic<?>>>() {
 		@Override
@@ -70,14 +73,17 @@ class TaskTreeCellProvider
 
 	public TaskTreeCellProvider(AbstractLogicImpl<?> source, String filter,
 			boolean readOnly) {
+		this(source, filter, readOnly, false);
+	}
+	
+	public TaskTreeCellProvider(AbstractLogicImpl<?> source, String filter,
+			boolean readOnly, boolean onlyOpened) {
 		super(source);
-		if (filter != null) {
-			this.filter = filter.trim();
-			if (this.filter.equals("")) {
-				this.filter = null;
-			}
-		}
+
+		this.filter = filter != null && !filter.isBlank() 
+				? filter.trim() : null;
 		this.readOnly = readOnly;
+		this.onlyOpened = onlyOpened;
 		eventBus.register(TaskUpdatedEvent.class, this);
 	}
 
@@ -96,21 +102,21 @@ class TaskTreeCellProvider
 		// Update cache
 		Task parentTask = parentTaskId == null ? null : taskSumsCache.get(parentTaskId).getTask();
 		List<TaskSums> subTasksSums = modelMgr.getSubTasksSums(parentTask, null, null);
-		if (filter != null) {
-			Task[] filteredTasks = modelMgr.getSubTasks(parentTaskId, filter);
-			List<Long> filteredTaskIds = new ArrayList<Long>();
-			for (Task filteredTask : filteredTasks) {
-				filteredTaskIds.add(filteredTask.getId());
-			}
-			List<TaskSums> filteredTaskSums = new ArrayList<TaskSums>();
-			for (TaskSums sums : subTasksSums) {
-				if (filteredTaskIds.contains(sums.getTask().getId())) {
-					filteredTaskSums.add(sums);
-				}
-			}
-			subTasksSums = filteredTaskSums;
+		
+		// TODO Filter closed
+		if (onlyOpened) {
+			subTasksSums.removeIf(it -> it.getTask().isClosed());
 		}
 		
+		if (filter != null && !subTasksSums.isEmpty()) {
+			List<Long> childrenIds = Stream.of(modelMgr.getSubTasks(parentTaskId, filter))
+				.filter(it -> !onlyOpened || !it.isClosed())
+				.map(it -> it.getId())
+				.collect(Collectors.toList());
+			subTasksSums.removeIf(it -> !childrenIds.contains(it.getTask().getId()));
+		}
+		
+			
 		subTaskIds = new ArrayList<Long>();
 		for (TaskSums subTaskSums : subTasksSums) {
 			long subTaskId = subTaskSums.getTask().getId();
@@ -136,9 +142,10 @@ class TaskTreeCellProvider
 
 	@Override
 	protected final boolean unsafeContains(Long taskId) {
-		return taskSumsCache.containsKey(taskId) || 
-				// The task may not have been yet loaded in cache (if we want to reveal a deep task for example)
-				modelMgr.getTask(taskId) != null;
+		return taskSumsCache.containsKey(taskId) 
+				// The task may not have been yet loaded in cache 
+				// (if we want to reveal a deep task for example)
+				||  modelMgr.getTask(taskId) != null;
 	}
 
 	@Override
@@ -191,7 +198,8 @@ class TaskTreeCellProvider
 	public void handle(TaskUpdatedEvent event) {
 		Task task = event.getTask();
 		long updateAmount = event.getNewValue() - event.getOldValue();
-		long updateAmountForDelta = ITasksCellLogicFactory.BUDGET_PROPERTY_ID.equals(event.getProperty()) ? updateAmount : -updateAmount;
+		long updateAmountForDelta = ITasksCellLogicFactory.BUDGET_PROPERTY_ID.equals(event.getProperty()) 
+				? updateAmount : -updateAmount;
 		try {
 			updateTaskLabelPropertyAmount(task.getId(), ITasksCellLogicFactory.DELTA_PROPERTY_ID, updateAmountForDelta);
 			
@@ -200,13 +208,9 @@ class TaskTreeCellProvider
 				updateTaskLabelPropertyAmount(cursor, event.getProperty(), updateAmount);
 				updateTaskLabelPropertyAmount(cursor, ITasksCellLogicFactory.DELTA_PROPERTY_ID, updateAmountForDelta);
 			}
-		} catch (ExecutionException e) {
+		} catch (ExecutionException | StringFormatException e) {
 			throw new IllegalStateException(e);
 		}
-		catch (StringFormatException e) {
-			throw new IllegalStateException(e);
-		}
-		
 	}
 
 	private void updateTaskLabelPropertyAmount(long taskId, String property, long amount) throws ExecutionException, StringFormatException {

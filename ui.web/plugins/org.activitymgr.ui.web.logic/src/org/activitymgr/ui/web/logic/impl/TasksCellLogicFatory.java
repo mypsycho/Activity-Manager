@@ -4,7 +4,9 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.activitymgr.core.dto.Task;
 import org.activitymgr.core.dto.misc.TaskSums;
@@ -12,6 +14,7 @@ import org.activitymgr.core.model.ModelException;
 import org.activitymgr.core.util.StringFormatException;
 import org.activitymgr.core.util.StringHelper;
 import org.activitymgr.ui.web.logic.Align;
+import org.activitymgr.ui.web.logic.IConstraintsValidator;
 import org.activitymgr.ui.web.logic.ILogic;
 import org.activitymgr.ui.web.logic.IUILogicContext;
 import org.activitymgr.ui.web.logic.impl.event.TaskUpdatedEvent;
@@ -19,140 +22,128 @@ import org.activitymgr.ui.web.logic.spi.ITasksCellLogicFactory;
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.BeanUtilsBean2;
 
+import com.google.inject.Inject;
+
 public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 
-	private static final String NAME_ATTRIBUTE_NAME = "name";
-
-	private static final String CODE_ATTRIBUTE_NAME = "code";
-
-	private static final String ETC_ATTRIBUTE_NAME = "todo";
-
-	private static final String INITIALLY_CONSUMED_ATTRIBUTE_NAME = "initiallyConsumed";
-
-	private static final String BUDGET_ATTRIBUTE_NAME = "budget";
-	
-	static final Map<String, String> PROPERTY_ID_TO_ATTRIBUTE_NAME = new HashMap<String, String>();
+	static final Map<String, String> ATTR_NAMES = new HashMap<String, String>();
 	static {
-		PROPERTY_ID_TO_ATTRIBUTE_NAME.put(NAME_PROPERTY_ID, NAME_ATTRIBUTE_NAME);
-		PROPERTY_ID_TO_ATTRIBUTE_NAME.put(CODE_PROPERTY_ID, CODE_ATTRIBUTE_NAME);
-		PROPERTY_ID_TO_ATTRIBUTE_NAME.put(BUDGET_PROPERTY_ID, BUDGET_ATTRIBUTE_NAME);
-		PROPERTY_ID_TO_ATTRIBUTE_NAME.put(INITIAL_PROPERTY_ID, INITIALLY_CONSUMED_ATTRIBUTE_NAME);
-		PROPERTY_ID_TO_ATTRIBUTE_NAME.put(ETC_PROPERTY_ID, ETC_ATTRIBUTE_NAME);
+		// Used for reflection access
+		ATTR_NAMES.put(NAME_PROPERTY_ID, "name");
+		ATTR_NAMES.put(CODE_PROPERTY_ID, "code");
+		ATTR_NAMES.put(BUDGET_PROPERTY_ID, "budget");
+		ATTR_NAMES.put(INITIAL_PROPERTY_ID, "initiallyConsumed");
+		ATTR_NAMES.put(ETC_PROPERTY_ID, "todo");
 	}
+	
+	@Inject
+	private Set<IConstraintsValidator> tasksValidators;
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.spi.ITasksCellLogicFactory#createCellLogic(org.activitymgr.ui.web.logic.impl.AbstractLogicImpl, org.activitymgr.ui.web.logic.ILogicContext, org.activitymgr.core.dto.Task, java.lang.String, boolean)
-	 */
 	@Override
-	public ILogic<?> createCellLogic(final AbstractLogicImpl<?> parentLogic, final IUILogicContext context, final String filter, final TaskSums taskSums, final String propertyId, boolean readOnly) {
+	public ILogic<?> createCellLogic(final AbstractLogicImpl<?> parentLogic, final IUILogicContext context, 
+			final String filter, final TaskSums taskSums, final String propertyId, boolean readOnly) {
 		ILogic<?> logic = null;
 		final Task task = taskSums.getTask();
+		boolean editable = !readOnly 
+				&& tasksValidators.stream().allMatch(it -> it.canEditTask(taskSums.getTask()));
+				
+		
 		if (NAME_PROPERTY_ID.equals(propertyId)) {
-			if (readOnly) {
-				String name = highlightFilter(filter, task.getName());
-				logic = new LabelLogicImpl(parentLogic, name, true);
+			if (!editable) {
+				logic = new LabelLogicImpl(parentLogic, highlightFilter(filter, task.getName()), true);
 			} else {
-				logic = new TaskPropertyTextFieldLogic(parentLogic, task.getName(), propertyId, task);
+				logic = new TextFieldLogic(parentLogic, task.getName(), propertyId, task);
 			}
-		}
-		else if (CODE_PROPERTY_ID.equals(propertyId)) {
-			if (readOnly) {
-				String code = highlightFilter(filter, task.getCode());
-				logic = new LabelLogicImpl(parentLogic, code, true);
+		} else if (CODE_PROPERTY_ID.equals(propertyId)) {
+			if (!editable) {
+				logic = new LabelLogicImpl(parentLogic, highlightFilter(filter, task.getCode()), true);
 			} else {
-				logic = new TaskPropertyTextFieldLogic(parentLogic, task.getCode(), propertyId, task);
+				logic = new TextFieldLogic(parentLogic, task.getCode(), propertyId, task);
 			}
-		}
-		else if (BUDGET_PROPERTY_ID.equals(propertyId)) {
-			if (readOnly || !taskSums.isLeaf()) {
+		} else if (BUDGET_PROPERTY_ID.equals(propertyId)) {
+			if (!editable || !taskSums.isLeaf()) {
 				logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getBudgetSum()));
 			} else {
-				logic = new TaskNumericPropertyTextFieldLogic(parentLogic, taskSums.getBudgetSum(), propertyId, task);
+				logic = new NumericFieldLogic(parentLogic, taskSums.getBudgetSum(), propertyId, task);
 			}
-		}
-		else if (INITIAL_PROPERTY_ID.equals(propertyId)) {
-			if (readOnly || !taskSums.isLeaf()) {
+		} else if (INITIAL_PROPERTY_ID.equals(propertyId)) {
+			if (!editable || !taskSums.isLeaf()) {
 				logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getInitiallyConsumedSum()));
 			} else {
-				logic = new TaskNumericPropertyTextFieldLogic(parentLogic, taskSums.getInitiallyConsumedSum(), propertyId, task);
+				logic = new NumericFieldLogic(parentLogic, taskSums.getInitiallyConsumedSum(), propertyId, task);
 			}
-		}
-		else if (CONSUMMED_PROPERTY_ID.equals(propertyId)) {
+		} else if (CONSUMMED_PROPERTY_ID.equals(propertyId)) {
 			logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getContributionsSums().getConsumedSum()));
-		}
-		else if (ETC_PROPERTY_ID.equals(propertyId)) {
-			if (readOnly || !taskSums.isLeaf()) {
+		} else if (ETC_PROPERTY_ID.equals(propertyId)) {
+			if (!editable || !taskSums.isLeaf()) {
 				logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getTodoSum()));
 			} else {
-				logic = new TaskNumericPropertyTextFieldLogic(parentLogic, taskSums.getTodoSum(), propertyId, task);
+				logic = new NumericFieldLogic(parentLogic, taskSums.getTodoSum(), propertyId, task);
 			}
-		}
-		else if (DELTA_PROPERTY_ID.equals(propertyId)) {
+		} else if (CLOSED_ID.equals(propertyId)) {
+			if (!editable) {
+				logic = new LabelLogicImpl(parentLogic, taskSums.getTask().isClosed() ? "X" : "");
+			} else {
+				logic = new AbstractSafeCheckBoxLogicImpl(parentLogic, taskSums.getTask().isClosed()) {
+					@Override
+					protected void unsafeOnValueChanged(Boolean newValue) throws ModelException {
+						if (newValue != taskSums.getTask().isClosed()) {
+							taskSums.getTask().setClosed(newValue);
+							getModelMgr().updateTask(taskSums.getTask());
+						}
+					}
+				};
+			}
+		} else if (DELTA_PROPERTY_ID.equals(propertyId)) {
 			logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getBudgetSum()-taskSums.getInitiallyConsumedSum()-taskSums.getContributionsSums().getConsumedSum()-taskSums.getTodoSum())); 
-		}
-		else if (COMMENT_PROPERTY_ID.equals(propertyId)) {
+		} else if (COMMENT_PROPERTY_ID.equals(propertyId)) {
 			logic = new LabelLogicImpl(parentLogic, task.getComment());
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException(propertyId);
 		}
 		return logic;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.impl.ICollaboratorsCellLogicFactory#getPropertyIds()
-	 */
 	@Override
 	public Collection<String> getPropertyIds() {
 		return PROPERTY_IDS;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.impl.ICollaboratorsCellLogicFactory#getColumnWidth(java.lang.String)
-	 */
 	@Override
 	public Integer getColumnWidth(String propertyId) {
-		if (NAME_PROPERTY_ID.equals(propertyId)) {
+		switch (propertyId) {
+		case NAME_PROPERTY_ID:
 			return 200;
-		}
-		else if (CODE_PROPERTY_ID.equals(propertyId)) {
+		case CODE_PROPERTY_ID:
+		case BUDGET_PROPERTY_ID:
+		case INITIAL_PROPERTY_ID:
+		case CONSUMMED_PROPERTY_ID:
+		case ETC_PROPERTY_ID:
+		case DELTA_PROPERTY_ID:
 			return 60;
-		}
-		else if (BUDGET_PROPERTY_ID.equals(propertyId)) {
-			return 60;
-		}
-		else if (INITIAL_PROPERTY_ID.equals(propertyId)) {
-			return 60;
-		}
-		else if (CONSUMMED_PROPERTY_ID.equals(propertyId)) {
-			return 60;
-		}
-		else if (ETC_PROPERTY_ID.equals(propertyId)) {
-			return 60;
-		}
-		else if (DELTA_PROPERTY_ID.equals(propertyId)) {
-			return 60;
-		}
-		else if (COMMENT_PROPERTY_ID.equals(propertyId)) {
+		case CLOSED_ID:
+			return 45;
+		case COMMENT_PROPERTY_ID:
 			return 300;
+		default:
+			return 60;
 		}
-		else {
-			return null;
-		}
+		
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.spi.ICellLogicFactory#getColumnAlign(java.lang.String)
-	 */
 	@Override
 	public Align getColumnAlign(String propertyId) {
-		if (BUDGET_PROPERTY_ID.equals(propertyId)
-				|| INITIAL_PROPERTY_ID.equals(propertyId)
-				|| CONSUMMED_PROPERTY_ID.equals(propertyId)
-				|| ETC_PROPERTY_ID.equals(propertyId)
-				|| DELTA_PROPERTY_ID.equals(propertyId)) {
+		switch (propertyId) {
+		// Number on right (Excel like)
+		case BUDGET_PROPERTY_ID:
+		case INITIAL_PROPERTY_ID:
+		case CONSUMMED_PROPERTY_ID:
+		case ETC_PROPERTY_ID:
+		case DELTA_PROPERTY_ID:
 			return Align.RIGHT;
-		} else {
+		case CLOSED_ID:
+			return Align.CENTER;
+			default:
 			return Align.LEFT;
 		}
 	}
@@ -160,9 +151,9 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 	private String highlightFilter(final String filter, String text) {
 		text = text.replaceAll("<", "&lt;");
 		if (filter == null || filter.length() == 0) {
+			// Simple text
 			return text;
-		}
-		else {
+		} else {
 			String filterLC = filter.toLowerCase();
 			String textToLC = text.toLowerCase();
 			int filterLength = filter.length();
@@ -186,53 +177,56 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 		}
 	}
 	
+
+
+	static class NumericFieldLogic extends TextFieldLogic {
+		
+		public NumericFieldLogic(AbstractLogicImpl<?> parent, long value, String property, Task task) {
+			super(parent, StringHelper.hundredthToEntry(value), property, task);
+			getView().setNumericFieldStyle();
+		}
+
+		@Override
+		protected void unsafeOnValueChanged(String newValue)
+				throws ModelException, IllegalAccessException, InvocationTargetException, StringFormatException, NumberFormatException, NoSuchMethodException {
+			BeanUtilsBean beanUtils = BeanUtilsBean2.getInstance();
+			long oldValue = Long.parseLong(beanUtils.getProperty(getTask(), TasksCellLogicFatory.ATTR_NAMES.get(getProperty())));
+			long newValueAsLong = StringHelper.entryToHundredth(newValue);
+			super.unsafeOnValueChanged(String.valueOf(newValueAsLong));
+			getView().setValue(StringHelper.hundredthToEntry(newValueAsLong));
+			getEventBus().fire(new TaskUpdatedEvent(this, getTask(), getProperty(), oldValue, newValueAsLong));
+		}
+
+	};
+
+	static class TextFieldLogic extends AbstractSafeTextFieldLogicImpl {
+		
+		private String property;
+		private Task task;
+
+		public TextFieldLogic(AbstractLogicImpl<?> parent, String value, String property, Task task) {
+			super(parent, value, true);
+			this.property = property;
+			this.task = task;
+		}
+
+		@Override
+		protected void unsafeOnValueChanged(String newValue)
+				throws ModelException, IllegalAccessException, InvocationTargetException, StringFormatException, NumberFormatException, NoSuchMethodException {
+			BeanUtilsBean beanUtils = BeanUtilsBean2.getInstance();
+			beanUtils.setProperty(task, TasksCellLogicFatory.ATTR_NAMES.get(property), newValue);
+			getModelMgr().updateTask(task);
+		}
+		
+		public Task getTask() {
+			return task;
+		}
+		
+		public String getProperty() {
+			return property;
+		}
+		
+	}
 }
 
-class TaskNumericPropertyTextFieldLogic extends TaskPropertyTextFieldLogic {
-	
-	public TaskNumericPropertyTextFieldLogic(AbstractLogicImpl<?> parent, long value, String property, Task task) {
-		super(parent, StringHelper.hundredthToEntry(value), property, task);
-		getView().setNumericFieldStyle();
-	}
 
-	@Override
-	protected void unsafeOnValueChanged(String newValue)
-			throws ModelException, IllegalAccessException, InvocationTargetException, StringFormatException, NumberFormatException, NoSuchMethodException {
-		BeanUtilsBean beanUtils = BeanUtilsBean2.getInstance();
-		long oldValue = Long.parseLong(beanUtils.getProperty(getTask(), TasksCellLogicFatory.PROPERTY_ID_TO_ATTRIBUTE_NAME.get(getProperty())));
-		long newValueAsLong = StringHelper.entryToHundredth(newValue);
-		super.unsafeOnValueChanged(String.valueOf(newValueAsLong));
-		getView().setValue(StringHelper.hundredthToEntry(newValueAsLong));
-		getEventBus().fire(new TaskUpdatedEvent(this, getTask(), getProperty(), oldValue, newValueAsLong));
-	}
-
-};
-
-class TaskPropertyTextFieldLogic extends AbstractSafeTextFieldLogicImpl {
-	
-	private String property;
-	private Task task;
-
-	public TaskPropertyTextFieldLogic(AbstractLogicImpl<?> parent, String value, String property, Task task) {
-		super(parent, value, true);
-		this.property = property;
-		this.task = task;
-	}
-
-	@Override
-	protected void unsafeOnValueChanged(String newValue)
-			throws ModelException, IllegalAccessException, InvocationTargetException, StringFormatException, NumberFormatException, NoSuchMethodException {
-		BeanUtilsBean beanUtils = BeanUtilsBean2.getInstance();
-		beanUtils.setProperty(task, TasksCellLogicFatory.PROPERTY_ID_TO_ATTRIBUTE_NAME.get(property), newValue);
-		getModelMgr().updateTask(task);
-	}
-	
-	public Task getTask() {
-		return task;
-	}
-	
-	public String getProperty() {
-		return property;
-	}
-	
-}

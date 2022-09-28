@@ -61,7 +61,7 @@ public class ReportsTabLogicImpl extends
 		registerButtons(buttonFactories);
 
 		// In advanced mode, the list is longer than in basic mode
-		getView().setLongReportsList(advancedMode);
+		// getView().setLongReportsList(advancedMode);
 
 		// Add report configurations buttons
 		@SuppressWarnings("unchecked")
@@ -307,15 +307,12 @@ public class ReportsTabLogicImpl extends
 			changeSelectionCallback.callback(true);
 		}
 	}
-
+	
+	private static final Comparator<ReportCfg> REPORT_NAME_SORTER = 
+			Comparator.comparing(it -> it.getName().toLowerCase());
+	
 	private void sortReportCfgs() {
-		Collections.sort(reportCfgs, new Comparator<ReportCfg>() {
-			@Override
-			public int compare(ReportCfg o1, ReportCfg o2) {
-				return o1.getName().toLowerCase()
-						.compareTo(o2.getName().toLowerCase());
-			}
-		});
+		Collections.sort(reportCfgs, REPORT_NAME_SORTER);
 	}
 
 }

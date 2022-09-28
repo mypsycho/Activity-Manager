@@ -1,7 +1,9 @@
 package org.activitymgr.core.dao;
 
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.activitymgr.core.dto.Collaborator;
 import org.activitymgr.core.dto.Task;
@@ -109,4 +111,14 @@ public interface ITaskDAO extends IDAO<Task> {
 	 */
 	int getMaxTaskDepthUnder(String path) throws DAOException;
 	
+	
+	
+	/**
+	 * Returns ancestors by full path.
+	 * 
+	 * @param tasks to find.
+	 * @return found tasks
+	 * @throws DAOException
+	 */
+	Map<String, Task> getAllParents(Collection<Task> tasks) throws DAOException;
 }

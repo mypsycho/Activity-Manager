@@ -56,30 +56,29 @@ class ContributionsListTableCellProvider extends AbstractSafeTableCellProviderCa
 		this.contributor = getContext().getConnectedCollaborator();
 	}
 
-	private LoadingCache<Long, LoadingCache<String, ILogic<?>>> cellLogics = CacheBuilder.newBuilder().removalListener(new RemovalListener<Long, LoadingCache<String, ILogic<?>>>() {
-		@Override
-		public void onRemoval(
-				RemovalNotification<Long, LoadingCache<String, ILogic<?>>> notification) {
-			LoadingCache<String, ILogic<?>> nestedCache = notification.getValue();
-			nestedCache.invalidateAll();
-		}
-	}).build(new CacheLoader<Long, LoadingCache<String, ILogic<?>>>() {
-		@Override
-		public LoadingCache<String, ILogic<?>> load(final Long taskId) throws Exception {
-			return CacheBuilder.newBuilder().removalListener(new RemovalListener<String, ILogic<?>>() {
-				@Override
-				public void onRemoval(
-						RemovalNotification<String, ILogic<?>> notification) {
-					ILogic<?> value = notification.getValue();
-					value.dispose();
-				}
-			}).build(new CacheLoader<String, ILogic<?>>() {
-				@Override
-				public ILogic<?> load(String propertyId) throws Exception {
-					return cellLogicFactory.createCellLogic((AbstractLogicImpl<?>) getSource(), context, contributor, firstDayOfWeek, contributionsMap.get(taskId), propertyId);
-				}
-			});
-		}
+	private LoadingCache<Long, LoadingCache<String, ILogic<?>>> cellLogics = CacheBuilder
+			.newBuilder()
+			.removalListener((RemovalNotification<Long, LoadingCache<String, ILogic<?>>> notification) -> {
+				LoadingCache<String, ILogic<?>> nestedCache = notification.getValue();
+				nestedCache.invalidateAll();
+			}).build(new CacheLoader<Long, LoadingCache<String, ILogic<?>>>() {
+			@Override
+			public LoadingCache<String, ILogic<?>> load(final Long taskId) throws Exception {
+				return CacheBuilder.newBuilder()
+					.removalListener((RemovalNotification<String, ILogic<?>> notification) -> {
+							ILogic<?> value = notification.getValue();
+							value.dispose();
+					})
+					.build(new CacheLoader<String, ILogic<?>>() {
+						@Override
+						public ILogic<?> load(String propertyId) throws Exception {
+							return cellLogicFactory.createCellLogic((AbstractLogicImpl<?>) getSource(), 
+									context, 
+									contributor, firstDayOfWeek, 
+									contributionsMap.get(taskId), propertyId);
+					}
+				});
+			}
 	});
 	
 	@Override
@@ -228,8 +227,7 @@ class ContributionsListTableCellProvider extends AbstractSafeTableCellProviderCa
 				}
 			}
 			return StringHelper.hundredthToEntry(total);
-		}
-		else if (IContributionsCellLogicFactory.TOTAL_COLUMN_ID.equals(propertyId)) {
+		} else if (IContributionsCellLogicFactory.TOTAL_COLUMN_ID.equals(propertyId)) {
 			long total = 0;
 			for (TaskContributions tc : contributionsMap.values()) {
 				for (Contribution contribution : tc.getContributions()) {
@@ -239,8 +237,7 @@ class ContributionsListTableCellProvider extends AbstractSafeTableCellProviderCa
 				}
 			}
 			return StringHelper.hundredthToEntry(total);
-		}
-		else {
+		} else {
 			return null;
 		}
 	}

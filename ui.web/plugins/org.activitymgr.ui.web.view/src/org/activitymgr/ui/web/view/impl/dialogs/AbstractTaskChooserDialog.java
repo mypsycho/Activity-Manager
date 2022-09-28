@@ -4,8 +4,10 @@ import java.util.Stack;
 
 import org.activitymgr.ui.web.logic.ITaskChooserLogic;
 import org.activitymgr.ui.web.logic.ITreeContentProviderCallback;
+import org.activitymgr.ui.web.logic.spi.ITasksCellLogicFactory;
 import org.activitymgr.ui.web.view.impl.internal.util.TreeTableDatasource;
 
+import com.vaadin.data.Item;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
@@ -131,7 +133,12 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
 		TreeTableDatasource<Long> dataSource = 
 				new TreeTableDatasource<Long>(getResourceCache(), callback);
 		taskTree.setContainerDataSource(dataSource);
-		taskTree.setItemCaptionPropertyId(callback.getPropertyIds().iterator().next());
+		taskTree.setItemCaptionPropertyId(ITasksCellLogicFactory.NAME_PROPERTY_ID);
+//		taskTree.setItemStyleGenerator((Tree source, Object itemId) -> {
+//				Item item = source.getItem(itemId);
+//				// item.getItemProperty(itemId).getValue();
+//				return "";
+//			});
 	}
 	
 	@Override

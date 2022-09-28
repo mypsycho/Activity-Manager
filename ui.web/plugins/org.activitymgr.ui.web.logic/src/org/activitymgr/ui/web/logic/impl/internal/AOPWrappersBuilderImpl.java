@@ -33,32 +33,27 @@ final class AOPWrappersBuilderImpl implements IAOPWrappersBuilder {
 	@Override
 	public <V extends IView<?>> V buildViewWrapperForLogic(
 			final V wrappedView, Class<V> viewInterface) {
-		return (V) Proxy.newProxyInstance(viewInterface
-				.getClassLoader(), new Class<?>[] { viewInterface,
-				IUINotificationsBlockingViewWrapper.class }, new InvocationHandler() {
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args)
-					throws Throwable {
+		return (V) Proxy.newProxyInstance(viewInterface.getClassLoader(), 
+			new Class<?>[] { viewInterface, IUINotificationsBlockingViewWrapper.class }, 
+			(proxy, method, args) -> {
 				if (method.getDeclaringClass().equals(IUINotificationsBlockingViewWrapper.class)) {
 					return wrappedView;
 				} else {
 					try {
 						disableViewNotifications();
-						if (args != null) {
-							for (int i = 0; i < args.length; i++) {
-								Object arg = args[i];
-								if (arg instanceof IUINotificationsBlockingViewWrapper) {
-									args[i] = ((IUINotificationsBlockingViewWrapper) arg).unwrapp();
-								}
+						for (int i = 0; args != null && i < args.length; i++) {
+							Object arg = args[i];
+							if (arg instanceof IUINotificationsBlockingViewWrapper) {
+								args[i] = ((IUINotificationsBlockingViewWrapper) arg).unwrapp();
 							}
 						}
+
 						return method.invoke(wrappedView, args);
 					} finally {
 						enableViewNotifications();
 					}
 				}
-			}
-		});
+			});
 	}
 
 	private void enableViewNotifications() {
@@ -130,7 +125,7 @@ final class AOPWrappersBuilderImpl implements IAOPWrappersBuilder {
 						txCtx.getTx().rollback();
 					}
 					Throwable exception = t.getTargetException();
-					LOGGER.warn("Transcation failure", exception);
+					LOGGER.warn("Transaction failure", exception);
 					
 					// exception.printStackTrace();
 					// Building message
@@ -142,7 +137,9 @@ final class AOPWrappersBuilderImpl implements IAOPWrappersBuilder {
 					String details = null;
 					Throwable cause = exception;
 					while ((cause = cause.getCause()) != null) {
-						details = cause.getClass().getSimpleName() + " : " + cause.getMessage() + "\n";
+						if (!cause.getMessage().equals(message)) {
+							details = cause.getClass().getSimpleName() + " : " + cause.getMessage();
+						}
 					}
 					rootLogic.getView().showErrorNotification(message, details);
 					return null;

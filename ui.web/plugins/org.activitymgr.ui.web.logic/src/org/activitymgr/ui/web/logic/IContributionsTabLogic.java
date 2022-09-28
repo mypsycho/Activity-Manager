@@ -25,8 +25,6 @@ public interface IContributionsTabLogic extends ITabLogic<IContributionsTabLogic
 
 	void onSelectMe();
 	
-	void onToday();
-	
 	public interface View extends ITabLogic.View<IContributionsTabLogic> {
 		
 		void setCollaboratorsProvider(ITableCellProviderCallback<Long> collaboratorsProvider);

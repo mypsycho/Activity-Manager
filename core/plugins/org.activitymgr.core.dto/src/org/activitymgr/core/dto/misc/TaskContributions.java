@@ -17,6 +17,8 @@ public class TaskContributions {
 	
 	/** The contributions */
 	private Contribution[] contributions;
+	
+	private boolean closed;
 
 	/**
 	 * @return the task
@@ -58,6 +60,26 @@ public class TaskContributions {
 	 */
 	public void setTaskCodePath(String taskCodePath) {
 		this.taskCodePath = taskCodePath;
+	}
+	
+	
+
+	/**
+	 * Sets the task is closed (directly or indirectly).
+	 * 
+	 * @param closed task flag
+	 */
+	public void setClosed(boolean closed) {
+		this.closed = closed;
+	}
+	
+	/**
+	 * Returns if the task is closed for contribution.
+	 * 
+	 * @return closed
+	 */
+	public boolean isClosed() {
+		return closed;
 	}
 
 }

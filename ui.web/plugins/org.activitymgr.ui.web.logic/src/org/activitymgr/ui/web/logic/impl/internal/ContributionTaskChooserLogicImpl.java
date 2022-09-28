@@ -17,7 +17,6 @@ import org.activitymgr.ui.web.logic.IConstraintsValidator;
 import org.activitymgr.ui.web.logic.IConstraintsValidator.ErrorStatus;
 import org.activitymgr.ui.web.logic.IConstraintsValidator.IStatus;
 import org.activitymgr.ui.web.logic.IContributionTaskChooserLogic;
-import org.activitymgr.ui.web.logic.ITreeContentProviderCallback;
 import org.activitymgr.ui.web.logic.impl.AbstractContributionTabLogicImpl;
 import org.activitymgr.ui.web.logic.impl.AbstractLogicImpl;
 import org.activitymgr.ui.web.logic.spi.ITaskCreationPatternHandler;
@@ -39,7 +38,7 @@ public class ContributionTaskChooserLogicImpl
 	@Inject
 	private Set<IConstraintsValidator> constraintsValidators;
 
-	private TaskTreeCellProvider treeContentProvider;
+	// private TaskTreeCellProvider treeContentProvider; 
 	private String newTaskName;
 	private String newTaskCode;
 	private boolean newTaskChecked;
@@ -117,26 +116,32 @@ public class ContributionTaskChooserLogicImpl
 		};
 	}
 	
-	@Override
-	public void onTaskFilterChanged(String filter) {
-		filter = filter.trim();
-		if (treeContentProvider != null) {
-			treeContentProvider.dispose();
-		}
-		// Register the tree content provider
-		treeContentProvider = new TaskTreeCellProvider(this, filter, true);
-		
-		@SuppressWarnings("unchecked")
-		ITreeContentProviderCallback<Long> wrapLogicForView =  // no class for generics
-			wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
-		getView().setTasksTreeProviderCallback(wrapLogicForView);
-		if (!"".equals(filter)) {
-			Task task = getModelMgr().getFirstTaskMatching(filter);
-			if (task != null) {
-				getView().expandToTask(task.getId());
-			}
-		}
+	protected TaskTreeCellProvider createFilteredContentProvider(String filter) {
+		// Contribution is only for open task
+		return new TaskTreeCellProvider(this, filter, true, true);
 	}
+	
+	// IDEM as abstract
+//	@Override
+//	public void onTaskFilterChanged(String filter) {
+//		filter = filter.trim();
+//		if (treeContentProvider != null) {
+//			treeContentProvider.dispose();
+//		}
+//		// Register the tree content provider
+//		treeContentProvider = new TaskTreeCellProvider(this, filter, true);
+//		
+//		@SuppressWarnings("unchecked") // no class for generics
+//		ITreeContentProviderCallback<Long> cpCallback =
+//			wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
+//		getView().setTasksTreeProviderCallback(cpCallback);
+//		if (!"".equals(filter)) {
+//			Task task = getModelMgr().getFirstTaskMatching(filter);
+//			if (task != null) {
+//				getView().expandToTask(task.getId());
+//			}
+//		}
+//	}
 
 	@Override
 	public void onNewTaskCheckboxClicked() {
@@ -181,14 +186,12 @@ public class ContributionTaskChooserLogicImpl
 			}
 		}
 		getView().setNewTaskFieldsEnabled(newTaskFieldsEnabled);
-		if (newStatus != null) {
-			return new ErrorStatus(newStatus);
-		} else {
-			return IConstraintsValidator.OK_STATUS;
-		}
+		return newStatus != null 
+				? new ErrorStatus(newStatus)
+				: IConstraintsValidator.OK_STATUS;
 	}
 	
-	String getNewTaskStatus(Task selectedTask) throws ModelException {
+	protected String getNewTaskStatus(Task selectedTask) throws ModelException {
 		// Check constraints
 		for (IConstraintsValidator cv : constraintsValidators) {
 			IStatus status = cv.canCreateSubTaskUnder(selectedTask);

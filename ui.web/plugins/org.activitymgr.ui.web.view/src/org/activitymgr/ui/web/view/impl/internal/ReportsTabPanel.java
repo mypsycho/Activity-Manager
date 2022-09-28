@@ -4,12 +4,11 @@ import java.util.Collection;
 
 import org.activitymgr.ui.web.logic.IReportsLogic.View;
 import org.activitymgr.ui.web.logic.IReportsTabLogic;
+import org.activitymgr.ui.web.logic.IStandardButtonLogic;
 import org.activitymgr.ui.web.view.AbstractTabPanel;
 import org.activitymgr.ui.web.view.IResourceCache;
 
 import com.google.inject.Inject;
-import com.vaadin.data.Property.ValueChangeEvent;
-import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Component;
@@ -21,15 +20,14 @@ import com.vaadin.ui.VerticalLayout;
 public class ReportsTabPanel extends AbstractTabPanel<IReportsTabLogic>
 		implements IReportsTabLogic.View {
 
-	private VerticalLayout leftComponent;
 
-	private HorizontalLayout bodyComponent;
+	private HorizontalLayout editionContainer;
 
-	private ListSelect reportsList;
+	private ListSelect confsSelector;
 
-	private HorizontalLayout reportCfgsButtonsPanel;
+	private HorizontalLayout confsToolbar;
 
-	private IndexedContainer resportsListDatasource;
+	private IndexedContainer confsModel;
 
 	private View reportsView;
 
@@ -38,72 +36,83 @@ public class ReportsTabPanel extends AbstractTabPanel<IReportsTabLogic>
 		super(resourceCache);
 	}
 
+
 	@Override
 	protected Component createLeftComponent() {
-		leftComponent = new VerticalLayout();
-		leftComponent.setSpacing(true);
-		leftComponent.setMargin(new MarginInfo(false, true, false, false));
+		VerticalLayout result = new VerticalLayout();
+		// style= overflow : auto
+		result.setSpacing(true);
+		result.addStyleName("parent-selector");
+		// result.setMargin(new MarginInfo(false, true, false, false)); //?
 
-		reportCfgsButtonsPanel = new HorizontalLayout();
-		leftComponent.addComponent(reportCfgsButtonsPanel);
+		
+		confsToolbar = new HorizontalLayout();
+		result.addComponent(confsToolbar);
+		// reportCfgsButtonsPanel.setWidth(100, Unit.PERCENTAGE);
 
-		reportsList = new ListSelect();
-		reportsList.setImmediate(true);
-		reportsList.setMultiSelect(true);
-		reportsList.setNullSelectionAllowed(false);
-		reportsList.setWidth(100, Unit.PERCENTAGE);
-		resportsListDatasource = (IndexedContainer) reportsList
+		confsSelector = new ListSelect();
+		confsSelector.setImmediate(true);
+		confsSelector.setMultiSelect(true);
+		confsSelector.setNullSelectionAllowed(false);
+		confsSelector.setSizeFull();
+		confsSelector.addStyleName("main-selector");
+		// reportsList.
+		// reportsList.style = min-width: 250px
+		
+		confsModel = (IndexedContainer) confsSelector
 				.getContainerDataSource();
-		reportsList.select("Projet EDF");
-		leftComponent.addComponent(reportsList);
 
-		leftComponent.setExpandRatio(reportCfgsButtonsPanel, 10);
-		leftComponent.setExpandRatio(reportsList, 90);
+		result.addComponent(confsSelector);
 
-		reportsList.addValueChangeListener(new ValueChangeListener() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-				getLogic().onSelectionChanged(
-						(Collection<Long>) reportsList.getValue());
-			}
-		});
+		result.setExpandRatio(confsSelector, 100);
+		result.setSizeFull();
 
-		return leftComponent;
+		return result;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public void registerLogic(IReportsTabLogic logic) {
+		super.registerLogic(logic);
+		confsSelector.addValueChangeListener(event ->
+			getLogic().onSelectionChanged((Collection<Long>) confsSelector.getValue()));
+
+	}
+	
+	
 	@Override
 	public void removeReportCfg(long id) {
-		resportsListDatasource.removeItem(id);
+		confsModel.removeItem(id);
 	}
 
 	@Override
 	public void addReportCfg(long id, String name, int idx) {
-		resportsListDatasource.addItemAt(idx, id);
-		reportsList.setItemCaption(id, name);
+		confsModel.addItemAt(idx, id);
+		confsSelector.setItemCaption(id, name);
 	}
 
-	@Override
-	public void setLongReportsList(boolean longList) {
-		reportsList.setHeight(longList ? 530 : 230, Unit.PIXELS);
-	}
 
 	@Override
 	protected Component createBodyComponent() {
-		bodyComponent = new HorizontalLayout();
-		return bodyComponent;
+		editionContainer = new HorizontalLayout();
+		editionContainer.setSizeFull();
+		editionContainer.setMargin(new MarginInfo(false, false, false, true));
+		editionContainer.addStyleName("parent-selector");
+		return editionContainer;
 	}
 
 	@Override
 	public void setReportsView(View view) {
 		this.reportsView = view;
-		bodyComponent.addComponent((Component) view);
+		Component display = (Component) view;
+		// display.setSizeFull();
+		editionContainer.addComponent(display);
+		editionContainer.setExpandRatio(display, 100);
 	}
 
 	@Override
-	public void addReportConfigurationButton(
-			org.activitymgr.ui.web.logic.IStandardButtonLogic.View view) {
-		reportCfgsButtonsPanel.addComponent((Component) view);
+	public void addReportConfigurationButton(IStandardButtonLogic.View view) {
+		confsToolbar.addComponent((Component) view);
 	}
 
 	@Override
@@ -114,10 +123,10 @@ public class ReportsTabPanel extends AbstractTabPanel<IReportsTabLogic>
 	@SuppressWarnings("unchecked")
 	@Override
 	public void selectReportCfg(long id) {
-		for (Long selected : (Collection<Long>) reportsList.getValue()) {
-			reportsList.unselect(selected);
+		for (Long selected : (Collection<Long>) confsSelector.getValue()) {
+			confsSelector.unselect(selected);
 		}
-		reportsList.select(id);
+		confsSelector.select(id);
 	}
 
 }
