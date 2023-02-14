@@ -68,7 +68,7 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		result.addComponent(left);
 		result.setExpandRatio(left, LEFT_SIDE_RATIO);
 		
-		selectMeButton = new Button("Me");
+		selectMeButton = new Button("Select myself");
 		selectMeButton.setWidth(100, Unit.PERCENTAGE);
 		left.addComponent(selectMeButton);
 		left.setWidth(100, Unit.PERCENTAGE);
