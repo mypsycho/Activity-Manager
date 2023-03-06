@@ -24,7 +24,7 @@ jobs:
       
       - name: Deploy RCP 🚀
         if: ${{ (github.ref == 'refs/heads/master') }}
-        uses: JamesIves/github-pages-deploy-action@4
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: ui.rcp/releng/org.activitymgr.ui.rcp.repository/target/repository
@@ -33,7 +33,7 @@ jobs:
         
       - name: Deploy Web 🚀
         if: ${{ (github.ref == 'refs/heads/master') }}
-        uses: JamesIves/github-pages-deploy-action@4
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: ui.web/releng/org.activitymgr.ui.web.repository/target/repository
@@ -46,7 +46,7 @@ jobs:
   
       - name: Deploy Release RCP 🚀🏷️
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: JamesIves/github-pages-deploy-action@4
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: ui.rcp/releng/org.activitymgr.ui.rcp.repository/target/repository
@@ -55,7 +55,7 @@ jobs:
         
       - name: Deploy Release Web 🚀🏷️
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: JamesIves/github-pages-deploy-action@4
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: ui.web/releng/org.activitymgr.ui.web.repository/target/repository
