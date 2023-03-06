@@ -30,26 +30,20 @@ import com.vaadin.ui.Table.ColumnGenerator;
 public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic> 
 		implements IContributionsTabLogic.View {
 
-	private PopupDateField dateField;
-
 	private Button selectMeButton;
 
-	private Button todayButton;
-
 	private Button previousYearButton;
-
 	private Button previousMonthButton;
-
 	private Button previousWeekButton;
 
+	private PopupDateField dateField;
+	private Button todayButton;
+
 	private Button nextWeekButton;
-
 	private Button nextMonthButton;
-
 	private Button nextYearButton;
 
 	private Table contributionsTable;
-
 	private Table collaboratorsTable;
 
 	private ITableCellProviderCallback<Long> contributionsProvider;
@@ -80,15 +74,9 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		result.setExpandRatio(dateLayout, CENTER_RATIO);
 		result.setComponentAlignment(dateLayout, Alignment.MIDDLE_CENTER);
 		
-		previousYearButton = new Button("<<< Year");
-		previousYearButton.setDescription("Ctrl+Shift+Alt+Left");
-		dateLayout.addComponent(previousYearButton);
-		previousMonthButton = new Button("<< Month");
-		previousMonthButton.setDescription("Ctrl+Shift+Left");
-		dateLayout.addComponent(previousMonthButton);
-		previousWeekButton = new Button("< Week");
-		previousWeekButton.setDescription("Ctrl+Left");
-		dateLayout.addComponent(previousWeekButton);
+		previousYearButton = createBoundButton(dateLayout, "<<< Year", "Ctrl+Shift+Alt+Left");
+		previousMonthButton = createBoundButton(dateLayout, "<< Month", "Ctrl+Shift+Left");
+		previousWeekButton = createBoundButton(dateLayout, "< Week", "Ctrl+Left");
 
 		addSpaceComponent(dateLayout, 20);
 		
@@ -103,18 +91,20 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		
 		addSpaceComponent(dateLayout, 20);
 
-		nextWeekButton = new Button("Week >");
-		nextWeekButton.setDescription("Ctrl+Right");
-		dateLayout.addComponent(nextWeekButton);
-		nextMonthButton = new Button("Month >>");
-		nextMonthButton.setDescription("Ctrl+Shift+Right");
-		dateLayout.addComponent(nextMonthButton);
-		nextYearButton = new Button("Year >>>");
-		nextYearButton.setDescription("Ctrl+Shift+Alt+Right");
-		dateLayout.addComponent(nextYearButton);
+		nextWeekButton = createBoundButton(dateLayout, "Week >", "Ctrl+Right");
+		nextMonthButton = createBoundButton(dateLayout, "Month >>", "Ctrl+Shift+Right");
+		nextYearButton = createBoundButton(dateLayout, "Year >>>", "Ctrl+Shift+Alt+Right");
+
 		
 		addSpaceComponent(result, 5 + 50); // separator + Actions Column
 		
+		return result;
+	}
+	
+	private Button createBoundButton(ComponentContainer parent, String label, String description) {
+		Button result = new Button(label);
+		result.setDescription(description);
+		parent.addComponent(result);
 		return result;
 	}
 
@@ -182,7 +172,7 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 				ModifierKey.CTRL, ModifierKey.SHIFT, ModifierKey.ALT);
 
 		registerBoundButton(previousMonthButton, "Previous month",
-				() -> getLogic().onPreviousWeek(),
+				() -> getLogic().onPreviousMonth(),
 				KeyCode.ARROW_LEFT,
 				ModifierKey.CTRL, ModifierKey.SHIFT);
 
@@ -197,7 +187,7 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 				ModifierKey.CTRL, ModifierKey.SHIFT, ModifierKey.ALT);
 
 		registerBoundButton(nextMonthButton, "Next month",
-				() -> getLogic().onNextWeek(),
+				() -> getLogic().onNextMonth(),
 				KeyCode.ARROW_LEFT,
 				ModifierKey.CTRL, ModifierKey.SHIFT);
 
@@ -205,18 +195,15 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 				() -> getLogic().onNextWeek(),
 				KeyCode.ARROW_LEFT,
 				ModifierKey.CTRL);
-
-
 	}
 
 	@Override
 	public void setContributionsProvider(final ITableCellProviderCallback<Long> provider) {
 		this.contributionsProvider = provider;
-		TableDatasource<Long> dataSource = new TableDatasource<Long>(getResourceCache(), provider);
+		TableDatasource<Long> dataSource = new TableDatasource<>(getResourceCache(), provider);
 		contributionsTable.setContainerDataSource(dataSource);
 		
-		ColumnGenerator colGen = (source, itemId, propertyId1) -> 
-		provider.getCell((Long) itemId, (String) propertyId1);
+		ColumnGenerator colGen = (source, itemId, prop) -> provider.getCell((Long) itemId, (String) prop);
 		for (String propertyId : dataSource.getContainerPropertyIds()) {
 			contributionsTable.addGeneratedColumn(propertyId, colGen);
 			
@@ -253,19 +240,18 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 
 
 	@Override
-	public void setCollaboratorsProvider(
-			ITableCellProviderCallback<Long> collaboratorsProvider) {
-		TableDatasource<Long> dataSource = new TableDatasource<Long>(getResourceCache(), collaboratorsProvider);
+	public void setCollaboratorsProvider(ITableCellProviderCallback<Long> cellProvider) {
+		TableDatasource<Long> dataSource = new TableDatasource<>(getResourceCache(), cellProvider);
 		collaboratorsTable.setContainerDataSource(dataSource);
 		
-		ColumnGenerator colGen = (source, itemId, propertyId) -> 
-			collaboratorsProvider.getCell((Long) itemId, (String) propertyId);
+		ColumnGenerator colGen = (source, itemId, prop) -> 
+			cellProvider.getCell((Long) itemId, (String) prop);
 		for (String propertyId : dataSource.getContainerPropertyIds()) {
 			collaboratorsTable.addGeneratedColumn(propertyId, colGen);
-			int columnWidth = collaboratorsProvider.getColumnWidth(propertyId);
+			int columnWidth = cellProvider.getColumnWidth(propertyId);
 			collaboratorsTable.setColumnExpandRatio(propertyId, columnWidth);
 			collaboratorsTable.setColumnAlignment(propertyId, 
-					AlignHelper.toVaadinAlign(collaboratorsProvider.getColumnAlign(propertyId)));
+					AlignHelper.toVaadinAlign(cellProvider.getColumnAlign(propertyId)));
 		}
 	}
 
