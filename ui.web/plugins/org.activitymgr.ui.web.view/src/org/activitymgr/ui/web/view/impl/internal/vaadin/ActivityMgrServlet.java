@@ -25,25 +25,20 @@ import com.google.inject.Inject;
 import com.vaadin.server.BootstrapFragmentResponse;
 import com.vaadin.server.BootstrapListener;
 import com.vaadin.server.BootstrapPageResponse;
-import com.vaadin.server.SessionInitEvent;
-import com.vaadin.server.SessionInitListener;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.UI;
 
+@SuppressWarnings("serial")
 final class ActivityMgrServlet extends VaadinServlet {
-	/**
-	 * 
-	 */
-	private final long start;
+
 
 	@Inject
 	private Set<IRESTServiceLogic> serviceLogics;
 
-	private Map<String, IRESTServiceLogic> serviceLogicsMap = new HashMap<String, IRESTServiceLogic>();
+	private Map<String, IRESTServiceLogic> serviceLogicsMap = new HashMap<>();
 
 	ActivityMgrServlet() {
-		this.start = System.currentTimeMillis();
 		Activator.getDefault().getInjector().injectMembers(this);
 		for (IRESTServiceLogic serviceLogic : serviceLogics) {
 			String path = serviceLogic.getPath().trim();
@@ -169,14 +164,8 @@ final class ActivityMgrServlet extends VaadinServlet {
 			} else {
 				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			}
-		}
-		else if (!uri.startsWith("/VAADIN/")) {
-			logS(uri + "- in");
-			long now = System.currentTimeMillis();
-			super.service(req, res);
-			logS(uri + "- Time spent : " + (System.currentTimeMillis() - now));
-		}
-		else {
+
+		} else {
 			super.service(req, res);
 		}
 	}
@@ -184,23 +173,16 @@ final class ActivityMgrServlet extends VaadinServlet {
 	@Override
 	protected void servletInitialized() throws ServletException {
 		super.servletInitialized();
-		getService().addSessionInitListener(new SessionInitListener() {
-
-			@Override
-			public void sessionInit(SessionInitEvent event) {
-				event.getSession().addBootstrapListener(
+		getService().addSessionInitListener(event -> event.getSession()
+				.addBootstrapListener(
 						new BootstrapListener() {
-
+			
 							@Override
-							public void modifyBootstrapFragment(
-									BootstrapFragmentResponse response) {
-								// TODO Auto-generated method stub
-
+							public void modifyBootstrapFragment(BootstrapFragmentResponse response) {
 							}
-
+			
 							@Override
-							public void modifyBootstrapPage(
-									BootstrapPageResponse response) {
+							public void modifyBootstrapPage(BootstrapPageResponse response) {
 								Element head = response.getDocument().head();
 								head.prependElement("script")
 										.attr("src",
@@ -208,14 +190,8 @@ final class ActivityMgrServlet extends VaadinServlet {
 										.attr("async", "true")
 										.attr("defer", "true");
 							}
-						});
-			}
-		});
+						})
+		);
 	}
 
-	private void logS(String s) {
-//		String format = "0000000";
-//		String time = format + String.valueOf(System.currentTimeMillis() - start);
-//		System.out.println(time.substring(time.length() - format.length()) + "-" + s);
-	}
 }

@@ -41,14 +41,12 @@ public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 
 	private static final String UI_PROVIDER_PARAM = "UIProvider";
 
-	private static final String WIDGETSET_PARAM = "widgetset";
-
 	private static final String PRODUCTION_MODE_PARAM = "productionMode";
 
-	@SuppressWarnings("unchecked")
 	private static final List<Class<?>> SERVICE_CLASSES = Arrays
 			.asList(IExtensionRegistry.class,
-					HttpService.class /* , HttpContextExtensionService.class */);
+					HttpService.class 
+					/* , HttpContextExtensionService.class */);
 
 	private BundleContext context;
 

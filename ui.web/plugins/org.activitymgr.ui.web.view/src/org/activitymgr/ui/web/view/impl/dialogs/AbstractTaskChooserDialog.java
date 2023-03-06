@@ -7,7 +7,6 @@ import org.activitymgr.ui.web.logic.ITreeContentProviderCallback;
 import org.activitymgr.ui.web.logic.spi.ITasksCellLogicFactory;
 import org.activitymgr.ui.web.view.impl.internal.util.TreeTableDatasource;
 
-import com.vaadin.data.Item;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;

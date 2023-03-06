@@ -10,6 +10,7 @@ import org.activitymgr.ui.web.view.impl.internal.util.TableDatasource;
 import com.google.inject.Inject;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.Table;
+import com.vaadin.ui.Table.ColumnGenerator;
 
 @SuppressWarnings("serial")
 public class CollaboratorsPanel extends AbstractTabPanel<ICollaboratorsTabLogic> implements ICollaboratorsTabLogic.View {
@@ -31,20 +32,19 @@ public class CollaboratorsPanel extends AbstractTabPanel<ICollaboratorsTabLogic>
 		collaboratorsTable.setSizeFull();
 		return collaboratorsTable;
 	}
+	
     @Override
 	public void setCollaboratorsProviderCallback(
 			final ITableCellProviderCallback<Long> collaboratorsProvider) {
 		TableDatasource<Long> dataSource = new TableDatasource<Long>(getResourceCache(), collaboratorsProvider);
 		collaboratorsTable.setContainerDataSource(dataSource);
+		
+		ColumnGenerator cellProvider = (source, itemId, propertyId) -> 
+			collaboratorsProvider.getCell((Long) itemId, (String) propertyId);
+				
 		for (String propertyId : dataSource.getContainerPropertyIds()) {
-			collaboratorsTable.addGeneratedColumn(propertyId, new Table.ColumnGenerator() {
-				@Override
-				public Object generateCell(Table source, Object itemId, Object propertyId) {
-					return collaboratorsProvider.getCell((Long) itemId, (String) propertyId);
-				}
-			});
-			int columnWidth = collaboratorsProvider.getColumnWidth(propertyId);
-			collaboratorsTable.setColumnWidth(propertyId, columnWidth);
+			collaboratorsTable.addGeneratedColumn(propertyId, cellProvider);
+			collaboratorsTable.setColumnWidth(propertyId, collaboratorsProvider.getColumnWidth(propertyId));
 			collaboratorsTable.setColumnAlignment(propertyId, AlignHelper.toVaadinAlign(collaboratorsProvider.getColumnAlign(propertyId)));
 		}
 	}

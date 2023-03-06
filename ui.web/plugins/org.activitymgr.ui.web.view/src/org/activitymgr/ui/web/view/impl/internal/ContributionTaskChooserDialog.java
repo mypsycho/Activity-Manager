@@ -59,8 +59,6 @@ public class ContributionTaskChooserDialog
 		        
 		        AbstractLayout panel = createNewTaskPanel();
 		        addComponent(panel);
-		        
-		        // TODO Add close
 				
 		        setExpandRatio(recentTasksSelect, 60);
 		        setExpandRatio(panel, 40);

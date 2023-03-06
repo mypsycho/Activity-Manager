@@ -15,23 +15,18 @@ public class AbstractDialog extends Window {
 	public AbstractDialog(String title) {
 		super(title);
 		// Register escape key binding
-		setCloseShortcut(ShortcutListener.KeyCode.ESCAPE);
+		addCloseShortcut(ShortcutListener.KeyCode.ESCAPE);
 		// Not resizeable
 		//setResizable(false);
 		// Trigger a focus as soon as it is possible (the dialog mus be attached
 		// first)
-		addAttachListener(new AttachListener() {
-			@Override
-			public void attach(AttachEvent event) {
-				focus();
-			}
-		});
+		addAttachListener(event -> focus());
 	}
 
 	@Override
 	public void setClosable(boolean closable) {
 		// Unregister escape key binding
-		setCloseShortcut(-1);
+		removeCloseShortcut(ShortcutListener.KeyCode.ESCAPE);
 		super.setClosable(closable);
 	}
 

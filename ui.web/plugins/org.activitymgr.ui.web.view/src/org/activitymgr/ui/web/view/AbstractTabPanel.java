@@ -2,7 +2,6 @@ package org.activitymgr.ui.web.view;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.activitymgr.ui.web.logic.IButtonLogic.View;
@@ -12,9 +11,6 @@ import org.activitymgr.ui.web.view.impl.internal.util.TextFieldView;
 
 import com.google.inject.Inject;
 import com.vaadin.event.Action;
-import com.vaadin.event.LayoutEvents;
-import com.vaadin.event.LayoutEvents.LayoutClickEvent;
-import com.vaadin.server.Sizeable.Unit;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Component;
@@ -26,8 +22,6 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 
 	protected int LEFT_SIDE_RATIO = 20;
 	protected int CENTER_RATIO = 100 - LEFT_SIDE_RATIO;
-	
-	
 	
 	public static class ButtonBasedShortcutListener extends ShortcutListener {
 		
@@ -150,7 +144,7 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 				}
 				@Override
 				public Action[] getActions(Object target, Object sender) {
-					return (Action[]) activeActions.toArray(new Action[activeActions.size()]);
+					return activeActions.toArray(new Action[activeActions.size()]);
 				}
 			});
 		}
@@ -167,13 +161,8 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 	public void enableShortcut(ButtonBasedShortcutListener shortcutListener) {
 		activeActions.add(shortcutListener);
 		// Else, we must preserve the initial order when restoring the action
-		Collections.sort(activeActions, new Comparator<ButtonBasedShortcutListener>() {
-			@Override
-			public int compare(ButtonBasedShortcutListener o1,
-					ButtonBasedShortcutListener o2) {
-				return new Integer(orderedActions.indexOf(o1)).compareTo(orderedActions.indexOf(o2));
-			}
-		});
+		Collections.sort(activeActions, (o1, o2) ->
+				orderedActions.indexOf(o1) - orderedActions.indexOf(o2));
 		addShortcutListener(shortcutListener);
 		forceActionHandlersReload();
 	}

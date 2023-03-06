@@ -8,11 +8,9 @@ import org.activitymgr.ui.web.view.impl.internal.util.AlignHelper;
 import org.activitymgr.ui.web.view.impl.internal.util.TreeTableDatasource;
 
 import com.google.inject.Inject;
-import com.vaadin.data.Property.ValueChangeEvent;
-import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.Table;
 import com.vaadin.ui.TreeTable;
+import com.vaadin.ui.Table.ColumnGenerator;
 
 @SuppressWarnings("serial")
 public class TasksPanel extends AbstractTabPanel<ITasksTabLogic> implements ITasksTabLogic.View {
@@ -41,11 +39,13 @@ public class TasksPanel extends AbstractTabPanel<ITasksTabLogic> implements ITas
 			final ITreeContentProviderCallback<Long> tasksProvider) {
 		TreeTableDatasource<Long> dataSource = new TreeTableDatasource<Long>(getResourceCache(), tasksProvider);
 		taskTree.setContainerDataSource(dataSource);
+		
+		ColumnGenerator cellProvider = (source, itemId, prop) -> 
+			tasksProvider.getCell((Long) itemId, (String) prop);
+		
 		for (String propertyId : dataSource.getContainerPropertyIds()) {
-			taskTree.addGeneratedColumn(propertyId, (source, itemId, prop) 
-					-> tasksProvider.getCell((Long) itemId, (String) prop));
-			int columnWidth = tasksProvider.getColumnWidth(propertyId);
-			taskTree.setColumnWidth(propertyId, columnWidth);
+			taskTree.addGeneratedColumn(propertyId, cellProvider);
+			taskTree.setColumnWidth(propertyId, tasksProvider.getColumnWidth(propertyId));
 			taskTree.setColumnAlignment(propertyId, AlignHelper.toVaadinAlign(tasksProvider.getColumnAlign(propertyId)));
 		}
 	}
