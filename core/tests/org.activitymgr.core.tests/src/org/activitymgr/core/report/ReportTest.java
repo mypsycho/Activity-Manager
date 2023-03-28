@@ -92,10 +92,12 @@ public class ReportTest extends AbstractModelTestCase {
 		doTestReport();
 	}
 
+	// TODO fixme in maven
 	public void ignoretestReportWithoutStartNorInterval() throws IOException, ModelException {
 		doTestReport();
 	}
 
+	// TODO fixme in maven
 	public void ignoretestReportWithoutStart() throws IOException, ModelException {
 		doTestReport();
 	}
