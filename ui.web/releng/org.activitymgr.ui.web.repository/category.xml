@@ -4,4 +4,6 @@
       <category name="org.activitymgr.ui.web"/>
    </feature>
    <category-def name="org.activitymgr.ui.web" label="ActivityManager Web UI"/>
+   <repository-reference location="http://https://download.eclipse.org/releases/2019-03/" enabled="true" />
+   <repository-reference location="http://https://download.eclipse.org/tools/orbit/downloads/drops/R20211213173813/repository/" enabled="true" />
 </site>
