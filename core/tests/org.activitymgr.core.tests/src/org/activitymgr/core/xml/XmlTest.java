@@ -14,6 +14,7 @@ import org.activitymgr.core.dto.Contribution;
 import org.activitymgr.core.dto.Duration;
 import org.activitymgr.core.dto.Task;
 import org.activitymgr.core.model.ModelException;
+import org.activitymgr.core.model.impl.XmlHelper;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
@@ -90,13 +91,7 @@ public class XmlTest extends AbstractModelTestCase {
 		assertEquals(0, initialCollaborators.length);
 
 		// Import du fichier associé au test
-		try {
-			importTestFile();
-			fail("Duplicate login must generate an error");
-		}
-		catch (ModelException expected) {
-			// Do nothing...
-		}
+		assertFail(ModelException.class, "Duplicate login must generate an error");
 	}
 
 	public void testCreateTasks() throws IOException, ParserConfigurationException, SAXException, ModelException {
@@ -220,14 +215,23 @@ public class XmlTest extends AbstractModelTestCase {
 	/*
 	 * Méthodes privées 
 	 */
-
-	private void assertSAXExceptionThrown(String testFailMessage) throws IOException, ParserConfigurationException, ModelException {
+	
+	private void assertSAXExceptionThrown(String testFailMessage) {
+		assertFail(SAXException.class, testFailMessage);
+	}
+	
+	private void assertFail(Class<? extends Exception> errorType,
+			String testFailMessage) {
 		try {
+			XmlHelper.setLogIssue(false);
 			importTestFile();
 			fail(testFailMessage);
-		}
-		catch (SAXException e) {
-			// Exception normalement levée en cas de mauvais format
+		} catch (Exception e) {
+			if (!errorType.isInstance(e)) {
+				throw new RuntimeException(e);
+			}
+		} finally {
+			XmlHelper.setLogIssue(true);
 		}
 	}
 

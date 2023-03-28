@@ -160,6 +160,8 @@ public class XmlHelper implements EntityResolver, ErrorHandler, ContentHandler {
 	public static final String COMMENT_NODE = "comment"; //$NON-NLS-1$
 	public static final String VALUE_NODE = "value"; //$NON-NLS-1$
 
+	private static boolean LOG_ISSUE = true;
+	
 	/** Gestionnaire du modèle */
 	private ModelMgrDelegate modelMgrDelegate;
 
@@ -206,31 +208,31 @@ public class XmlHelper implements EntityResolver, ErrorHandler, ContentHandler {
 
 	/** ErrorHandler interface methods */
 
-	/*
-	 * (non-Javadoc)
+	/**
+	 * Enables log of error.
 	 * 
-	 * @see org.xml.sax.ErrorHandler#error(org.xml.sax.SAXParseException)
+	 * @param enable logging 
 	 */
+	public static void setLogIssue(boolean logging) {
+		LOG_ISSUE = logging;
+	}
+	
+	@Override
 	public void error(SAXParseException e) throws SAXParseException {
-		log.error(
-				"SAX error line : " + e.getLineNumber() + " column : " + e.getColumnNumber(), e); //$NON-NLS-1$ //$NON-NLS-2$
+		if (LOG_ISSUE) {
+			log.error(
+					"SAX error line : " + e.getLineNumber() //$NON-NLS-1$ 
+					+ " column : " + e.getColumnNumber(), e); //$NON-NLS-1$
+		}
 		throw e;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.xml.sax.ErrorHandler#fatalError(org.xml.sax.SAXParseException)
-	 */
+	@Override
 	public void fatalError(SAXParseException e) throws SAXParseException {
 		error(e);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
-	 */
+	@Override
 	public void warning(SAXParseException e) throws SAXParseException {
 		error(e);
 	}

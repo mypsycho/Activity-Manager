@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
@@ -27,6 +29,22 @@ import org.activitymgr.core.model.ModelException;
 import org.xml.sax.SAXException;
 
 public class ReportTest extends AbstractModelTestCase {
+	
+	private static final OutputStream NULL_OUTPUT = new OutputStream() {
+
+        @Override
+        public void write(byte[] b, int off, int len) {
+        }
+
+        @Override
+        public void write(int b) {
+        }
+		
+	};
+	
+	private static final PrintStream POUT =  Boolean.getBoolean("activitymgr.output.log")
+			? System.out
+			: new PrintStream(NULL_OUTPUT);
 	
 	private static final int SAMPLE_DATA_WEEK_COUNT = 10;
 	private static final String START_PROP = "start";
@@ -153,7 +171,7 @@ public class ReportTest extends AbstractModelTestCase {
 	private void doTestReport() throws IOException, ModelException {
 		String testName = getName();
 		String fileName = testName.substring(4) + ".txt";
-		System.out.println(fileName);
+		POUT.println(fileName);
 		BufferedReader in = new BufferedReader(new InputStreamReader(ReportTest.class.getResourceAsStream(fileName), Charset.forName("UTF-8")));
 		String line = "";
 
@@ -214,7 +232,7 @@ public class ReportTest extends AbstractModelTestCase {
 					contributorIds, // Contributor ids
 					Boolean.parseBoolean(props.getProperty(ORDER_BY_CONTRIBUTOR_PROP)) // Order by contributor
 					);
-			System.out.println(report);
+			POUT.println(report);
 			assertNotNull(report);
 			List<ReportItem> items = report.getItems();
 			assertNotNull(items);
@@ -228,17 +246,17 @@ public class ReportTest extends AbstractModelTestCase {
 			boolean onlyKeepTasksWithContributions, boolean byContributor,
 			long[] contributorIds, boolean orderByContributor)
 			throws ModelException {
-		System.out.println("buildReport(");
-		System.out.println("  "
+		POUT.println("buildReport(");
+		POUT.println("  "
 				+ (start != null ? (start.get(Calendar.YEAR) + "/"
 						+ (start.get(Calendar.MONTH) + 1) + "/" + start
 						.get(Calendar.DATE)) : null) + ", // start");
-		System.out.println("  " + intervalType + ", // intervalType");
-		System.out.println("  " + intervalCount + ", // intervalCount");
-		System.out.println("  " + rootTaskId + ", // rootTaskId");
-		System.out.println("  " + taskDepth + ", // taskDepth");
-		System.out.println("  " + onlyKeepTasksWithContributions + ", // onlyKeepTasksWithContributions");
-		System.out.println("  " + byContributor + ", // byContributor");
+		POUT.println("  " + intervalType + ", // intervalType");
+		POUT.println("  " + intervalCount + ", // intervalCount");
+		POUT.println("  " + rootTaskId + ", // rootTaskId");
+		POUT.println("  " + taskDepth + ", // taskDepth");
+		POUT.println("  " + onlyKeepTasksWithContributions + ", // onlyKeepTasksWithContributions");
+		POUT.println("  " + byContributor + ", // byContributor");
 		StringWriter sw = new StringWriter();
 		if (contributorIds != null) {
 			for (long contributorId : contributorIds) {
@@ -246,8 +264,8 @@ public class ReportTest extends AbstractModelTestCase {
 				sw.append(' ');
 			}
 		}
-		System.out.println("  " + sw.toString() + ", // contributorIds");
-		System.out.println("  " + orderByContributor + ") // orderByContributor");
+		POUT.println("  " + sw.toString() + ", // contributorIds");
+		POUT.println("  " + orderByContributor + ") // orderByContributor");
 		return getModelMgr().buildReport(start, intervalType, intervalCount,
 				rootTaskId, taskDepth, onlyKeepTasksWithContributions,
 				byContributor, orderByContributor, contributorIds);
