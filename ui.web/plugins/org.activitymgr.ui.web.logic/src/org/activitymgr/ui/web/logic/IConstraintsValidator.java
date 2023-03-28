@@ -55,10 +55,11 @@ public interface IConstraintsValidator {
 	/**
 	 * Indicates a task can be edit by web.
 	 * 
+	 * @param property from ITasksCellLogicFactory
 	 * @param task to evaluate.
 	 * @return <code>true</code> if the task can be modified.
 	 */
-	default boolean canEditTask(Task task) {
+	default boolean canEditTask(String property, Task task) {
 		return true;
 	}
 	

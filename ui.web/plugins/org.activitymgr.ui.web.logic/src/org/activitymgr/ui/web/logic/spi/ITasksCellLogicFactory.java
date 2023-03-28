@@ -1,6 +1,5 @@
 package org.activitymgr.ui.web.logic.spi;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.activitymgr.core.dto.misc.TaskSums;
@@ -23,10 +22,10 @@ public interface ITasksCellLogicFactory extends ICellLogicFactory {
 	String ETC_PROPERTY_ID = "ETC";
 	String DELTA_PROPERTY_ID = "DELTA";
 	String COMMENT_PROPERTY_ID = "COMMENT";
-	String CLOSED_ID = "CLOSED";
+	String CLOSED_PROPERTY_ID = "CLOSED";
 	
 	
-	List<String> PROPERTY_IDS = Arrays.asList(
+	List<String> PROPERTY_IDS = List.of(
 			NAME_PROPERTY_ID, 
 			CODE_PROPERTY_ID, 
 			BUDGET_PROPERTY_ID, 
@@ -34,7 +33,7 @@ public interface ITasksCellLogicFactory extends ICellLogicFactory {
 			CONSUMMED_PROPERTY_ID, 
 			ETC_PROPERTY_ID, 
 			DELTA_PROPERTY_ID,
-			CLOSED_ID, 
+			CLOSED_PROPERTY_ID, 
 			COMMENT_PROPERTY_ID);
 
 	ILogic<?> createCellLogic(AbstractLogicImpl<?> parentLogic, IUILogicContext context, String filter, TaskSums task,

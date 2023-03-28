@@ -26,15 +26,13 @@ import com.google.inject.Inject;
 
 public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 
-	static final Map<String, String> ATTR_NAMES = new HashMap<String, String>();
-	static {
-		// Used for reflection access
-		ATTR_NAMES.put(NAME_PROPERTY_ID, "name");
-		ATTR_NAMES.put(CODE_PROPERTY_ID, "code");
-		ATTR_NAMES.put(BUDGET_PROPERTY_ID, "budget");
-		ATTR_NAMES.put(INITIAL_PROPERTY_ID, "initiallyConsumed");
-		ATTR_NAMES.put(ETC_PROPERTY_ID, "todo");
-	}
+	static final Map<String, String> ATTR_NAMES = Map.of(
+			NAME_PROPERTY_ID, "name",
+			CODE_PROPERTY_ID, "code",
+			BUDGET_PROPERTY_ID, "budget",
+			INITIAL_PROPERTY_ID, "initiallyConsumed",
+			ETC_PROPERTY_ID, "todo");
+
 	
 	@Inject
 	private Set<IConstraintsValidator> tasksValidators;
@@ -45,7 +43,7 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 		ILogic<?> logic = null;
 		final Task task = taskSums.getTask();
 		boolean editable = !readOnly 
-				&& tasksValidators.stream().allMatch(it -> it.canEditTask(taskSums.getTask()));
+				&& tasksValidators.stream().allMatch(it -> it.canEditTask(propertyId, taskSums.getTask()));
 				
 		
 		if (NAME_PROPERTY_ID.equals(propertyId)) {
@@ -64,13 +62,13 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 			if (!editable || !taskSums.isLeaf()) {
 				logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getBudgetSum()));
 			} else {
-				logic = new NumericFieldLogic(parentLogic, taskSums.getBudgetSum(), propertyId, task);
+				logic = new DayFieldLogic(parentLogic, taskSums.getBudgetSum(), propertyId, task);
 			}
 		} else if (INITIAL_PROPERTY_ID.equals(propertyId)) {
 			if (!editable || !taskSums.isLeaf()) {
 				logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getInitiallyConsumedSum()));
 			} else {
-				logic = new NumericFieldLogic(parentLogic, taskSums.getInitiallyConsumedSum(), propertyId, task);
+				logic = new DayFieldLogic(parentLogic, taskSums.getInitiallyConsumedSum(), propertyId, task);
 			}
 		} else if (CONSUMMED_PROPERTY_ID.equals(propertyId)) {
 			logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getContributionsSums().getConsumedSum()));
@@ -78,9 +76,9 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 			if (!editable || !taskSums.isLeaf()) {
 				logic = new LabelLogicImpl(parentLogic, StringHelper.hundredthToEntry(taskSums.getTodoSum()));
 			} else {
-				logic = new NumericFieldLogic(parentLogic, taskSums.getTodoSum(), propertyId, task);
+				logic = new DayFieldLogic(parentLogic, taskSums.getTodoSum(), propertyId, task);
 			}
-		} else if (CLOSED_ID.equals(propertyId)) {
+		} else if (CLOSED_PROPERTY_ID.equals(propertyId)) {
 			if (!editable) {
 				logic = new LabelLogicImpl(parentLogic, taskSums.getTask().isClosed() ? "X" : "");
 			} else {
@@ -121,7 +119,7 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 		case ETC_PROPERTY_ID:
 		case DELTA_PROPERTY_ID:
 			return 60;
-		case CLOSED_ID:
+		case CLOSED_PROPERTY_ID:
 			return 45;
 		case COMMENT_PROPERTY_ID:
 			return 300;
@@ -141,7 +139,7 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 		case ETC_PROPERTY_ID:
 		case DELTA_PROPERTY_ID:
 			return Align.RIGHT;
-		case CLOSED_ID:
+		case CLOSED_PROPERTY_ID:
 			return Align.CENTER;
 			default:
 			return Align.LEFT;
@@ -153,35 +151,34 @@ public class TasksCellLogicFatory implements ITasksCellLogicFactory {
 		if (filter == null || filter.length() == 0) {
 			// Simple text
 			return text;
-		} else {
-			String filterLC = filter.toLowerCase();
-			String textToLC = text.toLowerCase();
-			int filterLength = filter.length();
-			StringWriter sw = new StringWriter();
-			if (filterLength > 0) {
-				int lastIndexOf = 0;
-				int indexOf = 0;
-				while ((indexOf = textToLC.indexOf(filterLC, lastIndexOf)) >= 0) {
-					sw.append(text.substring(lastIndexOf, indexOf));
-					sw.append("<b><i>");
-					sw.append(text.substring(indexOf, indexOf + filterLength));
-					sw.append("</i></b>");
-					lastIndexOf = indexOf + filterLength;
-				}
-				int textLength = text.length();
-				if (lastIndexOf < textLength) {
-					sw.append(text.substring(lastIndexOf, textLength));
-				}
-			}
-			return sw.toString();
 		}
+
+		String filterLC = filter.toLowerCase();
+		String textToLC = text.toLowerCase();
+		StringWriter sw = new StringWriter();
+		
+		int lastIndexOf = 0;
+		int indexOf = 0;
+		while ((indexOf = textToLC.indexOf(filterLC, lastIndexOf)) >= 0) {
+			sw.append(text.substring(lastIndexOf, indexOf));
+			sw.append("<b><i>");
+			sw.append(text.substring(indexOf, indexOf + filter.length()));
+			sw.append("</i></b>");
+			lastIndexOf = indexOf + filter.length();
+		}
+		int textLength = text.length();
+		if (lastIndexOf < textLength) {
+			sw.append(text.substring(lastIndexOf, textLength));
+		}
+		
+		return sw.toString();
 	}
 	
 
-
-	static class NumericFieldLogic extends TextFieldLogic {
+	/** Field to handle days count: stored value is 100edth of day. */
+	static class DayFieldLogic extends TextFieldLogic {
 		
-		public NumericFieldLogic(AbstractLogicImpl<?> parent, long value, String property, Task task) {
+		public DayFieldLogic(AbstractLogicImpl<?> parent, long value, String property, Task task) {
 			super(parent, StringHelper.hundredthToEntry(value), property, task);
 			getView().setNumericFieldStyle();
 		}
