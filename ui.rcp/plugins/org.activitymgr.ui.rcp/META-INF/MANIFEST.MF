@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Activity Manager RCP UI
 Bundle-SymbolicName: org.activitymgr.ui.rcp;singleton:=true
 Automatic-Module-Name: org.activitymgr.ui.rcp
-Bundle-Version: 1.2.1.qualifier
+Bundle-Version: 1.2.2.qualifier
 Bundle-Activator: org.activitymgr.ui.rcp.Activator
 Bundle-Vendor: Jean-Francois Brazeau
 Require-Bundle: org.eclipse.ui,
