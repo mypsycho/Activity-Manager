@@ -229,7 +229,8 @@ public class DurationsUI extends AbstractTableMgrUI implements IDbStatusListener
 			int columnIndex = tableColsMgr.getColumnIndex(property);
 			switch (columnIndex) {
 			case IS_ACTIVE_COLUMN_IDX:
-				return duration.getIsActive() ? Boolean.TRUE
+				return duration.getIsActive()
+						? Boolean.TRUE
 						: Boolean.FALSE;
 			case DURATION_COLUMN_IDX:
 				return String.valueOf(new BigDecimal(duration.getId())
@@ -316,7 +317,8 @@ public class DurationsUI extends AbstractTableMgrUI implements IDbStatusListener
 				Duration duration = (Duration) element;
 				switch (columnIndex) {
 				case IS_ACTIVE_COLUMN_IDX:
-					return duration.getIsActive() ? checkedIcon
+					return duration.getIsActive()
+							? checkedIcon
 							: uncheckedIcon;
 				case DURATION_COLUMN_IDX:
 					return null;

@@ -77,7 +77,7 @@ public class ContributionsCellLogicFatory implements IContributionsCellLogicFact
 				};
 				textFieldLogic.getView().setNumericFieldStyle();
 				field = textFieldLogic;
-			} else {
+			} else { // ComboBox
 				ISelectFieldLogic<String> selectFieldLogic = new AbstractSafeSelectLogicImpl<String>(parentLogic, durationsMap, duration) {
 					@Override
 					protected void unsafeOnSelectedItemChanged(String newValue) throws Exception {

@@ -98,7 +98,9 @@ public class Contribution {
 	}
 
 	/**
-	 * @return la durée.
+	 * Durée en 100 th de jour.
+	 * 
+	 * @return la durée
 	 */
 	public long getDurationId() {
 		return durationId;

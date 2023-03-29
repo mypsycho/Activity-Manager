@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -30,6 +30,7 @@ package org.activitymgr.ui.rcp.dialogs;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.activitymgr.core.dto.Collaborator;
 import org.activitymgr.core.dto.Contribution;
@@ -73,10 +74,20 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 	public static final int TASK_CODE_PATH_COLUMN_IDX = 2;
 	public static final int TASK_NAME_COLUMN_IDX = 3;
 	public static final int DURATION_COLUMN_IDX = 4;
-	private static TableOrTreeColumnsMgr tableColsMgr;
+	private static TableOrTreeColumnsMgr tableColsMgr = new TableOrTreeColumnsMgr();
+	static {
+		BiConsumer<String, Integer> addColumn = (code, size) -> tableColsMgr.addColumn(
+				code, Strings.getString("ContributionsViewerTable.columns." + code), //$NON-NLS-1$
+				size, SWT.LEFT);
+		addColumn.accept("DATE", 70); //$NON-NLS-1$
+		addColumn.accept("COLLABORATOR", 100); //$NON-NLS-1$
+		addColumn.accept("TASK_PATH", 170); //$NON-NLS-1$
+		addColumn.accept("TASK_NAME", 170); //$NON-NLS-1$
+		addColumn.accept("DURATION", 50); //$NON-NLS-1$
+	}
 
 	/** Formatteur de date */
-	private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy"); //$NON-NLS-1$
+	private SimpleDateFormat DAY_FORMAT = new SimpleDateFormat("dd/MM/yyyy"); //$NON-NLS-1$
 
 	/** Viewer */
 	private TableViewer tableViewer;
@@ -88,20 +99,20 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 	private MenuItem exportItem;
 
 	/** Cache de taches */
-	private Map<Long, Task> tasksCache = new HashMap<Long, Task>();
+	private Map<Long, Task> tasksCache = new HashMap<>();
 
 	/** Cache de chemins de tache */
-	private Map<Long, String> taskCodePathsCache = new HashMap<Long, String>();
+	private Map<Long, String> taskCodePathsCache = new HashMap<>();
 
 	/** Cache de collaborateurs */
-	private Map<Long, Collaborator> collaboratorsCache = new HashMap<Long, Collaborator>();
+	private Map<Long, Collaborator> collaboratorsCache = new HashMap<>();
 
 	/** Model manager */
 	private IModelMgr modelMgr;
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 * @param layoutData
@@ -134,21 +145,6 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 
 		// Configuration des colonnes
 		tableColsMgr = new TableOrTreeColumnsMgr();
-		tableColsMgr
-				.addColumn(
-						"DATE", Strings.getString("ContributionsViewerTable.columns.DATE"), 70, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"COLLABORATOR", Strings.getString("ContributionsViewerTable.columns.COLLABORATOR"), 100, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"TASK_PATH", Strings.getString("ContributionsViewerTable.columns.TASK_PATH"), 170, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"TASK_NAME", Strings.getString("ContributionsViewerTable.columns.TASK_NAME"), 170, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"DURATION", Strings.getString("ContributionsViewerTable.columns.CONTRIBUTION_DURATION"), 50, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
 		tableColsMgr.configureTable(tableViewer);
 
 		// Configuration du menu popup
@@ -163,7 +159,7 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 
 	/**
 	 * Initialise le filtre de recherche des contributions.
-	 * 
+	 *
 	 * @param task
 	 *            la tache.
 	 * @param contributor
@@ -177,72 +173,48 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 		tableViewer.setInput(ROOT_NODE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java
-	 * .lang.Object)
-	 */
+	private static final Contribution[] NO_CONTRIBUTIONS = {};
+	@Override
 	public Object[] getElements(Object inputElement) {
-		// Chargement des données
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				// Recherche des collaborateurs
-				return modelMgr.getContributions(contributor, task, null, null);
-			}
-		};
-		// Exécution
-		Object result = (Object) safeRunner.run(parent.getShell());
-		return (Contribution[]) (result != null ? result
-				: new Contribution[] {});
+		return SafeRunner.exec(parent.getShell(), NO_CONTRIBUTIONS,
+			() -> modelMgr.getContributions(contributor, task, null, null));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang
-	 * .Object, int)
-	 */
+	@Override
 	public String getColumnText(final Object element, final int columnIndex) {
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				Contribution c = (Contribution) element;
-				String text = null;
-				switch (columnIndex) {
-				case (DATE_COLUMN_IDX):
-					text = sdf.format(c.getDate().getTime());
-					break;
-				case (COLLABORATOR_COLUMN_IDX):
-					Collaborator collaborator = getCachedCollaborator(c
-							.getContributorId());
-					text = collaborator.getFirstName()
-							+ " " + collaborator.getLastName(); //$NON-NLS-1$
-					break;
-				case (TASK_CODE_PATH_COLUMN_IDX):
-					text = getCachedTaskCodePath(c.getTaskId());
-					break;
-				case (TASK_NAME_COLUMN_IDX):
-					text = getCachedTask(c.getTaskId()).getName();
-					break;
-				case (DURATION_COLUMN_IDX):
-					text = StringHelper.hundredthToEntry(c.getDurationId());
-					break;
-				default:
-					throw new Error(
-							Strings.getString("ContributionsViewerTable.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
-				}
-				return text;
+		return SafeRunner.exec(parent.getShell(), "", () -> { //$NON-NLS-1$
+			Contribution c = (Contribution) element;
+			String text = null;
+			switch (columnIndex) {
+			case DATE_COLUMN_IDX:
+				text = DAY_FORMAT.format(c.getDate().getTime());
+				break;
+			case COLLABORATOR_COLUMN_IDX:
+				Collaborator collaborator = getCachedCollaborator(c
+						.getContributorId());
+				text = collaborator.getFirstName()
+						+ " " + collaborator.getLastName(); //$NON-NLS-1$
+				break;
+			case TASK_CODE_PATH_COLUMN_IDX:
+				text = getCachedTaskCodePath(c.getTaskId());
+				break;
+			case TASK_NAME_COLUMN_IDX:
+				text = getCachedTask(c.getTaskId()).getName();
+				break;
+			case DURATION_COLUMN_IDX:
+				text = StringHelper.hundredthToEntry(c.getDurationId());
+				break;
+			default:
+				throw new Error(
+						Strings.getString("ContributionsViewerTable.errors.UNKNOWN_COLUMN")); //$NON-NLS-1$
 			}
-		};
-		// Exécution
-		return (String) safeRunner.run(parent.getShell(), ""); //$NON-NLS-1$
+			return text;
+		});
 	}
 
 	/**
 	 * Retourne le chemin de la tache associée à l'identifiant spécifié.
-	 * 
+	 *
 	 * @param taskId
 	 *            l'identifiant de la tache.
 	 * @return le chemin.
@@ -250,61 +222,53 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 	 *             levé en cas de viloation du modèle.
 	 */
 	private String getCachedTaskCodePath(long taskId) throws ModelException {
-		Long _taskId = new Long(taskId);
-		String taskCodePath = (String) taskCodePathsCache.get(_taskId);
+		String taskCodePath = taskCodePathsCache.get(taskId);
 		if (taskCodePath == null) {
 			log.debug("Registering in cache task code path for taskId=" + taskId); //$NON-NLS-1$
 			Task task = getCachedTask(taskId);
 			taskCodePath = modelMgr.getTaskCodePath(task);
-			taskCodePathsCache.put(_taskId, taskCodePath);
+			taskCodePathsCache.put(taskId, taskCodePath);
 		}
 		return taskCodePath;
 	}
 
 	/**
 	 * Retourne la tache associée à l'identifiant spécifié.
-	 * 
+	 *
 	 * @param taskId
 	 *            l'identifiant de la tache.
 	 * @return la tache.
 	 */
 	private Task getCachedTask(long taskId) {
-		Long _taskId = new Long(taskId);
-		Task task = (Task) tasksCache.get(_taskId);
+		Task task = tasksCache.get(taskId);
 		if (task == null) {
 			log.debug("Registering in cache task for taskId=" + taskId); //$NON-NLS-1$
 			task = modelMgr.getTask(taskId);
-			tasksCache.put(_taskId, task);
+			tasksCache.put(taskId, task);
 		}
 		return task;
 	}
 
 	/**
 	 * Retourne le collaborateur associée à l'identifiant spécifié.
-	 * 
+	 *
 	 * @param collaboratorId
 	 *            l'identifiant du collaborateur.
 	 * @return le collaborateur.
 	 */
 	private Collaborator getCachedCollaborator(long collaboratorId) {
-		Long _collaboratorId = new Long(collaboratorId);
-		Collaborator collaborator = (Collaborator) collaboratorsCache
-				.get(_collaboratorId);
+		Collaborator collaborator = collaboratorsCache
+				.get(collaboratorId);
 		if (collaborator == null) {
 			log.debug("Registering in cache collaborator for collaboratorId=" + collaboratorId); //$NON-NLS-1$
 			collaborator = modelMgr.getCollaborator(collaboratorId);
-			collaboratorsCache.put(_collaboratorId, collaborator);
+			collaboratorsCache.put(collaboratorId, collaborator);
 		}
 		return collaborator;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.MenuListener#menuShown(org.eclipse.swt.events.
-	 * MenuEvent)
-	 */
+
+	@Override
 	public void menuShown(MenuEvent e) {
 		log.debug("menuShown(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		// TableItem[] selection = tableViewer.getTable().getSelection();
@@ -313,50 +277,28 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 		exportItem.setEnabled(true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.MenuListener#menuHidden(org.eclipse.swt.events
-	 * .MenuEvent)
-	 */
+
+	@Override
 	public void menuHidden(MenuEvent e) {
 		// Do nothing...
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt
-	 * .events.SelectionEvent)
-	 */
-	public void widgetSelected(final SelectionEvent e) {
-		log.debug("SelectionListener.widgetSelected(" + e + ")"); //$NON-NLS-1$ //$NON-NLS-2$
-		final Object source = e.getSource();
-		SafeRunner safeRunner = new SafeRunner() {
-			public Object runUnsafe() throws Exception {
-				// TableItem[] selection =
-				// tableViewer.getTable().getSelection();
-				// Cas d'une demande d'export du tableau
-				if (exportItem.equals(source)) {
-					// Export du tableau
-					SWTHelper.exportToWorkBook(tableViewer.getTable());
-				}
-				return null;
+
+	@Override
+	public void widgetSelected(final SelectionEvent evt) {
+		log.debug("SelectionListener.widgetSelected(" + evt + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+
+		SafeRunner.exec(parent.getShell(), () -> {
+			// Cas d'une demande d'export du tableau
+			if (exportItem.equals(evt.getSource())) {
+				// Export du tableau
+				SWTHelper.exportToWorkBook(tableViewer.getTable());
 			}
-		};
-		// Exécution
-		safeRunner.run(parent.getShell());
+		});
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse
-	 * .swt.events.SelectionEvent)
-	 */
+
+	@Override
 	public void widgetDefaultSelected(SelectionEvent e) {
 		widgetSelected(e);
 	}

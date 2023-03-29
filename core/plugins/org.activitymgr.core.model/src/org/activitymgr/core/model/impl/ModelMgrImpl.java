@@ -250,17 +250,15 @@ public class ModelMgrImpl implements IModelMgr {
 
 	private void verify(String errorCode, boolean predicate) throws ModelException {
 		if (!predicate) {
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors." + errorCode)); //$NON-NLS-1$
-			
+			String msgKey = "ModelMgr.errors." + errorCode; //$NON-NLS-1$
+			throw new ModelException(Strings.getString(msgKey));
 		}
 	}
 	
 	private void verify(String errorCode, boolean predicate, Object... details) throws ModelException {
 		if (!predicate) {
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors." + errorCode, details)); //$NON-NLS-1$
-			
+			String msgKey = "ModelMgr.errors." + errorCode; //$NON-NLS-1$
+			throw new ModelException(Strings.getString(msgKey, details));
 		}
 	}
 	
@@ -307,7 +305,7 @@ public class ModelMgrImpl implements IModelMgr {
 	 *             levé dans la cas ou la tache de destination ne peut recevoir
 	 *             de sous-tache.
 	 */
-	private void checkTaskPath(Task task) throws ModelException {
+	private void verifyTaskPath(Task task) throws ModelException {
 		boolean noErrorOccured = false;
 		Task _task = null;
 		try {
@@ -328,6 +326,14 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 	}
 
+	private Duration verifyExistingDuration(Contribution contribution) throws  ModelException {		
+		// La durée existe-t-elle ?
+		Duration result = getDuration(contribution.getDurationId());
+		// Verify "active" ??
+		verify("INVALID_DURATION", result != null); //$NON-NLS-1$
+		return result;
+	}
+	
 	/**
 	 * Vérifie l'unicité d'un login.
 	 * 
@@ -336,11 +342,10 @@ public class ModelMgrImpl implements IModelMgr {
 	 * @throws ModelException
 	 *             levé dans le cas ou le ogin n'est pas unique.
 	 */
-	private void checkUniqueLogin(Collaborator collaborator)
+	private void verifyUniqueLogin(Collaborator collaborator)
 			throws  ModelException {
 		// Vérification de l'unicité
-		Collaborator existing = getCollaborator(collaborator
-				.getLogin());
+		Collaborator existing = getCollaborator(collaborator.getLogin());
 		// Vérification du login
 		verify("NON_UNIQUE_COLLABORATOR_LOGIN", //$NON-NLS-1$
 				existing == null || existing.equals(collaborator),
@@ -352,7 +357,7 @@ public class ModelMgrImpl implements IModelMgr {
 			throws ModelException {
 		log.info("createCollaborator(" + collaborator + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		// Control de l'unicité du login
-		checkUniqueLogin(collaborator);
+		verifyUniqueLogin(collaborator);
 
 		// Collaborator creation
 		return collaboratorDAO.insert(collaborator);
@@ -368,9 +373,7 @@ public class ModelMgrImpl implements IModelMgr {
 				getSubTasksCount(contribution.getTaskId()) == 0);
 		Task task = getTask(contribution.getTaskId());
 
-		// La durée existe-t-elle ?
-		verify("INVALID_DURATION", //$NON-NLS-1$ 
-				getDuration(contribution.getDurationId()) != null);
+		verifyExistingDuration(contribution);
 
 		// Contribution creation
 		contribution = contributionDAO.insert(contribution);
@@ -451,10 +454,8 @@ public class ModelMgrImpl implements IModelMgr {
 		// Check sur l'unicité du code pour le chemin considéré
 		Task sameCodeTask = getTask(
 				parentTask != null ? parentTask.getFullPath() : "", task.getCode()); //$NON-NLS-1$
-		if (sameCodeTask != null && !sameCodeTask.equals(task)) {
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors.TASK_CODE_ALREADY_IN_USE", task.getCode())); //$NON-NLS-1$
-		}
+		verify("TASK_CODE_ALREADY_IN_USE", //$NON-NLS-1$
+				sameCodeTask == null || sameCodeTask.equals(task), task.getCode());
 	}
 	
 	@Override
@@ -749,175 +750,124 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.IModelMgr#isLeaf(long)
-	 */
 	@Override
 	public boolean isLeaf(long parentTaskId) {
 		return getSubTasksCount(parentTaskId) == 0;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.IModelMgr#getSubTasksCount(long)
-	 */
 	@Override
 	public int getSubTasksCount(long parentTaskId) {
 		return taskDAO.getSubTasksCount(parentTaskId);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getCollaborator(long)
-	 */
 	@Override
 	public Collaborator getCollaborator(long collaboratorId) {
 		return collaboratorDAO.selectByPK(new Object[] { collaboratorId });
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getCollaborator(java.lang.String)
-	 */
 	@Override
 	public Collaborator getCollaborator(String login) {
 		Collaborator[] collaborators = collaboratorDAO.select(new String[] { "login" }, new Object[] { login }, null, -1);
 		return collaborators.length > 0 ? collaborators[0] : null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getCollaborators()
-	 */
 	@Override
 	public Collaborator[] getCollaborators() {
 		return getCollaborators(Collaborator.LOGIN_FIELD_IDX, true, false);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getActiveCollaborators(int, boolean)
-	 */
 	@Override
-	public Collaborator[] getActiveCollaborators(int orderByClauseFieldIndex,
+	public Collaborator[] getActiveCollaborators(int orderFieldIndex,
 			boolean ascendantSort) {
-		return getCollaborators(orderByClauseFieldIndex, ascendantSort,
-				true);
+		return getCollaborators(orderFieldIndex, ascendantSort, true);
 	}
 
-	private Collaborator[] getCollaborators(int orderByClauseFieldIndex,
-			boolean ascendantSort, boolean onlyActiveCollaborators) {
-		String[] whereClauseAttrNames = onlyActiveCollaborators ? new String[] { "isActive" } : null;
-		Object[] whereClauseAttrValues = onlyActiveCollaborators ? new Object[] { Boolean.TRUE } : null;
-		String orderByClauseFieldName = null;
-		switch (orderByClauseFieldIndex) {
+	private Collaborator[] getCollaborators(int orderFieldIndex,
+			boolean ascendantSort, boolean onlyActive) {
+		String orderName;
+		switch (orderFieldIndex) {
 		case Collaborator.ID_FIELD_IDX:
-			orderByClauseFieldName = "id"; //$NON-NLS-1$
+			orderName = "id"; //$NON-NLS-1$
 			break;
 		case Collaborator.LOGIN_FIELD_IDX:
-			orderByClauseFieldName = "login"; //$NON-NLS-1$
+			orderName = "login"; //$NON-NLS-1$
 			break;
 		case Collaborator.FIRST_NAME_FIELD_IDX:
-			orderByClauseFieldName = "firstName"; //$NON-NLS-1$
+			orderName = "firstName"; //$NON-NLS-1$
 			break;
 		case Collaborator.LAST_NAME_FIELD_IDX:
-			orderByClauseFieldName = "lastName"; //$NON-NLS-1$
+			orderName = "lastName"; //$NON-NLS-1$
 			break;
 		case Collaborator.IS_ACTIVE_FIELD_IDX:
-			orderByClauseFieldName = "isActive"; //$NON-NLS-1$
+			orderName = "isActive"; //$NON-NLS-1$
 			break;
 		default:
 			throw new DAOException(
-					Strings.getString(
-							"DbMgr.errors.UNKNOWN_FIELD_INDEX", orderByClauseFieldIndex), null); //$NON-NLS-1$ //$NON-NLS-2$
+					Strings.getString("DbMgr.errors.UNKNOWN_FIELD_INDEX", orderFieldIndex)); //$NON-NLS-1$
 		}
-		Object[] orderByClause = new Object[] { ascendantSort ? new AscendantOrderByClause(orderByClauseFieldName) : new DescendantOrderByClause(orderByClauseFieldName)};
-		return collaboratorDAO.select(whereClauseAttrNames, whereClauseAttrValues, orderByClause, -1);
+		Object[] orderByClause = new Object[] { 
+				ascendantSort 
+					? new AscendantOrderByClause(orderName) 
+					: new DescendantOrderByClause(orderName)
+		};
+		if (onlyActive) {
+			return collaboratorDAO.select(
+					new String[] { "isActive" }, 
+					new Object[] { Boolean.TRUE }, 
+					orderByClause, -1);
+		} else {
+			return collaboratorDAO.select(null, null, orderByClause, -1);
+		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getCollaborators(int, boolean)
-	 */
+
 	@Override
-	public Collaborator[] getCollaborators(int orderByClauseFieldIndex,
+	public Collaborator[] getCollaborators(int orderFieldIndex,
 			boolean ascendantSort) {
-		return getCollaborators(orderByClauseFieldIndex, ascendantSort,
+		return getCollaborators(orderFieldIndex, ascendantSort,
 				false);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#getContributionsSum(org.activitymgr.core
-	 * .beans.Collaborator, org.activitymgr.core.beans.Task, java.util.Calendar,
-	 * java.util.Calendar)
-	 */
+
 	@Override
 	public long getContributionsSum(Collaborator contributor, Task task,
 			Calendar fromDate, Calendar toDate) throws ModelException {
 		// Control sur la date
-		checkInterval(fromDate, toDate);
+		verifyInterval(fromDate, toDate);
 		// Récupération du total
 		return contributionDAO.getContributionsSum(contributor, task, fromDate, toDate);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#getContributionsCount(org.activitymgr.
-	 * core.beans.Collaborator, org.activitymgr.core.beans.Task,
-	 * java.util.Calendar, java.util.Calendar)
-	 */
+
 	@Override
 	public int getContributionsCount(Collaborator contributor, Task task,
 			Calendar fromDate, Calendar toDate) throws ModelException {
 		// Control sur la date
-		checkInterval(fromDate, toDate);
+		verifyInterval(fromDate, toDate);
 		// Récupération du compte
 		return contributionDAO.getContributionsCount(contributor, task, fromDate, toDate);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#getContributions(org.activitymgr.core.
-	 * beans.Collaborator, org.activitymgr.core.beans.Task, java.util.Calendar,
-	 * java.util.Calendar)
-	 */
 	@Override
 	public Contribution[] getContributions(Collaborator contributor, Task task,
 			Calendar fromDate, Calendar toDate) throws 	ModelException {
 		// Vérification de la tache (le chemin de la tache doit être le bon
 		// pour que le calcul le soit)
-		if (task != null)
-			checkTaskPath(task);
+		if (task != null) {
+			verifyTaskPath(task);
+		}
 
 		// Control sur la date
-		checkInterval(fromDate, toDate);
+		verifyInterval(fromDate, toDate);
 
 		// Retour du résultat
 		return contributionDAO.getContributions(contributor, task, fromDate, toDate);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#getContributors(org.activitymgr.core.beans
-	 * .Task, java.util.Calendar, java.util.Calendar)
-	 */
 	@Override
 	public Collaborator[] getContributors(Task task, Calendar fromDate,
 			Calendar toDate) throws ModelException {
-		checkInterval(fromDate, toDate);
+		verifyInterval(fromDate, toDate);
 		return collaboratorDAO.getContributors(task, fromDate, toDate);
 	}
 
@@ -931,7 +881,7 @@ public class ModelMgrImpl implements IModelMgr {
 	 * @throws ModelException
 	 *             thrown if the interval is invalid.
 	 */
-	private void checkInterval(Calendar fromDate, Calendar toDate)
+	private void verifyInterval(Calendar fromDate, Calendar toDate)
 			throws ModelException {
 		verify("FROM_DATE_MUST_BE_BEFORE_TO_DATE", //$NON-NLS-1$
 			fromDate == null 
@@ -980,7 +930,7 @@ public class ModelMgrImpl implements IModelMgr {
 		verify("CONTRIBUTOR_MUST_BE_SPECIFIED", contributor != null);
 
 		// Control sur la date
-		checkInterval(fromDate, toDate);
+		verifyInterval(fromDate, toDate);
 
 		// Récupération des contributions
 		Map<Long, TaskContributions> taskContribs = 
@@ -1220,7 +1170,7 @@ public class ModelMgrImpl implements IModelMgr {
 		// Vérification de la tache (le chemin de la tache doit être le bon
 		// pour que le calcul le soit)
 		if (parentTask != null) {
-			checkTaskPath(parentTask);
+			verifyTaskPath(parentTask);
 		}
 		// Compute parent task path
 		String tasksPath = parentTask != null ? parentTask.getFullPath() : "";
@@ -1283,7 +1233,7 @@ public class ModelMgrImpl implements IModelMgr {
 		// attributs
 		// n'est autorisée que pour les champs autres que le chemin et le
 		// numéro.
-		checkTaskPath(task);
+		verifyTaskPath(task);
 
 		// Construction du chemin
 		return buildTaskCodePath(task);
@@ -1315,14 +1265,12 @@ public class ModelMgrImpl implements IModelMgr {
 		// attributs
 		// n'est autorisée que pour les champs autres que le chemin et le
 		// numéro.
-		checkTaskPath(task);
+		verifyTaskPath(task);
 
 		// Recherche de la tache à descendre (incrémentation du numéro)
 		byte taskToMoveUpNumber = (byte) (task.getNumber() + 1);
 		Task taskToMoveUp = getTask(task.getPath(), taskToMoveUpNumber);
-		if (taskToMoveUp == null)
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors.TASK_CANNOT_BE_MOVED_DOWN")); //$NON-NLS-1$
+		verify("TASK_CANNOT_BE_MOVED_DOWN", taskToMoveUp != null); //$NON-NLS-1$
 
 		// Inversion des taches
 		toggleTasks(task, taskToMoveUp);
@@ -1340,7 +1288,7 @@ public class ModelMgrImpl implements IModelMgr {
 			throws ModelException {
 		// Le chemin de la tache et son numéro ne doivent pas avoir changés
 		// pour pouvoir invoquer cette méthode
-		checkTaskPath(task);
+		verifyTaskPath(task);
 
 		// Pour que la méthode fonctionne, il faut que le nombre
 		// cible soit différent du nombre courant
@@ -1386,35 +1334,33 @@ public class ModelMgrImpl implements IModelMgr {
 		// attributs
 		// n'est autorisée que pour les champs autres que le chemin et le
 		// numéro.
-		checkTaskPath(task);
+		verifyTaskPath(task);
 		if (destParentTask != null)
-			checkTaskPath(destParentTask);
+			verifyTaskPath(destParentTask);
 
 		// Control : la tache de destination ne doit pas être
 		// une tache fille de la tache à déplacer
 		Task cursor = destParentTask;
 		while (cursor != null) {
-			if (cursor.equals(task))
-				throw new ModelException(
-						Strings.getString("ModelMgr.errors.TASK_CANNOT_BE_MOVED_UNDER_ITSELF")); //$NON-NLS-1$
+			verify("TASK_CANNOT_BE_MOVED_UNDER_ITSELF", !cursor.equals(task)); //$NON-NLS-1$
 			cursor = getParentTask(cursor);
 		}
 
 		// Une tache ne peut admettre une sous-tache que si elle
 		// n'est pas déja associée à un consommé
-		if (destParentTask != null)
+		if (destParentTask != null) {
 			checkAcceptsSubtasks(destParentTask);
+		}
 
 		// Le code de la tache à déplacer ne doit pas être en conflit
 		// avec un code d'une autre tache fille de la tache parent
 		// de destination
-		String destPath = destParentTask != null ? destParentTask.getFullPath()
+		String destPath = destParentTask != null 
+				? destParentTask.getFullPath()
 				: ""; //$NON-NLS-1$
-		Task sameCodeTask = getTask(destPath, task.getCode());
-		if (sameCodeTask != null)
-			throw new ModelException(
-					Strings.getString(
-							"ModelMgr.errors.TASK_CODE_EXIST_AT_DESTINATION", task.getCode())); //$NON-NLS-1$ //$NON-NLS-2$
+		verify("TASK_CODE_EXIST_AT_DESTINATION", //$NON-NLS-1$
+				getTask(destPath, task.getCode()) == null, task.getCode()); 
+
 
 		/**
 		 * Déplacement de la tache.
@@ -1455,14 +1401,12 @@ public class ModelMgrImpl implements IModelMgr {
 		// attributs
 		// n'est autorisée que pour les champs autres que le chemin et le
 		// numéro.
-		checkTaskPath(task);
+		verifyTaskPath(task);
 
 		// Recherche de la tache à monter (décrémentation du numéro)
 		byte taskToMoveDownNumber = (byte) (task.getNumber() - 1);
 		Task taskToMoveDown = getTask(task.getPath(), taskToMoveDownNumber);
-		if (taskToMoveDown == null)
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors.TASK_CANNOT_BE_MOVED_UP")); //$NON-NLS-1$
+		verify("TASK_CANNOT_BE_MOVED_UP", taskToMoveDown != null); //$NON-NLS-1$
 
 		// Inversion des taches
 		toggleTasks(task, taskToMoveDown);
@@ -1538,18 +1482,15 @@ public class ModelMgrImpl implements IModelMgr {
 			if (contributions.length == 0) {
 				// Si la contribution n'existait pas, il n'y a rien à faire
 				// de plus
-			}
-			// Sinon, il y a forcément une seule contribution
-			else {
+			} else { // Sinon, il y a forcément une seule contribution
+				
 				// On vérifie que la donnée en base est en phase avec
 				// l'entrant
 				// pour s'assurer qu'on ne va pas incrémenter le RAF de la
 				// tache
 				// avec une valeur incohérente
-				if (contribution.getDurationId() != contributions[0]
-						.getDurationId())
-					throw new ModelException(
-							Strings.getString("ModelMgr.errors.CONTRIBUTION_UPDATE_DETECTED")); //$NON-NLS-1$
+				verify("CONTRIBUTION_UPDATE_DETECTED", //$NON-NLS-1$
+						contribution.getDurationId() == contributions[0].getDurationId());
 
 				// Suppression de la contribution
 				contributionDAO.delete(contribution);
@@ -1585,38 +1526,25 @@ public class ModelMgrImpl implements IModelMgr {
 	@Override
 	public void removeDuration(Duration duration) throws ModelException {
 		// Vérification de l'existance
-		if (!durationExists(duration))
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors.DURATION_DOES_NOT_EXIST")); //$NON-NLS-1$
+		verify("DURATION_DOES_NOT_EXIST", durationExists(duration)); //$NON-NLS-1$
 
 		// Vérification de la non utilisation de la durée
 		boolean isUsed = contributionDAO.count(new String[] { "durationId" }, new Object[] { duration.getId()}) > 0;
-		if (isUsed)
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors.UNMOVEABLE_DURATION")); //$NON-NLS-1$
+		verify("UNMOVEABLE_DURATION", !isUsed); //$NON-NLS-1$
 
 		// Suppression
 		durationDAO.delete(duration);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#removeTask(org.activitymgr.core.beans.
-	 * Task)
-	 */
 	@Override
 	public synchronized void removeTask(Task task) throws ModelException {
-		// Vérification de l'adéquation des attibuts de la tache avec les
+		// Vérification de l'adéquation des attributs de la tache avec les
 		// données en base
-		checkTaskPath(task);
+		verifyTaskPath(task);
 
 		// Vérification que la tache n'est pas utilisé
 		long contribsNb = getContributionsCount(null, task, null, null);
-		if (contribsNb != 0)
-			throw new ModelException(Strings.getString(
-					"ModelMgr.errors.TASK_HAS_SUBTASKS", contribsNb)); //$NON-NLS-1$ //$NON-NLS-2$
+		verify("TASK_HAS_SUBTASKS", contribsNb == 0); //$NON-NLS-1$ 
 
 		// Récupération de la tâche parent pour reconstruction des
 		// numéros de taches
@@ -1681,7 +1609,7 @@ public class ModelMgrImpl implements IModelMgr {
 	public Collaborator updateCollaborator(Collaborator collaborator)
 			throws ModelException {
 		// Control de l'unicité du login
-		checkUniqueLogin(collaborator);
+		verifyUniqueLogin(collaborator);
 
 		// Mise à jour des données
 		return collaboratorDAO.update(collaborator);
@@ -1709,9 +1637,7 @@ public class ModelMgrImpl implements IModelMgr {
 	@Override
 	public Contribution updateContribution(Contribution contribution,
 			boolean updateEstimatedTimeToComlete) throws ModelException {
-		// La durée existe-t-elle ?
-		verify("INVALID_DURATION", //$NON-NLS-1$
-				getDuration(contribution.getDurationId()) != null);
+		verifyExistingDuration(contribution);
 
 		Contribution result = null;
 		// Faut-il mettre à jour automatiquement le RAF de la tache ?
@@ -1726,25 +1652,22 @@ public class ModelMgrImpl implements IModelMgr {
 			// Récupération de la contribution correspondante en base
 			Contribution[] contributions = contributionDAO.getContributions(contributor,
 					task, contribution.getDate(), contribution.getDate());
-			if (contributions.length == 0) {
-				// Si la contribution n'existe pas, c'est qu'il y a
-				// déphasage entre les données de l'appelant et la BDD
-				throw new ModelException(
-						Strings.getString("ModelMgr.errors.CONTRIBUTION_DELETION_DETECTED")); //$NON-NLS-1$
-			}
-			// Sinon, il y a forcément une seule contribution
-			else {
-				long oldDuration = contributions[0].getDurationId();
-				long newDuration = contribution.getDurationId();
 
-				// Mise à jour de la contribution
-				result = contributionDAO.update(contribution);
+			// Si la contribution n'existe pas, c'est qu'il y a
+			// déphasage entre les données de l'appelant et la BDD
+			verify("CONTRIBUTION_DELETION_DETECTED", contributions.length != 0); //$NON-NLS-1$
 
-				// Mise à jour du RAF de la tache
-				long newEtc = task.getTodo() + oldDuration - newDuration;
-				task.setTodo(newEtc > 0 ? newEtc : 0);
-				taskDAO.update(task);
-			}
+			long oldDuration = contributions[0].getDurationId();
+			long newDuration = contribution.getDurationId();
+
+			// Mise à jour de la contribution
+			result = contributionDAO.update(contribution);
+
+			// Mise à jour du RAF de la tache
+			long newEtc = task.getTodo() + oldDuration - newDuration;
+			task.setTodo(newEtc > 0 ? newEtc : 0);
+			taskDAO.update(task);
+			
 		}
 
 		// Retour du résultat
@@ -1763,9 +1686,8 @@ public class ModelMgrImpl implements IModelMgr {
 			Task newContributionTask) throws ModelException {
 		// La tache ne peut accepter une contribution que
 		// si elle n'admet aucune sous-tache
-		if (getSubTasksCount(newContributionTask.getId()) > 0)
-			throw new ModelException(
-					Strings.getString("ModelMgr.errors.A_TASK_WITH_SUBTASKS_CANNOT_ACCEPT_CONTRIBUTIONS")); //$NON-NLS-1$
+		verify("A_TASK_WITH_SUBTASKS_CANNOT_ACCEPT_CONTRIBUTIONS", //$NON-NLS-1$
+			getSubTasksCount(newContributionTask.getId()) == 0);
 
 		// Mise à jour des identifiants de tâche
 		for (int i = 0; i < contributions.length; i++) {
@@ -1816,7 +1738,7 @@ public class ModelMgrImpl implements IModelMgr {
 		// attributs
 		// n'est autorisée que pour les champs autres que le chemin et le
 		// numéro.
-		checkTaskPath(task);
+		verifyTaskPath(task);
 
 		// Check sur l'unicité du code pour le chemin considéré
 		assertUniquePath(getParentTask(task), task);
@@ -1873,8 +1795,7 @@ public class ModelMgrImpl implements IModelMgr {
 	
 	
 	@Override
-	public byte[] exportToExcel(Long parentTaskId) throws IOException,
-			ModelException {
+	public byte[] exportToExcel(Long parentTaskId) throws IOException, ModelException {
 		try (Workbook wbk = new HSSFWorkbook()) {
 	
 			Sheet sheet = wbk.createSheet();
@@ -1964,8 +1885,7 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 	}
 	
-	private static void setAttributeValue(Task task,
-			XLSCell cell, boolean numeric) throws ModelException {
+	private static void setAttributeValue(Task task, XLSCell cell, boolean numeric) throws ModelException {
 		try {
 			Object value = cell.getValue();
 			if (value != null) {
@@ -1976,16 +1896,13 @@ public class ModelMgrImpl implements IModelMgr {
 			}
 		} catch (StringFormatException e) {
 			throw new XLSModelException(cell.getCell(), "bad format (" + e.getMessage() + ")");
-		} catch (IllegalAccessException e) {
-			throw new XLSModelException(cell.getCell(), "invalid content (" + e.getMessage() + ")");
-		} catch (InvocationTargetException e) {
+		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new XLSModelException(cell.getCell(), "invalid content (" + e.getMessage() + ")");
 		}
 	}
 	
 	@Override
-	public void importFromExcel(Long parentTaskId, InputStream xls)
-			throws IOException, ModelException {
+	public void importFromExcel(Long parentTaskId, InputStream xls) throws IOException, ModelException {
 		final List<String> numericFieldNames = Arrays.asList(BUDGET_ATTRIBUTE, "initiallyConsumed", "todo");
 		final TaskDAOCache taskCache = new TaskDAOCache(taskDAO);
 		final String parentTaskCodePath = parentTaskId == null ? "" : taskCache.getCodePath(parentTaskId);
@@ -2046,15 +1963,12 @@ public class ModelMgrImpl implements IModelMgr {
 			boolean onlyKeepTasksWithContributions, boolean byContributor,
 			boolean contributorCentricMode, long[] contributorIds)
 			throws ModelException {
-		try {
-			return doBuildReport(start, intervalType, intervalCount,
-					rootTaskId, taskDepth, onlyKeepTasksWithContributions,
-					byContributor, contributorCentricMode, contributorIds,
-					(String[]) null, -1, false);
-		} catch (ColumnsOverflowException e) {
-			// Shouldn't happe
-			throw new IllegalStateException(e);
-		}
+
+		return doBuildReport(start, intervalType, intervalCount,
+				rootTaskId, taskDepth, onlyKeepTasksWithContributions,
+				byContributor, contributorCentricMode, contributorIds,
+				null, -1, false);
+
 	}
 
 	/**
@@ -2070,7 +1984,8 @@ public class ModelMgrImpl implements IModelMgr {
 			boolean onlyKeepTasksWithContributions, boolean byContributor,
 			boolean contributorCentricMode, long[] contributorIds,
 			String[] orderContributorsBy, int maxIntervalCount, boolean dryRun)
-			throws ModelException, ColumnsOverflowException {
+			throws ModelException {
+		
 		// Fix task depth
 		if (taskDepth < 0) {
 			taskDepth = getMaxTaskDepthUnder(rootTaskId);
@@ -2098,8 +2013,9 @@ public class ModelMgrImpl implements IModelMgr {
 
 		// Ensure we have an interval count
 		if (intervalCount == null) {
-			Calendar end = interval != null ? interval[1] : Calendar
-					.getInstance();
+			Calendar end = interval != null 
+					? interval[1] 
+					: Calendar.getInstance();
 			prepareCalendarForReport(end, intervalType);
 			end.add(intervalType.getIntType(), 1);
 			
@@ -2118,27 +2034,26 @@ public class ModelMgrImpl implements IModelMgr {
 				intervalCount = DateHelper.countDaysBetween(start, end);
 			}
 		} else if (intervalCount < 0) {
-			throw new ModelException(
-					"Invalid interval (negative value is not allowed)");
+			throw new ModelException("Invalid interval (negative value is not allowed)");
 		} else if (intervalCount == 0) {
-			throw new ModelException(
-					"Invalid interval (null value is not allowed)");
+			throw new ModelException("Invalid interval (null value is not allowed)");
 		}
 		
 		// Column count computation
 		if (maxIntervalCount > 0 && intervalCount >= maxIntervalCount) {
-			throw new ColumnsOverflowException(intervalCount);
+			throw new ModelException("Too many generated columns :"
+					+ intervalCount
+					+ " (Try to change your report interval type)");
 		}
 		
 		// Compute the report
 		if (dryRun) {
 			return null;
-		} else {
-			return reportDAO.buildReport(start, intervalType, intervalCount,
-					rootTask, taskDepth, onlyKeepTasksWithContributions,
-					byContributor, contributorCentricMode, contributorIds,
-					orderContributorsBy);
 		}
+		return reportDAO.buildReport(start, intervalType, intervalCount,
+				rootTask, taskDepth, onlyKeepTasksWithContributions,
+				byContributor, contributorCentricMode, contributorIds,
+				orderContributorsBy);
 	}
 
 	@Override
@@ -2146,8 +2061,9 @@ public class ModelMgrImpl implements IModelMgr {
 			ReportIntervalType intervalType, Integer intervalCount,
 			Long rootTaskId, int taskDepth,
 			boolean onlyKeepTasksWithContributions, boolean byContributor,
-			boolean contributorCentricMode, long[] contributorIds,
-			String[] columnIds, boolean includeTotals, boolean dryRun)
+			boolean contributorCentricMode, long[] contributorIds, 
+			String[] columnIds, 
+			boolean includeTotals, boolean dryRun)
 			throws ModelException {
 		Map<String, IReportColumnComputer> reportColumnComputers = new HashMap<String, IReportColumnComputer>(defaultReportColumnComputers); 
 		List<IReportColumnComputer> columns = new ArrayList<IReportColumnComputer>();
@@ -2155,207 +2071,188 @@ public class ModelMgrImpl implements IModelMgr {
 		List<String> collaboratorFields = new ArrayList<String>();
 		if (columnIds != null) {
 			for (String columnId : columnIds) {
-				IReportColumnComputer column = reportColumnComputers
-						.get(columnId);
+				IReportColumnComputer column = reportColumnComputers.get(columnId);
 				if (column == null) {
 					column = new ReflectiveReportColumnComputer(columnId);
 					reportColumnComputers.put(columnId, column);
 				}
 				columns.add(column);
-				if (columnId
-						.startsWith(ReflectiveReportColumnComputer.TASK_PREFIX)) {
+				if (columnId.startsWith(ReflectiveReportColumnComputer.TASK_PREFIX)) {
 					taskFields++;
-				} else if (columnId
-						.startsWith(ReflectiveReportColumnComputer.COLLABORATOR_PREFIX)) {
-					collaboratorFields
-							.add(columnId
-									.substring(ReflectiveReportColumnComputer.COLLABORATOR_PREFIX
-											.length()));
+				} else if (columnId.startsWith(ReflectiveReportColumnComputer.COLLABORATOR_PREFIX)) {
+					int skip = ReflectiveReportColumnComputer.COLLABORATOR_PREFIX.length();
+					collaboratorFields.add(columnId.substring(skip));
 				} else {
-					throw new IllegalArgumentException("Unknown field type '"
-							+ columnId + "'");
+					throw new IllegalArgumentException("Unknown field type '" + columnId + "'");
 				}
 			}
 		}
 		// Check attributes to include
-		if (taskDepth > 0 && taskFields == 0) {
-			throw new ModelException(Strings.getString("ModelMgr.errors.BAD_REPORT_PARAMS_EMPTY_TASK_ATTRIBUTES"));
-		}
+		verify("BAD_REPORT_PARAMS_EMPTY_TASK_ATTRIBUTES", taskDepth == 0 || taskFields != 0);
+
 		// If collaborator is expected, must specify at least one collaborator attribute
 		// (except if one and only one collaborator identifier has been given)
-		else if (byContributor && collaboratorFields.isEmpty() && !(contributorIds == null || contributorIds.length == 1)) {
-			throw new ModelException(Strings.getString("ModelMgr.errors.BAD_REPORT_PARAMS_EMPTY_COLLABORATOR_ATTRIBUTES"));
-		}
+		verify("BAD_REPORT_PARAMS_EMPTY_COLLABORATOR_ATTRIBUTES", 
+				!byContributor 
+				|| !collaboratorFields.isEmpty()
+				|| contributorIds == null 
+				|| contributorIds.length == 1
+				);
 
 		return buildReport(
-				start,
-				intervalType,
-				intervalCount,
-				rootTaskId,
-				taskDepth,
-				onlyKeepTasksWithContributions,
-				byContributor,
-				contributorCentricMode,
-				contributorIds,
-				(IReportColumnComputer[]) columns
-						.toArray(new IReportColumnComputer[columns.size()]),
-				collaboratorFields.toArray(new String[collaboratorFields.size()]),
-				includeTotals,
-				dryRun);
+				start, intervalType, intervalCount,
+				rootTaskId, taskDepth,
+				onlyKeepTasksWithContributions, byContributor,
+				contributorCentricMode, contributorIds,
+				columns.toArray(IReportColumnComputer[]::new),
+				collaboratorFields.toArray(String[]::new),
+				includeTotals, dryRun);
 	}
 
 	@Override
-	public Workbook buildReport(Calendar start,
-			ReportIntervalType intervalType, Integer intervalCount,
+	public Workbook buildReport(
+			Calendar start, ReportIntervalType intervalType, Integer intervalCount,
 			Long rootTaskId, int taskDepth,
 			boolean onlyKeepTasksWithContributions, boolean byContributor,
 			boolean contributorCentricMode, long[] contributorIds,
 			IReportColumnComputer[] columns, String[] orderContributorsBy,
 			boolean includeTotals, boolean dryRun) throws ModelException {
-		try {
-			// In Excel 97 format, it is not possible to have more than 256
-			// columns
-			int maxIntervalCount = 256 - columns.length - 1;
-			// Build raw report
-			Report report = doBuildReport(start, intervalType, intervalCount,
-					rootTaskId, taskDepth, onlyKeepTasksWithContributions,
-					byContributor, contributorCentricMode, contributorIds,
-					orderContributorsBy, maxIntervalCount, dryRun);
 
-			// Stop here if dry run mode
-			if (dryRun) {
-				return null;
-			}
+		// In Excel 97 format, it is not possible to have more than 256
+		// columns
+		int maxIntervalCount = 256 - columns.length - 1;
+		// Build raw report
+		Report report = doBuildReport(start, intervalType, intervalCount,
+				rootTaskId, taskDepth, onlyKeepTasksWithContributions,
+				byContributor, contributorCentricMode, contributorIds,
+				orderContributorsBy, maxIntervalCount, dryRun);
 
-			// Convert report to XLS
-			String dateFormat = null;
-			switch (intervalType) {
-			case YEAR:
-				dateFormat = "yyyy";
-				break;
-			case MONTH:
-				dateFormat = "MM/yy";
-				break;
-			case WEEK:
-				dateFormat = "'W'ww/YY";
-				break;
-			case DAY:
-				dateFormat = "dd/MM";
-				break;
-			}
-			SimpleDateFormat xlsSdf = new SimpleDateFormat(dateFormat);
-			WorkbookBuilder wb = new WorkbookBuilder();
-			Workbook workbook = wb.getWorkbook();
-			Sheet sheet = workbook.createSheet("Report");
-			Row headerRow = sheet.createRow(sheet.getLastRowNum());
-			int colIdx = 0;
-			for (IReportColumnComputer column : columns) {
-				wb.asHeaderCellStyl(headerRow.createCell(colIdx++))
-						.setCellValue(column.getName());
-			}
-
-			Collection<Calendar> dates = report.getDates();
-			for (Calendar date : dates) {
-				String week = xlsSdf.format(date.getTime());
-				wb.asHeaderCellStyl(headerRow.createCell(colIdx)).setCellValue(
-						week);
-				colIdx++;
-			}
-			if (includeTotals) {
-				wb.asHeaderCellStyl(headerRow.createCell(colIdx)).setCellValue(
-						"Total");
-			}
-
-			long[] columnSums = new long[dates.size()];
-			ReportItem lastItem = null;
-			for (ReportItem item : report.getItems()) {
-				TaskSums contributedTask = item.getContributedTask();
-				Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-				colIdx = 0;
-				for (IReportColumnComputer column : columns) {
-					Cell cell = wb.asBodyCellStyl(row.createCell(colIdx++));
-					boolean ignoreCell = false;
-					// Summable fields must only appear once and not for each
-					// occurence
-					// For example if a task has 200 as budget, this value must
-					// not appear
-					// for every vollaborator that contributes to it
-					if (column.isSummable() && lastItem != null
-							&& contributedTask != null) {
-						if (lastItem.getContributedTask().getTask().getId() == contributedTask
-								.getTask().getId()) {
-							ignoreCell = true;
-						}
-					}
-					if (!ignoreCell) {
-						Object cellValue = column.compute(item);
-						if (cellValue instanceof String) {
-							cell.setCellValue((String) cellValue);
-						} else if (cellValue instanceof Double) {
-							cell.setCellValue((Double) cellValue);
-							wb.asBodyRightAlignmentCellStyl(cell);
-						} else if (cellValue instanceof Boolean) {
-							cell.setCellValue((Boolean) cellValue);
-						} else if (cellValue != null) {
-							throw new IllegalStateException(
-									"Unexpected cell type : "
-											+ cellValue.getClass());
-						}
-					}
-				}
-				long sum = 0;
-				for (int i = 0; i < dates.size(); i++) {
-					long contributionSum = item.getContributionSum(i);
-					Cell cell = wb.asBodyRightAlignmentCellStyl(row
-							.createCell(colIdx++));
-					if (contributionSum > 0) {
-						sum += contributionSum;
-						columnSums[i] += contributionSum;
-						cell.setCellValue(contributionSum / 100d);
-					}
-				}
-				if (includeTotals) {
-					wb.asFooterCellStyl(row.createCell(colIdx++)).setCellValue(
-							sum / 100d);
-				}
-				lastItem = item;
-			}
-
-			// Footer
-			if (includeTotals) {
-				colIdx = columns.length;
-				Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-				long globalSum = 0;
-				for (int i = 0; i < dates.size(); i++) {
-					long columnSum = columnSums[i];
-					wb.asFooterCellStyl(row.createCell(colIdx++)).setCellValue(
-							columnSum / 100d);
-					globalSum += columnSum;
-				}
-				wb.asFooterCellStyl(row.createCell(colIdx++)).setCellValue(
-						globalSum / 100d);
-			}
-
-			// Autosize code & name columns
-			colIdx = 0;
-			for (@SuppressWarnings("unused")
-			IReportColumnComputer column : columns) {
-				sheet.autoSizeColumn(colIdx++);
-			}
-			// Freeze
-			sheet.createFreezePane(colIdx, 1);
-			for (@SuppressWarnings("unused")
-			Calendar date : dates) {
-				sheet.setColumnWidth(colIdx, 1900);
-				colIdx++;
-			}
-		
-			return workbook;
-		} catch (ColumnsOverflowException e) {
-			throw new ModelException("Too many generated columns :"
-					+ e.getColumnsCount()
-					+ " (Try to change your report interval type)");
+	
+		// Stop here if dry run mode
+		if (dryRun) {
+			return null;
 		}
+
+		// Convert report to XLS
+		String dateFormat = null;
+		switch (intervalType) {
+		case YEAR:
+			dateFormat = "yyyy";
+			break;
+		case MONTH:
+			dateFormat = "MM/yy";
+			break;
+		case WEEK:
+			dateFormat = "'W'ww/YY";
+			break;
+		case DAY:
+			dateFormat = "dd/MM";
+			break;
+		}
+		SimpleDateFormat xlsSdf = new SimpleDateFormat(dateFormat);
+		WorkbookBuilder wb = new WorkbookBuilder();
+		Workbook workbook = wb.getWorkbook();
+		Sheet sheet = workbook.createSheet("Report");
+		Row headerRow = sheet.createRow(sheet.getLastRowNum());
+		int colIdx = 0;
+		for (IReportColumnComputer column : columns) {
+			wb.asHeaderCellStyl(headerRow.createCell(colIdx++))
+					.setCellValue(column.getName());
+		}
+
+		Collection<Calendar> dates = report.getDates();
+		for (Calendar date : dates) {
+			String week = xlsSdf.format(date.getTime());
+			wb.asHeaderCellStyl(headerRow.createCell(colIdx))
+				.setCellValue(week);
+			colIdx++;
+		}
+		if (includeTotals) {
+			wb.asHeaderCellStyl(headerRow.createCell(colIdx))
+				.setCellValue("Total");
+		}
+
+		long[] columnSums = new long[dates.size()];
+		ReportItem lastItem = null;
+		for (ReportItem item : report.getItems()) {
+			TaskSums contributedTask = item.getContributedTask();
+			Row row = sheet.createRow(sheet.getLastRowNum() + 1);
+			colIdx = 0;
+			for (IReportColumnComputer column : columns) {
+				Cell cell = wb.asBodyCellStyl(row.createCell(colIdx++));
+				// Summable fields must only appear once and not for each  occurence
+				// For example if a task has 200 as budget, this value must not appear
+				// for every collaborator that contributes to it
+
+				boolean ignoreCell = column.isSummable() 
+					&& lastItem != null
+					&& contributedTask != null
+					&& lastItem.getContributedTask().getTask().getId() 
+						== contributedTask.getTask().getId();
+				
+				if (!ignoreCell) {
+					Object cellValue = column.compute(item);
+					if (cellValue instanceof String) {
+						cell.setCellValue((String) cellValue);
+					} else if (cellValue instanceof Double) {
+						cell.setCellValue((Double) cellValue);
+						wb.asBodyRightAlignmentCellStyl(cell);
+					} else if (cellValue instanceof Boolean) {
+						cell.setCellValue((Boolean) cellValue);
+					} else if (cellValue != null) {
+						throw new IllegalStateException(
+								"Unexpected cell type : "
+										+ cellValue.getClass());
+					}
+				}
+			}
+			long sum = 0;
+			for (int i = 0; i < dates.size(); i++) {
+				long contributionSum = item.getContributionSum(i);
+				Cell cell = wb.asBodyRightAlignmentCellStyl(row.createCell(colIdx++));
+				if (contributionSum > 0) {
+					sum += contributionSum;
+					columnSums[i] += contributionSum;
+					cell.setCellValue(contributionSum / 100d);
+				}
+			}
+			if (includeTotals) {
+				wb.asFooterCellStyle(row.createCell(colIdx++))
+					.setCellValue(sum / 100d);
+			}
+			lastItem = item;
+		}
+
+		// Footer
+		if (includeTotals) {
+			colIdx = columns.length;
+			Row row = sheet.createRow(sheet.getLastRowNum() + 1);
+			long globalSum = 0;
+			for (int i = 0; i < dates.size(); i++) {
+				long columnSum = columnSums[i];
+				wb.asFooterCellStyle(row.createCell(colIdx++))
+					.setCellValue(columnSum / 100d);
+				globalSum += columnSum;
+			}
+			wb.asFooterCellStyle(row.createCell(colIdx++))
+				.setCellValue(globalSum / 100d);
+		}
+
+		// Autosize code & name columns
+		colIdx = 0;
+		for (@SuppressWarnings("unused")
+		IReportColumnComputer column : columns) {
+			sheet.autoSizeColumn(colIdx++);
+		}
+		// Freeze
+		sheet.createFreezePane(colIdx, 1);
+		for (@SuppressWarnings("unused")
+		Calendar date : dates) {
+			sheet.setColumnWidth(colIdx, 1900);
+			colIdx++;
+		}
+	
+		return workbook;
 	}
 	
 	private void prepareCalendarForReport(Calendar start, ReportIntervalType intervalType) {
@@ -2391,7 +2288,9 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 		// If the root task Id is a leaf task, the SQL request returns 0 (as there are no child task)
 		int maxTaskDepthUnder = taskDAO.getMaxTaskDepthUnder(path);
-		return maxTaskDepthUnder > 0 ? maxTaskDepthUnder- (path.length() / 2) : 0;
+		return maxTaskDepthUnder > 0 
+			? maxTaskDepthUnder - (path.length() / 2) 
+			: 0;
 	}
 
 	@Override
@@ -2486,34 +2385,5 @@ public class ModelMgrImpl implements IModelMgr {
 		return reportCfgDAO.selectByPK(id);
 	}
 
-	/**
-	 * Exception that is used to detect EXCEL columns overflow.
-	 */
-	@SuppressWarnings("serial")
-	private static class ColumnsOverflowException extends Exception {
-
-		/** Columnc count. */
-		private int columnsCount;
-
-		/**
-		 * Default constructor.
-		 * 
-		 * @param columnsCount
-		 *            the columns count.
-		 */
-		public ColumnsOverflowException(int columnsCount) {
-			this.columnsCount = columnsCount;
-		}
-
-		/**
-		 * Returns the columns count.
-		 * 
-		 * @return the columns count.
-		 */
-		public int getColumnsCount() {
-			return columnsCount;
-		}
-
-	}
 }
 

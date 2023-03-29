@@ -48,4 +48,15 @@ public class DAOException extends RuntimeException {
 		super(message, cause);
 	}
 
+
+	/**
+	 * Constructeur par défaut.
+	 * 
+	 * @param message
+	 *            message d'erreur.
+	 */
+	public DAOException(String message) {
+		super(message);
+	}
+	
 }

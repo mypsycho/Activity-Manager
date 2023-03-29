@@ -98,7 +98,7 @@ public class WorkbookBuilder {
 		return cell;
 	}
 
-	public Cell asFooterCellStyl(Cell cell) {
+	public Cell asFooterCellStyle(Cell cell) {
 		cell.setCellStyle(footerCellStyle);
 		return cell;
 	}

@@ -31,15 +31,16 @@ public interface IContributionsCellLogicFactory extends ICellLogicFactory {
 	String SUN_COLUMN_ID = "SUN";
 	
 	String TOTAL_COLUMN_ID = "TOTAL";
-	List<String> DAY_COLUMNS_IDENTIFIERS = Collections
-			.unmodifiableList(Arrays.asList(MON_COLUMN_ID,
-					TUE_COLUMN_ID, WED_COLUMN_ID, THU_COLUMN_ID, FRI_COLUMN_ID,
-					SAT_COLUMN_ID, SUN_COLUMN_ID));
-	List<String> PROPERTY_IDS = Collections
-			.unmodifiableList(Arrays.asList(PATH_COLUMN_ID,
-					NAME_COLUMN_ID, MON_COLUMN_ID, TUE_COLUMN_ID,
-					WED_COLUMN_ID, THU_COLUMN_ID, FRI_COLUMN_ID, SAT_COLUMN_ID,
-					SUN_COLUMN_ID, TOTAL_COLUMN_ID));
+	List<String> DAY_COLUMNS_IDENTIFIERS = List.of(
+			MON_COLUMN_ID, TUE_COLUMN_ID, WED_COLUMN_ID, 
+			THU_COLUMN_ID, FRI_COLUMN_ID,
+			SAT_COLUMN_ID, SUN_COLUMN_ID);
+	List<String> PROPERTY_IDS = List.of(
+			PATH_COLUMN_ID, NAME_COLUMN_ID, 
+			MON_COLUMN_ID, TUE_COLUMN_ID, WED_COLUMN_ID, 
+			THU_COLUMN_ID, FRI_COLUMN_ID, 
+			SAT_COLUMN_ID, SUN_COLUMN_ID, 
+			TOTAL_COLUMN_ID);
 
 	ILogic<?> createCellLogic(AbstractLogicImpl<?> parentLogic, IUILogicContext context, Collaborator contributor,
 			Calendar firstDayOfWeek, TaskContributions weekContributions,

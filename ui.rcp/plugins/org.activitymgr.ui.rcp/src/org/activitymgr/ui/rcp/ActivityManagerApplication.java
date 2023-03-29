@@ -14,14 +14,15 @@ public class ActivityManagerApplication implements IApplication {
 	/* (non-Javadoc)
 	 * @see org.eclipse.equinox.app.IApplication#start(org.eclipse.equinox.app.IApplicationContext)
 	 */
+	@Override
 	public Object start(IApplicationContext context) {
 		Display display = PlatformUI.createDisplay();
 		try {
 			int returnCode = PlatformUI.createAndRunWorkbench(display, new ApplicationWorkbenchAdvisor());
-			if (returnCode == PlatformUI.RETURN_RESTART) {
-				return IApplication.EXIT_RESTART;
-			}
-			return IApplication.EXIT_OK;
+
+			return returnCode == PlatformUI.RETURN_RESTART
+					? IApplication.EXIT_RESTART
+					: IApplication.EXIT_OK;
 		} finally {
 			display.dispose();
 		}
@@ -30,15 +31,15 @@ public class ActivityManagerApplication implements IApplication {
 	/* (non-Javadoc)
 	 * @see org.eclipse.equinox.app.IApplication#stop()
 	 */
+	@Override
 	public void stop() {
-		if (!PlatformUI.isWorkbenchRunning())
+		if (!PlatformUI.isWorkbenchRunning()) {
 			return;
+		}
 		final IWorkbench workbench = PlatformUI.getWorkbench();
-		final Display display = workbench.getDisplay();
-		display.syncExec(new Runnable() {
-			public void run() {
-				if (!display.isDisposed())
-					workbench.close();
+		workbench.getDisplay().syncExec(() -> {
+			if (!workbench.getDisplay().isDisposed()) {
+				workbench.close();
 			}
 		});
 	}

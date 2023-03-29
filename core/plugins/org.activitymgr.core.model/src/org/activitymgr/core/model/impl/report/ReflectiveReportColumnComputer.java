@@ -1,9 +1,8 @@
 package org.activitymgr.core.model.impl.report;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
-import org.activitymgr.core.dto.misc.TaskSums;
 import org.activitymgr.core.dto.report.ReportItem;
 import org.activitymgr.core.model.IModelMgr;
 import org.activitymgr.core.model.IReportColumnComputer;
@@ -16,7 +15,7 @@ public class ReflectiveReportColumnComputer implements IReportColumnComputer {
 
 	public static final String TASK_PREFIX = "task.";
 
-	private static final Collection<String> SUMMABLE_FIELDS = Arrays.asList(
+	private static final Collection<String> SUMMABLE_FIELDS = List.of(
 			IModelMgr.BUDGET_ATTRIBUTE, IModelMgr.INITIALLY_CONSUMED_ATTRIBUTE, IModelMgr.ETC_ATTRIBUTE);
 
 	private static final String SUM_SUFFIX = "Sum";
@@ -57,14 +56,13 @@ public class ReflectiveReportColumnComputer implements IReportColumnComputer {
 	@Override
 	public Object compute(ReportItem item) {
 		Object object = null;
-		TaskSums contributedTask = item.getContributedTask();
-		// For summable fields, TaskSums object will be used
-		if (isSummable()) {
-			object = contributedTask;
-		}
-		// Otherwise, Task or Collaborator will be used
-		else {
-			object = id.startsWith(TASK_PREFIX) ? contributedTask.getTask() : item.getContributor();
+		
+		if (isSummable()) {// use TaskSums
+			object = item.getContributedTask();
+		} else if (id.startsWith(TASK_PREFIX)) {
+			object = item.getContributedTask().getTask();
+		} else {
+			object = item.getContributor();
 		}
 		// Collaborator my be null in task oriented report with a task that
 		// has no contribution

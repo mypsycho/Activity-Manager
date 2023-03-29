@@ -94,6 +94,8 @@ public class XlsImportHelper {
 					}
 					switch (cellType) {
 					case BLANK :
+					case _NONE :
+					case FORMULA : // already interpreted
 						// Do nothing
 						break;
 					case BOOLEAN :
@@ -114,12 +116,9 @@ public class XlsImportHelper {
 			try {
 				// Handle the row
 				handler.handleRow(map);
-			}
-			catch (XLSModelException e) {
-				// Simply rethrow
+			} catch (XLSModelException e) { // Simply rethrow
 				throw e;
-			}
-			catch (ModelException e) {
+			} catch (ModelException e) {
 				// Encapsulate and link to the first cell
 				throw new XLSModelException(row.getCell(0), e);
 			}
