@@ -1,12 +1,8 @@
-# Build directories
-bin
-target
+# Build directories in any sub-folder
+target/
 
-# Binary builds
-ActivityMgr_*
-
-# Build directory
-.dist/*
+# Workspace at root
+/workspace/
 
 # Mac specific
 .DS_Store
