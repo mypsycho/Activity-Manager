@@ -34,6 +34,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.activitymgr.core.dto.Collaborator;
@@ -61,6 +62,8 @@ import org.activitymgr.ui.rcp.util.SafeRunner;
 import org.activitymgr.ui.rcp.util.SelectableCollaboratorPanel;
 import org.activitymgr.ui.rcp.util.TableOrTreeColumnsMgr;
 import org.apache.log4j.Logger;
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.DialogCellEditor;
@@ -85,7 +88,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -125,11 +127,32 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 	public static final int SATURDAY_COLUMN_IDX = 7;
 	public static final int SUNDAY_COLUMN_IDX = 8;
 	public static final int BLANK_COLUMN_IDX = 9;
-	private static TableOrTreeColumnsMgr tableColsMgr;
+	private static TableOrTreeColumnsMgr tableColsMgr = new TableOrTreeColumnsMgr();
+
+	private static void addContribColumn(String id, int columnWidth, int columnAlignment) {
+		String label = Strings.getString("ContributionsUI.columns." + id); //$NON-NLS-1$
+		tableColsMgr.addColumn(id, label, columnWidth, columnAlignment);
+	}
+
+	static { // Configuration des colonnes
+		addContribColumn("TASK_PATH", 200, SWT.LEFT); //$NON-NLS-1$
+		addContribColumn("TASK_NAME", 100, SWT.LEFT); //$NON-NLS-1$
+		addContribColumn("MONDAY", 50, SWT.CENTER); //$NON-NLS-1$
+		addContribColumn("TUESDAY", 50, SWT.CENTER); //$NON-NLS-1$
+		addContribColumn("WEDNESDAY", 50, SWT.CENTER); //$NON-NLS-1$
+		addContribColumn("THURSDAY", 50, SWT.CENTER); //$NON-NLS-1$
+		addContribColumn("FRIDAY", 50, SWT.CENTER); //$NON-NLS-1$
+		addContribColumn("SATURDAY", 50, SWT.CENTER); //$NON-NLS-1$
+		addContribColumn("SUNDAY", 50, SWT.CENTER); //$NON-NLS-1$
+		// Blank column
+		tableColsMgr.addColumn("BLANK", "", 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
+	}
 
 	/** Initiales des jours de la semaine */
 	private static final String[] weekDaysInitials = new String[] {
-			"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+			"MON", "TUE", "WED", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			"THU", "FRI", //$NON-NLS-1$ //$NON-NLS-2$
+			"SAT", "SUN" //$NON-NLS-1$ //$NON-NLS-2$
 	};
 
 	/**
@@ -206,6 +229,7 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 	private Button previousYearButton;
 	private Button previousMonthButton;
 	private Button previousWeekButton;
+	private Button currentWeekButton;
 	private Button nextWeekButton;
 	private Button nextMonthButton;
 	private Button nextYearButton;
@@ -220,7 +244,8 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 	private SelectableCollaboratorPanel selectableCollaboratorPanel;
 
 	/** Date associé au Lundi de la semaine */
-	private Calendar currentMonday;
+	// Recherche du 1er Lundi précédent la date courante
+	private Calendar currentMonday = DateHelper.moveToFirstDayOfWeek(new GregorianCalendar());
 
 	/** Label contenant les dates de la semaine */
 	private Label weekLabel;
@@ -332,36 +357,6 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 				tableFont.getHeight(), SWT.ITALIC);
 
 		// Configuration des colonnes
-		tableColsMgr = new TableOrTreeColumnsMgr();
-		tableColsMgr
-				.addColumn(
-						"TASK_PATH", Strings.getString("ContributionsUI.columns.TASK_PATH"), 200, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"TASK NAME", Strings.getString("ContributionsUI.columns.TASK_NAME"), 100, SWT.LEFT); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"MONDAY", Strings.getString("ContributionsUI.columns.MONDAY"), 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"TUESDAY", Strings.getString("ContributionsUI.columns.TUESDAY"), 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"WEDNESDAY", Strings.getString("ContributionsUI.columns.WEDNESDAY"), 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"THURSDAY", Strings.getString("ContributionsUI.columns.THURSDAY"), 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"FRIDAY", Strings.getString("ContributionsUI.columns.FRIDAY"), 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"SATURDAY", Strings.getString("ContributionsUI.columns.SATURDAY"), 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
-		tableColsMgr
-				.addColumn(
-						"SUNDAY", Strings.getString("ContributionsUI.columns.SUNDAY"), 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
-		// Blank column
-		tableColsMgr.addColumn("BLANK", "", 50, SWT.CENTER); //$NON-NLS-1$ //$NON-NLS-2$
 		tableColsMgr.configureTable(tableViewer);
 
 		// Configuration des éditeurs de cellules
@@ -462,72 +457,45 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 
 		// Panneau contenant les boutons de navigation
 		Composite navigationButtonsPanel = new Composite(parent, SWT.NONE);
-		GridLayout layout = new GridLayout(2, true);
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		navigationButtonsPanel.setLayout(layout);
-		gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		// gridData.horizontalSpan = 2;
-		navigationButtonsPanel.setLayoutData(gridData);
+		navigationButtonsPanel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		GridDataFactory dateLayout = GridDataFactory
+				.swtDefaults()
+				.hint(95, SWT.DEFAULT); // hint is higher that the minimum
+		Function<String, Button> dateChanger = id -> {
+			Button result = new Button(navigationButtonsPanel, SWT.NONE);
+			String labelId = "ContributionsUI.buttons." + id; //$NON-NLS-1$
+			result.setText(Strings.getString(labelId));
+			result.setToolTipText(Strings.getString(labelId + "_TOOLTIP")); //$NON-NLS-1$
+			result.addSelectionListener(this);
+			dateLayout.applyTo(result);
+			return result;
+		};
 
 		// Panneau contenant les boutons 'Précédent'
-		Composite previousButtonsPanel = new Composite(navigationButtonsPanel,
-				SWT.NONE);
-		previousButtonsPanel.setLayout(new FillLayout());
-		gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		gridData.horizontalAlignment = SWT.LEFT;
-		previousButtonsPanel.setLayoutData(gridData);
-		previousYearButton = new Button(previousButtonsPanel, SWT.NONE);
-		previousYearButton.setText(Strings
-				.getString("ContributionsUI.buttons.PREVIOUS_YEAR")); //$NON-NLS-1$
-		previousYearButton.setToolTipText(Strings
-				.getString("ContributionsUI.buttons.PREVIOUS_YEAR_TOOLTIP")); //$NON-NLS-1$
-		previousYearButton.addSelectionListener(this);
-		previousMonthButton = new Button(previousButtonsPanel, SWT.NONE);
-		previousMonthButton.setText(Strings
-				.getString("ContributionsUI.buttons.PREVIOUS_MONTH")); //$NON-NLS-1$
-		previousMonthButton.setToolTipText(Strings
-				.getString("ContributionsUI.buttons.PREVIOUS_MONTH_TOOLTIP")); //$NON-NLS-1$
-		previousMonthButton.addSelectionListener(this);
-		previousWeekButton = new Button(previousButtonsPanel, SWT.NONE);
-		previousWeekButton.setText(Strings
-				.getString("ContributionsUI.buttons.PREVIOUS_WEEK")); //$NON-NLS-1$
-		previousWeekButton.setToolTipText(Strings
-				.getString("ContributionsUI.buttons.PREVIOUS_WEEK_TOOLTIP")); //$NON-NLS-1$
-		previousWeekButton.addSelectionListener(this);
+		previousYearButton = dateChanger.apply("PREVIOUS_YEAR"); //$NON-NLS-1$
+		previousMonthButton = dateChanger.apply("PREVIOUS_MONTH"); //$NON-NLS-1$
+		previousWeekButton = dateChanger.apply("PREVIOUS_WEEK"); //$NON-NLS-1$
+
+		new Label(navigationButtonsPanel, SWT.NONE).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		currentWeekButton = dateChanger.apply("NOW"); //$NON-NLS-1$
+		new Label(navigationButtonsPanel, SWT.NONE).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		// Panneau contenant les boutons 'Prochains'
-		Composite nextButtonsPanel = new Composite(navigationButtonsPanel,
-				SWT.NONE);
-		nextButtonsPanel.setLayout(new FillLayout());
-		gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		gridData.horizontalAlignment = SWT.RIGHT;
-		nextButtonsPanel.setLayoutData(gridData);
-		nextWeekButton = new Button(nextButtonsPanel, SWT.NONE);
-		nextWeekButton.setText(Strings
-				.getString("ContributionsUI.buttons.NEXT_WEEK")); //$NON-NLS-1$
-		nextWeekButton.setToolTipText(Strings
-				.getString("ContributionsUI.buttons.NEXT_WEEK_TOOLTIP")); //$NON-NLS-1$
-		nextWeekButton.addSelectionListener(this);
-		nextMonthButton = new Button(nextButtonsPanel, SWT.NONE);
-		nextMonthButton.setText(Strings
-				.getString("ContributionsUI.buttons.NEXT_MONTH")); //$NON-NLS-1$
-		nextMonthButton.setToolTipText(Strings
-				.getString("ContributionsUI.buttons.NEXT_MONTH_TOOLTIP")); //$NON-NLS-1$
-		nextMonthButton.addSelectionListener(this);
-		nextYearButton = new Button(nextButtonsPanel, SWT.NONE);
-		nextYearButton.setText(Strings
-				.getString("ContributionsUI.buttons.NEXT_YEAR")); //$NON-NLS-1$
-		nextYearButton.setToolTipText(Strings
-				.getString("ContributionsUI.buttons.NEXT_YEAR_TOOLTIP")); //$NON-NLS-1$
-		nextYearButton.addSelectionListener(this);
+		nextWeekButton = dateChanger.apply("NEXT_WEEK"); //$NON-NLS-1$
+		nextMonthButton = dateChanger.apply("NEXT_MONTH");
+		nextYearButton = dateChanger.apply("NEXT_YEAR"); //$NON-NLS-1$
+
+		GridLayoutFactory.swtDefaults()
+			.numColumns(navigationButtonsPanel.getChildren().length)
+			.margins(0, 0)
+			.applyTo(navigationButtonsPanel);
+
 
 		// Initialisation du popup de choix des taches
 		taskChooserDialog = new TaskChooserTreeWithHistoryDialog(
 				parent.getShell(), modelMgr);
 
-		// Recherche du 1er Lundi précédent la date courante
-		currentMonday = DateHelper.moveToFirstDayOfWeek(new GregorianCalendar());
 		log.debug("Date courante : " + currentMonday); //$NON-NLS-1$
 
 		// Création du presse papier
@@ -605,9 +573,7 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 		// Cas de la ligne des totaux
 		if (element == WeekContributionsSum.getInstance()) {
 			canModify = false;
-		}
-		// Cas des autres lignes
-		else {
+		} else { // Cas des autres lignes
 			int propertyIdx = tableColsMgr.getColumnIndex(property);
 			switch (propertyIdx) {
 			case TASK_PATH_COLUMN_IDX:
@@ -980,6 +946,12 @@ public class ContributionsUI extends AbstractTableMgrUI implements
 					currentMonday.add(Calendar.DATE, -7);
 					tableViewer.refresh();
 				}
+				// Cas d'un changement de semaine en cours
+				else if (currentWeekButton.equals(source)) {
+					currentMonday = DateHelper.moveToFirstDayOfWeek(Calendar.getInstance());
+					tableViewer.refresh();
+				}
+
 				// Cas d'un changement de semaine en avant
 				else if (nextWeekButton.equals(source)) {
 					currentMonday.add(Calendar.DATE, 7);
