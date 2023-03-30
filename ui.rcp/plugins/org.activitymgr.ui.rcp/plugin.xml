@@ -62,14 +62,14 @@
          point="org.eclipse.core.runtime.products">
       <product
             application="org.activitymgr.ui.rcp.application"
-            name="Activity Manager (RCP) v1.0.0">
+            name="Activity Manager Admin">
          <property
                name="windowImages"
                value="icons/alt_window_16.gif,icons/alt_window_32.gif,icons/alt_window_48.gif,icons/alt_window_64.gif,icons/alt_window_128.gif">
          </property>
          <property
                name="appName"
-               value="Activity Manager (RCP) v1.0.0">
+               value="Activity Manager Admin">
          </property>
          <property
                name="startupForegroundColor"
