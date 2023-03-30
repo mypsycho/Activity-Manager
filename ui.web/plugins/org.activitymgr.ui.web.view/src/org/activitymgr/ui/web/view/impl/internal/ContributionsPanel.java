@@ -1,6 +1,7 @@
 package org.activitymgr.ui.web.view.impl.internal;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 import org.activitymgr.ui.web.logic.IContributionsTabLogic;
@@ -148,9 +149,8 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 	
 	private void registerBoundButton(Button button, String caption, Runnable task,
 			int keyCode, int... modifierKeys) {
-		if (button != null) {
-			button.addClickListener(evt -> task.run());
-		}
+
+		button.addClickListener(evt -> task.run());
 		addShortcutListener(new ShortcutListener(caption, keyCode, modifierKeys) {
 			@Override
 			public void handleAction(Object sender, Object target) {
@@ -195,6 +195,14 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 				() -> getLogic().onNextWeek(),
 				KeyCode.ARROW_LEFT,
 				ModifierKey.CTRL);
+		
+		dateField.addValueChangeListener(evt -> {
+				Calendar cal = new GregorianCalendar();
+				cal.setTime(dateField.getValue() != null 
+						? dateField.getValue() 
+						: new Date());
+				getLogic().onDateChange(cal);
+		});
 	}
 
 	@Override
