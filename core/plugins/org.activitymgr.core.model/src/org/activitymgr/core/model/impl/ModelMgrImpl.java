@@ -280,7 +280,7 @@ public class ModelMgrImpl implements IModelMgr {
 		verify("NON_NULL_TASK_BUDGET", //$NON-NLS-1$
 				task.getBudget() == 0, task.getName());
 		verify("NON_NULL_TASK_INITIALLY_CONSUMMED", //$NON-NLS-1$
-				task.getBudget() == 0, task.getName());
+				task.getInitiallyConsumed() == 0, task.getName());
 		verify("NON_NULL_TASK_ESTIMATED_TIME_TO_COMPLETE", //$NON-NLS-1$
 				task.getTodo() == 0, task.getName());
 		
@@ -288,8 +288,7 @@ public class ModelMgrImpl implements IModelMgr {
 		// n'est pas déja associée à un consommé (ie: à des
 		// contributions)
 		long contribsNb = contributionDAO.getContributionsCount(
-				null /*everyone*/, task, 
-				null/*from*/, null /*until*/);
+				null /*everyone*/, task, null /*from*/, null /*until*/);
 		
 		verify("TASK_USED_BY_CONTRIBUTIONS", //$NON-NLS-1$
 				contribsNb == 0, task.getName(), contribsNb);
