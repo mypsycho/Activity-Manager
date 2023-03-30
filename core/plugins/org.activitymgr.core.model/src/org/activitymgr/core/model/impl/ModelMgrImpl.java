@@ -330,7 +330,7 @@ public class ModelMgrImpl implements IModelMgr {
 		// La durée existe-t-elle ?
 		Duration result = getDuration(contribution.getDurationId());
 		// Verify "active" ??
-		verify("INVALID_DURATION", result != null); //$NON-NLS-1$
+		verify("INVALID_DURATION", result != null && result.getIsActive()); //$NON-NLS-1$
 		return result;
 	}
 	
