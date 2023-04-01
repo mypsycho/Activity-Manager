@@ -43,7 +43,7 @@
 		<tp.version>1.0.0-SNAPSHOT</tp.version>
 		<tp.mode>build</tp.mode>
 		
-		<tycho.version>2.5.0</tycho.version><!-- 0.24.0 -->
+		<tycho.version>2.7.1</tycho.version><!-- 0.24.0 -->
 		<tycho.scmUrl>scm:git:https://github.com/jfbrazeau/Activity-Manager.git</tycho.scmUrl>
 		
 		<!-- Xtend plugin does not take source version from TPD  -->
