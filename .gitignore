@@ -6,3 +6,11 @@ target/
 
 # Mac specific
 .DS_Store
+._*
+
+# Eclipse 
+bin/
+
+# Local maven repository 
+.repo/
+.repository/
