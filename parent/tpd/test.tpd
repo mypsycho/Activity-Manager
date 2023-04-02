@@ -37,7 +37,7 @@ with requirements
 
 // This target platform declare dependencies only used by automatic tests
 
-location eclipse "https://download.eclipse.org/releases/2019-03/" {
+location eclipse "https://download.eclipse.org/releases/2021-06/" {
 // location eclipse "https://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
 
 	

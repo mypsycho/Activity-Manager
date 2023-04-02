@@ -37,7 +37,7 @@ with requirements
 
 // This target platform declare dependencies of components to be release
 
-location eclipse "https://download.eclipse.org/releases/2019-03/" {
+location eclipse "https://download.eclipse.org/releases/2021-06/" {
 // location eclipse "https://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
 	org.eclipse.platform.feature.group
 	org.eclipse.equinox.executable.feature.group
@@ -45,6 +45,8 @@ location eclipse "https://download.eclipse.org/releases/2019-03/" {
 	org.eclipse.emf.common.feature.group
 	org.eclipse.emf.ecore.feature.group
 	org.apache.commons.codec
+	org.apache.log4j [1.2.15,2.0.0)
+	jakarta.servlet-api
 
 //	org.hamcrest
 //	org.hamcrest.core
@@ -65,7 +67,6 @@ location orbit "https://download.eclipse.org/tools/orbit/downloads/drops/R202112
 	com.google.inject.assistedinject
 	com.google.inject.multibindings
 	com.google.guava
-	org.apache.log4j [1.2.15,2.0.0)
 	org.apache.poi
 	com.google.gson
 	javax.xml

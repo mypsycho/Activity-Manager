@@ -33,7 +33,7 @@
       <plugin id="com.google.inject.assistedinject" fragment="true"/>
       <plugin id="com.google.inject.multibindings" fragment="true"/>
       <plugin id="javax.inject"/>
-      <plugin id="javax.servlet"/>
+      <plugin id="jakarta.servlet-api"/>
       <plugin id="javax.xml"/>
       <plugin id="org.activitymgr.core.dao"/>
       <plugin id="org.activitymgr.core.dao.h2fragment" fragment="true"/>
@@ -63,7 +63,6 @@
       <plugin id="org.eclipse.equinox.http.servlet"/>
       <plugin id="org.eclipse.equinox.preferences"/>
       <plugin id="org.eclipse.equinox.registry"/>
-      <plugin id="org.eclipse.jetty.continuation"/>
       <plugin id="org.eclipse.jetty.http"/>
       <plugin id="org.eclipse.jetty.io"/>
       <plugin id="org.eclipse.jetty.security"/>
