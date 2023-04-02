@@ -2,22 +2,24 @@ target "Activity Manager"
 
 with source
 
-location "http://download.eclipse.org/eclipse/updates/4.5" { // Eclipse mars
+location eclipse "https://download.eclipse.org/releases/2021-06/" {
 	org.eclipse.platform.feature.group lazy
 	org.eclipse.equinox.executable.feature.group lazy
 	org.eclipse.rcp.feature.group lazy
 	org.eclipse.emf.common.feature.group lazy
 	org.eclipse.emf.ecore.feature.group lazy
-	org.junit lazy
-	org.hamcrest lazy
-	org.hamcrest.core lazy
-	org.hamcrest.library lazy
-	org.hamcrest.integration lazy
-	org.hamcrest.text lazy
 	org.apache.commons.codec lazy
+	jakarta.servlet-api lazy
+	
+//	org.junit lazy
+//	org.hamcrest lazy
+//	org.hamcrest.core lazy
+//	org.hamcrest.library lazy
+//	org.hamcrest.integration lazy
+//	org.hamcrest.text lazy
 }
 
-location "http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/" {
+location orbit "https://download.eclipse.org/tools/orbit/downloads/drops/R20211213173813/repository/" {
 	org.apache.commons.dbcp lazy
 	org.apache.commons.pool lazy
 	org.apache.commons.beanutils lazy
