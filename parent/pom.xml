@@ -189,16 +189,11 @@ for p2-metadata in feature
 								<ws>cocoa</ws>
 								<arch>x86_64</arch>
 							</environment>
-							
-							<!--  
-							OBEO linux 32 bits is removed
-							Support is ensured.
 							<environment>
-							<os>linux</os>
-							<ws>gtk</ws>
-							<arch>x86</arch>
+								<os>macosx</os>
+								<ws>cocoa</ws>
+								<arch>aarch64</arch>
 							</environment>
-							 -->
 						</environments>
 					</configuration>
 				</plugin>
