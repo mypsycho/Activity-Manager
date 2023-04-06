@@ -1,10 +1,11 @@
 package org.activitymgr.ui.web.view.impl.internal;
 
 import org.activitymgr.ui.web.logic.IAuthenticationLogic;
+import org.activitymgr.ui.web.logic.IConfiguration;
 import org.activitymgr.ui.web.view.IResourceCache;
 
-import com.vaadin.event.ShortcutAction.KeyCode;
 import com.google.inject.Inject;
+import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
@@ -31,10 +32,12 @@ public class AuthenticationPanel extends VerticalLayout
 	
 	
 	protected final IResourceCache resourceCache;
+	protected IConfiguration cfg;
 	
 	@Inject
-	public AuthenticationPanel(IResourceCache resourceCache) {
+	public AuthenticationPanel(IResourceCache resourceCache, IConfiguration cfg) {
 		this.resourceCache = resourceCache;
+		this.cfg = cfg;
 		
 		setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
 
@@ -57,6 +60,8 @@ public class AuthenticationPanel extends VerticalLayout
 		
 		// Default focus management
 		userField.focus();
+		
+		
 		
 		// Register the attach listener
 		addAttachListener(evt -> logic.onViewAttached());
