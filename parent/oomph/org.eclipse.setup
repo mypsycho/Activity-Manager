@@ -47,11 +47,12 @@
 		targetURL="${product.location|uri}/eclipse.desktop" />
 	<setupTask xsi:type="setup:VariableTask" name="product.location"
 		value="${installation.location/}${installation.relativeProductFolder}" />
-    
-    <!-- sub-file should be edited using Copy/Paste of 'Dynamic Working Set' in "MENU/Windows/Preferences" -->
-    <setupTask xsi:type="setup.workingsets:WorkingSetTask" href="org.eclipse.worksets.setup#/"/>
 
-    <version href="org.eclipse.version_2020-06.setup#/"/>
+	<!-- sub-file should be edited using Copy/Paste of 'Dynamic Working Set' in "MENU/Windows/Preferences" -->
+	<setupTask xsi:type="setup.workingsets:WorkingSetTask" href="org.eclipse.worksets.setup#/"/>
+
+	<version href="org.eclipse.version_2020-06.setup#/"/>
+	<version href="org.eclipse.version_2021-06.setup#/"/>
 
 	
 	<description><![CDATA[

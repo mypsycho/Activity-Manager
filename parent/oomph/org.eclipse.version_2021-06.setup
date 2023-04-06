@@ -6,9 +6,9 @@
 	xmlns:setup.p2="http://www.eclipse.org/oomph/setup/p2/1.0" 
 	xmlns:setup.workingsets="http://www.eclipse.org/oomph/setup/workingsets/1.0"
 	xsi:schemaLocation="
-    http://www.eclipse.org/oomph/setup/workingsets/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/SetupWorkingSets.ecore
+	http://www.eclipse.org/oomph/setup/workingsets/1.0 http://git.eclipse.org/c/oomph/org.eclipse.oomph.git/plain/setups/models/SetupWorkingSets.ecore
 	"
-	name="2020-06" label="2020-06" requiredJavaVersion="11"
+	name="2021-06" label="2021-06" requiredJavaVersion="17"
 >
 	
 	<description><![CDATA[
@@ -44,9 +44,9 @@
 	</setupTask>
 	
 	<setupTask xsi:type="setup.p2:P2Task" id="eclipse" label="Eclipse basic">
-		
-		<repository url="http://download.eclipse.org/releases/2020-06" />
-		<repository url="http://download.eclipse.org/technology/epp/packages/2020-06" />
+	
+		<repository url="http://download.eclipse.org/releases/2021-06" />
+		<repository url="http://download.eclipse.org/technology/epp/packages/2021-06" />
 	
 		<requirement name="epp.package.modeling" />
 		<requirement name="epp.package.jee" />
@@ -57,8 +57,8 @@
 		<requirement name="org.eclipse.egit.feature.group" />
 		<requirement name="org.eclipse.m2e.feature.feature.group" />
 		<requirement name="org.eclipse.oomph.setup.ui.ide.feature.group" />
-	    
-	    	<!--  java dev -->
+		
+		<!--  java dev -->
 		<requirement name="org.eclipse.jdt.feature.group" />
 		<requirement name="org.eclipse.pde.feature.group" />
 	
@@ -80,7 +80,7 @@
 		<requirement name="org.eclipse.mylyn_feature.feature.group" />
 		<requirement name="org.eclipse.egit.mylyn.feature.group" />
 	
-	    	<!--  xml and web -->
+		<!--  xml and web -->
 		<requirement name="org.eclipse.xsd.sdk.feature.group" />
 		<requirement name="org.eclipse.wst.web_ui.feature.feature.group" />
 		<requirement name="org.eclipse.wst.xml_ui.feature.feature.group" />
@@ -93,11 +93,11 @@
 		<repository url="https://de-jcup.github.io/update-site-eclipse-yaml-editor/update-site" />
 		<requirement name="de.jcup.yamleditor.feature.group" />
 	
-	    <!-- Doc -->
+		<!-- Doc -->
 		<repository url="https://de-jcup.github.io/update-site-eclipse-asciidoctor-editor/update-site/" />
 		<requirement name="de.jcup.asciidoctoreditor.feature.group" />
-	    
-	    <!-- Image browser
+		
+		<!-- Image browser
 		<repository url="http://manu26.manufrog.com/~psnetnu/eclipse/updates/" />
 		<requirement name="nu.psnet.quickimage.feature.group" />
 		 -->
@@ -111,7 +111,7 @@
 			
 	<setupTask xsi:type="setup.p2:P2Task" id="ui" label="UI designer">
 		
-	    <!-- javafx -->
+		<!-- javafx -->
 		<repository url="http://download.eclipse.org/efxclipse/updates-released/3.6.0/site/" />
 		<requirement name="org.eclipse.fx.ide.feature.feature.group" />
 		
@@ -133,9 +133,9 @@
 	</setupTask>
 	
 	<setupTask xsi:type="setup.p2:P2Task" id="langs" label="Language">
-		<repository url="http://download.eclipse.org/releases/2020-06" />
+		<repository url="http://download.eclipse.org/releases/2021-06" />
 	
-		 <!-- Java language -->
+		<!-- Java language -->
 		<requirement name="org.eclipse.xtend.sdk.feature.group" />
 		<requirement name="org.eclipse.xtext.sdk.feature.group" />
 		
@@ -146,12 +146,12 @@
 		java.lang.NoClassDefFoundError: org/eclipse/jdt/internal/ui/javaeditor/CompilationUnitEditor
 			at org.jetbrains.kotlin.ui.commands.psiVisualization.PsiVisualization.setEnabled(PsiVisualization.java:54)
 			at org.eclipse.ui.internal.handlers.HandlerProxy.setEnabled(HandlerProxy.java:229)
-		 
+		
 		<repository url="https://dl.bintray.com/jetbrains/kotlin/eclipse-plugin/0.8.9/" />
-	    
+		
 		<requirement name="org.eclipse.equinox.weaving.sdk.feature.group" />
 		<requirement name="org.jetbrains.kotlin.feature.feature.group" />
-	 	-->
+		-->
 	
 	</setupTask>
 	
@@ -162,7 +162,7 @@
 	https://bugs.eclipse.org/bugs/show_bug.cgi?id=575002
 	-->
 	
-		<repository url="http://download.eclipse.org/releases/2020-06" />
+		<repository url="http://download.eclipse.org/releases/2021-06" />
 		<requirement name="org.eclipse.eclemma.feature.feature.group" /> <!-- from eclipse dist -->
 	
 		<repository url="https://checkstyle.org/eclipse-cs-update-site" />
@@ -170,7 +170,7 @@
 
 		<!-- Spotbugs replaces findbugs -->
 		<repository url="https://spotbugs.github.io/eclipse/" />
-	    <requirement name="com.github.spotbugs.plugin.eclipse.feature.group" />
+		<requirement name="com.github.spotbugs.plugin.eclipse.feature.group" />
 		<!-- Decompiler -->
 		<repository url="https://ecd-plugin.github.io/update/" />
 		<requirement name="org.sf.feeling.decompiler.cfr.feature.group" />
@@ -186,7 +186,7 @@
 	</setupTask>
 	
 	<setupTask xsi:type="setup.p2:P2Task" id="modeling" label="Eclipse Modeling">
-		<repository url="http://download.eclipse.org/releases/2020-06" />
+		<repository url="http://download.eclipse.org/releases/2021-06" />
 		<requirement name="org.eclipse.emf.sdk.feature.group" />
 		<requirement name="org.eclipse.emf.query.sdk.feature.group" />
 		<requirement name="org.eclipse.emf.transaction.sdk.feature.group" />
@@ -199,7 +199,7 @@
 		<requirement name="org.eclipse.emf.ecore.xcore.sdk.feature.group" />
 		
 		<!-- We do not reference Sirius from Eclipse release as source in not available -->
-		<repository url="https://download.eclipse.org/sirius/updates/releases/6.5.1/2020-06" />
+		<repository url="https://download.eclipse.org/sirius/updates/releases/6.5.1/2020-09" />
 		<requirement name="org.eclipse.sirius.specifier.ide.ui.source.feature.group" />
 		<requirement name="org.eclipse.sirius.diagram.elk.sdk.feature.feature.group" />
 		<requirement name="org.eclipse.acceleo.ui.interpreter.feature.group" />
@@ -209,32 +209,33 @@
 		
 		<repository url="http://download.eclipse.org/modeling/gmp/gmf-runtime/updates/releases/" />
 		<requirement name="org.eclipse.gmf.feature.group" versionRange="[1.13.0,1.14.0)"/>
-         
+		
 		<repository url="http://download.eclipse.org/modeling/gmp/gmf-notation/updates/releases/" />
 		<requirement name="org.eclipse.gmf.runtime.notation.feature.group" versionRange="1.10"/>
-         
+		
 		<repository url="https://download.eclipse.org/elk/updates/releases/0.7.1/" />
 		<requirement name="org.eclipse.elk.feature.feature.group" />
 		<requirement name="org.eclipse.elk.algorithms.feature.feature.group" />
-         
+		
 	</setupTask>
-			
+
 	<setupTask xsi:type="setup.p2:P2Task" id="database" label="Eclipse database">
-
-      <requirement name="org.eclipse.datatools.connectivity.feature.feature.group"/>
-      <requirement name="org.eclipse.datatools.sqldevtools.feature.feature.group" />
-      <requirement name="org.eclipse.datatools.enablement.mysql.feature.feature.group" />
-      <requirement name="org.eclipse.datatools.sqldevtools.sqlbuilder.feature.feature.group" />
-	  <requirement name="org.eclipse.datatools.sqldevtools.results.feature.feature.group" />
-      <repository url="https://download.eclipse.org/releases/2020-12/"/>
+	
+		<requirement name="org.eclipse.datatools.connectivity.feature.feature.group"/>
+		<requirement name="org.eclipse.datatools.sqldevtools.feature.feature.group" />
+		<requirement name="org.eclipse.datatools.enablement.mysql.feature.feature.group" />
+		<requirement name="org.eclipse.datatools.sqldevtools.sqlbuilder.feature.feature.group" />
+		<requirement name="org.eclipse.datatools.sqldevtools.results.feature.feature.group" />
+		<repository url="https://download.eclipse.org/releases/2020-12/"/>
+	
 	</setupTask>
-			
-	<setupTask xsi:type="setup.p2:P2Task" id="vaadin" label="vaadin framework">
 
-      <requirement name="com.vaadin.integration.eclipse.feature.group"/>
-      <repository url="http://vaadin.com/eclipse"/>
-      <repository url="http://www.apache.org/dist/ant/ivyde/updatesite"/>
-			
+	<setupTask xsi:type="setup.p2:P2Task" id="vaadin" label="vaadin framework">
+	
+		<requirement name="com.vaadin.integration.eclipse.feature.group"/>
+		<repository url="http://vaadin.com/eclipse"/>
+		<repository url="http://www.apache.org/dist/ant/ivyde/updatesite"/>
+	
 	</setupTask>
 
 </setup:ProductVersion>
