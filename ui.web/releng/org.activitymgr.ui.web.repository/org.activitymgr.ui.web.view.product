@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Activity Manager Server" uid="org.activitymgr.ui.web.view.product" id="org.activitymgr.ui.web.view.product" application="org.activitymgr.ui.web.view.application" version="1.2.2.qualifier" useFeatures="true" includeLaunchers="true">
+<product name="Activity Manager Server" uid="org.activitymgr.ui.web.view.product" id="org.activitymgr.ui.web.view.product" application="org.activitymgr.ui.web.view.application" version="1.2.3.qualifier" useFeatures="true" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
@@ -76,7 +76,7 @@
    </plugins>
 
    <features>
-      <feature id="org.activitymgr.ui.web.feature" version="1.2.2.qualifier"/>
+      <feature id="org.activitymgr.ui.web.feature" version="1.2.3.qualifier"/>
    </features>
 
    <configurations>

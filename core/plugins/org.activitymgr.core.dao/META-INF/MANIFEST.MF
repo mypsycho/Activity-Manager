@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Activity Manager DAO Layer
 Bundle-SymbolicName: org.activitymgr.core.dao
 Automatic-Module-Name: org.activitymgr.core.dao
-Bundle-Version: 1.2.2.qualifier
+Bundle-Version: 1.2.3.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: org.activitymgr.core.dto;bundle-version="1.0.0",
  org.activitymgr.core.util;bundle-version="1.0.0",
