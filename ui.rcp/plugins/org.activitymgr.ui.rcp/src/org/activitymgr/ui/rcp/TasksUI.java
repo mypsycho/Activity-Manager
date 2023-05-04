@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.activitymgr.core.dto.Contribution;
 import org.activitymgr.core.dto.Task;
@@ -112,6 +114,10 @@ public class TasksUI extends AbstractTableMgrUI
 	public static final int DELTA_COLUMN_IDX = 6;
 	public static final int COMMENT_COLUMN_IDX = 7;
 	public static final int CLOSED_COLUMN_IDX = 8;
+
+	private static final BiConsumer<MenuItem, TreeItem[]> FOR_SINGLE =
+			enableMItem((emptySelection, singleSelection) -> singleSelection);
+
 	private TableOrTreeColumnsMgr treeColsMgr;
 
 	/** Listeners */
@@ -120,21 +126,7 @@ public class TasksUI extends AbstractTableMgrUI
 	/** Viewer */
 	private TreeViewer treeViewer;
 
-	/** Items de menu */
-	private MenuItem newTaskItem;
-	private MenuItem newSubtaskItem;
-	private MenuItem moveUpItem;
-	private MenuItem moveDownItem;
-	private MenuItem moveBeforeAnotherTaskItem;
-	private MenuItem moveAfterAnotherTaskItem;
-	private MenuItem moveToAnotherTaskItem;
-	private MenuItem moveToRootItem;
-
-	private MenuItem xlsExportItem;
-	private MenuItem xlsImportItem;
-	private MenuItem xlsSnapshotExportItem;
-
-	private List<TreeActionEnable> menuRefreshs = new ArrayList<>();
+	private List<Consumer<TreeItem[]>> menuRefreshs = new ArrayList<>();
 
 	/** Composant parent */
 	private Composite parent;
@@ -156,6 +148,7 @@ public class TasksUI extends AbstractTableMgrUI
 	 * prochain paint
 	 */
 	private boolean needRefresh = false;
+
 
 	/**
 	 * Constructeur permettant de placer l'IHM dans un onglet.
@@ -306,19 +299,6 @@ public class TasksUI extends AbstractTableMgrUI
 		}
 	}
 
-	private void createTreeMenuItem(Menu menu, String code,
-			TreeActionEnable enabler, TreeSelectionAction action) {
-		MenuItem item = new MenuItem(menu, SWT.CASCADE);
-		item.setText(Strings.getString("TasksUI.menuitems." + code)); //$NON-NLS-1$
-		item.addSelectionListener(onTreeSelection(action));
-		if (enabler != null) {
-			menuRefreshs.add((emptySelection, singleSelection) -> {
-				item.setEnabled(enabler.enable(emptySelection, needRefresh));
-				return false; // Useled
-			});
-		}
-	}
-
 	private void initMenu() {
 
 		// Configuration du menu popup
@@ -329,11 +309,11 @@ public class TasksUI extends AbstractTableMgrUI
 		createMoveMenu(menu);
 
 		createTreeMenuItem(menu, "COPY",  //$NON-NLS-1$
-				(emptySelection, singleSelection) -> !emptySelection,
+				enableMItem((emptySelection, singleSelection) -> !emptySelection),
 				this::copyTask);
 
 		createTreeMenuItem(menu, "REMOVE",  //$NON-NLS-1$
-				(emptySelection, singleSelection) -> singleSelection,
+				FOR_SINGLE,
 				selection -> {
 					TreeItem selectedItem = selection[0];
 					TreeItem parentItem = selectedItem.getParentItem();
@@ -356,14 +336,14 @@ public class TasksUI extends AbstractTableMgrUI
 				});
 
 		createTreeMenuItem(menu, "EXPAND_ALL",  //$NON-NLS-1$
-				(emptySelection, singleSelection) -> singleSelection,
+				FOR_SINGLE,
 				selection -> {
 					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
 					treeViewer.expandToLevel(selectedItem.getData(),
 							AbstractTreeViewer.ALL_LEVELS);
 				});
 		createTreeMenuItem(menu, "COLLAPSE_ALL",  //$NON-NLS-1$
-				(emptySelection, singleSelection) -> singleSelection,
+				FOR_SINGLE,
 				selection -> {
 					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
 					treeViewer.collapseToLevel(selectedItem.getData(),
@@ -371,7 +351,7 @@ public class TasksUI extends AbstractTableMgrUI
 				});
 
 		createTreeMenuItem(menu, "LIST_CONTRIBUTIONS",  //$NON-NLS-1$
-				(emptySelection, singleSelection) -> singleSelection,
+				FOR_SINGLE,
 				selection -> {
 					TaskSums selected = (TaskSums) selection[0].getData();
 					Task selectedTask = selected.getTask();
@@ -381,7 +361,7 @@ public class TasksUI extends AbstractTableMgrUI
 				});
 
 		createTreeMenuItem(menu, "REFRESH",  //$NON-NLS-1$
-				(emptySelection, singleSelection) -> singleSelection,
+				FOR_SINGLE,
 				selection -> {
 					// Récupération du noeud parent
 					TreeItem selectedItem = selection[0];
@@ -401,187 +381,209 @@ public class TasksUI extends AbstractTableMgrUI
 		treeViewer.getTree().setMenu(menu);
 	}
 
+	private Menu createSubMenu(Menu menu, String labelId) {
+		// Sous-menu 'Nouveau'
+		MenuItem subItem = new MenuItem(menu, SWT.CASCADE);
+		subItem.setText(Strings.getString("TasksUI.menuitems." + labelId)); //$NON-NLS-1$
+		Menu result = new Menu(subItem);
+		subItem.setMenu(result);
+		return result;
+	}
+
+	private static BiConsumer<MenuItem, TreeItem[]> enableMItem(TreeActionEnable enabler) {
+		return (item, selection) -> {
+			item.setEnabled(enabler.enable(
+					selection.length == 0,
+					selection.length == 1));
+		};
+	}
+
+	private MenuItem createTreeMenuItem(Menu menu, String code,
+			BiConsumer<MenuItem, TreeItem[]> onUpdate, TreeSelectionAction action) {
+		MenuItem result = new MenuItem(menu, SWT.CASCADE);
+		result.setText(Strings.getString("TasksUI.menuitems." + code)); //$NON-NLS-1$
+		result.addSelectionListener(onTreeSelection(action));
+		if (onUpdate != null) {
+			menuRefreshs.add(selection -> onUpdate.accept(result, selection));
+		}
+		return result;
+	}
+
 
 	private void createNewMenu(Menu menu) {
 		// Sous-menu 'Nouveau'
-		MenuItem newItem = new MenuItem(menu, SWT.CASCADE);
-		newItem.setText(Strings.getString("TasksUI.menuitems.NEW")); //$NON-NLS-1$
-		Menu newMenu = new Menu(newItem);
-		newItem.setMenu(newMenu);
+		Menu newMenu = createSubMenu(menu, "NEW"); //$NON-NLS-1$
 
-		newTaskItem = new MenuItem(newMenu, SWT.CASCADE);
-		newTaskItem.setText(Strings.getString("TasksUI.menuitems.NEW_TASK")); //$NON-NLS-1$
-		newTaskItem.addSelectionListener(onTreeSelection(selection -> {
-			// Récupération du noeud parent
-			TreeItem parentItem = selection.length > 0 ? selection[0]
-					.getParentItem() : null;
-			TaskSums parentSums = parentItem == null ? null
-					: (TaskSums) parentItem.getData();
-			// Création de la tache
-			Task newTask = newTask(parentSums);
-			// Notification des listeners
-			notifyTaskAdded(newTask);
-		}));
-		newSubtaskItem = new MenuItem(newMenu, SWT.CASCADE);
-		newSubtaskItem.setText(Strings
-				.getString("TasksUI.menuitems.NEW_SUBTASK")); //$NON-NLS-1$
-		newSubtaskItem.addSelectionListener(onTreeSelection(selection -> {
-			TaskSums selected = (TaskSums) selection[0].getData();
-			Task newTask = newTask(selected);
-			// Then remember that the parent task is not a leaf task
-			selected.setLeaf(false);
-			// Notification des listeners
-			notifyTaskAdded(newTask);
-		}));
+		createTreeMenuItem(newMenu, "NEW_TASK",
+				enableMItem((emptySelection, singleSelection) -> emptySelection || singleSelection),
+				selection -> {
+					// Récupération du noeud parent
+					TreeItem parentItem = selection.length > 0
+							? selection[0].getParentItem()
+							: null;
+					TaskSums parentSums = parentItem != null
+							? (TaskSums) parentItem.getData()
+							: null;
+					// Création de la tache
+					Task newTask = newTask(parentSums);
+					// Notification des listeners
+					notifyTaskAdded(newTask);
+				});
+
+		createTreeMenuItem(newMenu, "NEW_SUBTASK",
+				FOR_SINGLE,
+				selection -> {
+					TaskSums selected = (TaskSums) selection[0].getData();
+					Task newTask = newTask(selected);
+					// Then remember that the parent task is not a leaf task
+					selected.setLeaf(false);
+					// Notification des listeners
+					notifyTaskAdded(newTask);
+				});
 	}
 
 
 	private void createMoveMenu(Menu menu) {
 
 		// Sous-menu 'Déplacer'
-		MenuItem moveToItem = new MenuItem(menu, SWT.CASCADE);
-		moveToItem.setText(Strings.getString("TasksUI.menuitems.MOVE")); //$NON-NLS-1$
-		Menu moveToMenu = new Menu(moveToItem);
-		moveToItem.setMenu(moveToMenu);
+		Menu moveToMenu = createSubMenu(menu, "MOVE"); //$NON-NLS-1$
 
-		moveUpItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveUpItem.setText(Strings.getString("TasksUI.menuitems.MOVE_UP")); //$NON-NLS-1$
-		moveUpItem.addSelectionListener(onTreeSelection(selection -> moveTask(selection, true)));
+		createTreeMenuItem(moveToMenu, "MOVE_UP", //$NON-NLS-1$
+				FOR_SINGLE,
+				selection -> moveTask(selection, true));
 
-		moveDownItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveDownItem.setText(Strings.getString("TasksUI.menuitems.MOVE_DOWN")); //$NON-NLS-1$
-		moveDownItem.addSelectionListener(onTreeSelection(selection ->
-			moveTask(selection, false)));
+		createTreeMenuItem(moveToMenu, "MOVE_DOWN", //$NON-NLS-1$
+				FOR_SINGLE,
+				selection -> moveTask(selection, false));
 
-		moveBeforeAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveBeforeAnotherTaskItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_BEFORE_ANOTHER_TASK")); //$NON-NLS-1$
-		moveBeforeAnotherTaskItem.addSelectionListener(onTreeSelection(selection -> {
-			moveTaskItem(selection, true);
-		}));
-		moveAfterAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveAfterAnotherTaskItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_AFTER_ANOTHER_TASK")); //$NON-NLS-1$
-		moveAfterAnotherTaskItem.addSelectionListener(onTreeSelection(selection -> {
-			moveTaskItem(selection, false);
-		}));
-		moveToAnotherTaskItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveToAnotherTaskItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_UNDER_ANOTHER_TASK")); //$NON-NLS-1$
-		moveToAnotherTaskItem.addSelectionListener(onTreeSelection(selection -> {
-			TaskSums selected = (TaskSums) selection[0].getData();
-			Task taskToMove = selected.getTask();
-			// Récupération du noeud parent
-			TreeItem parentItem = selection[0].getParentItem();
-			final Task srcParentTask = parentItem != null ? ((TaskSums) parentItem
-					.getData()).getTask() : null;
-			// Création du valideur
-			taskChooserDialog.setValidator(selectedTask -> {
-				if (srcParentTask != null && srcParentTask.equals(selectedTask))
-					throw new DialogException(
-							Strings.getString("TasksUI.errors.MOVE_TO_SAME_PARENT"), null); //$NON-NLS-1$
-				try {
-					modelMgr.checkAcceptsSubtasks(selectedTask);
-				} catch (ModelException e1) {
-					throw new DialogException(e1.getMessage(), null);
-				}
-			});
-			// Affichage du popup
-			if (taskChooserDialog.open() == Window.OK) {
-				Task newParentTask = (Task) taskChooserDialog.getValue();
-				doMoveToAnotherTask(taskToMove, newParentTask);
-			}
-		}));
-		moveToRootItem = new MenuItem(moveToMenu, SWT.CASCADE);
-		moveToRootItem.setText(Strings
-				.getString("TasksUI.menuitems.MOVE_UNDER_ROOT")); //$NON-NLS-1$
-		moveToRootItem.addSelectionListener(onTreeSelection(selection -> {
-			TaskSums selected = (TaskSums) selection[0].getData();
-			Task taskToMove = selected.getTask();
-			String oldTaskFullpath = taskToMove.getFullPath();
-			// Déplacement
-			modelMgr.moveTask(taskToMove, null);
-			treeViewer.refresh();
-			// Notification des listeners
-			notifyTaskMoved(oldTaskFullpath, taskToMove);
-		}));
+		createTreeMenuItem(moveToMenu, "MOVE_BEFORE_ANOTHER_TASK", //$NON-NLS-1$
+				FOR_SINGLE,
+				selection -> moveTaskItem(selection, true));
+
+		createTreeMenuItem(moveToMenu, "MOVE_AFTER_ANOTHER_TASK", //$NON-NLS-1$
+				FOR_SINGLE,
+				selection -> moveTaskItem(selection, false));
+
+		createTreeMenuItem(moveToMenu, "MOVE_UNDER_ANOTHER_TASK", //$NON-NLS-1$
+				FOR_SINGLE,
+				selection -> {
+					TaskSums selected = (TaskSums) selection[0].getData();
+					Task taskToMove = selected.getTask();
+					// Récupération du noeud parent
+					TreeItem parentItem = selection[0].getParentItem();
+					final Task srcParentTask = parentItem != null
+							? ((TaskSums) parentItem.getData()).getTask()
+									: null;
+					// Création du valideur
+					taskChooserDialog.setValidator(selectedTask -> {
+						if (srcParentTask != null && srcParentTask.equals(selectedTask))
+							throw new DialogException(
+									Strings.getString("TasksUI.errors.MOVE_TO_SAME_PARENT"), null); //$NON-NLS-1$
+						try {
+							modelMgr.checkAcceptsSubtasks(selectedTask);
+						} catch (ModelException e1) {
+							throw new DialogException(e1.getMessage(), null);
+						}
+					});
+					// Affichage du popup
+					if (taskChooserDialog.open() == Window.OK) {
+						Task newParentTask = (Task) taskChooserDialog.getValue();
+						doMoveToAnotherTask(taskToMove, newParentTask);
+					}
+				});
+
+		createTreeMenuItem(moveToMenu, "MOVE_UNDER_ROOT", //$NON-NLS-1$
+				(item, selection) -> {
+					boolean enable = selection.length == 1;
+					if (enable) {
+						TaskSums selected = (TaskSums) selection[0].getData();
+						// only in sub-element
+						enable = !selected.getTask().getPath().isEmpty();
+					}
+
+					item.setEnabled(enable);
+				},
+				selection -> {
+					TaskSums selected = (TaskSums) selection[0].getData();
+					Task taskToMove = selected.getTask();
+					String oldTaskFullpath = taskToMove.getFullPath();
+					// Déplacement
+					modelMgr.moveTask(taskToMove, null);
+					treeViewer.refresh();
+					// Notification des listeners
+					notifyTaskMoved(oldTaskFullpath, taskToMove);
+				});
 
 	}
 
 	private void createImportExportMenu(Menu menu) {
 
-		MenuItem exportItem = new MenuItem(menu, SWT.CASCADE);
-		exportItem.setText(Strings.getString("TasksUI.menuitems.EXPORT_IMPORT")); //$NON-NLS-1$
-		Menu exportMenu = new Menu(exportItem);
-		exportItem.setMenu(exportMenu);
+		Menu exportMenu = createSubMenu(menu, "EXPORT_IMPORT"); //$NON-NLS-1$
 
-		xlsExportItem = new MenuItem(exportMenu, SWT.CASCADE);
-		xlsExportItem.setText(Strings.getString("TasksUI.menuitems.XLS_EXPORT")); //$NON-NLS-1$
-		xlsExportItem.addSelectionListener(onTreeSelection(selection -> {
-			Long parentTaskId = null;
-			if (selection.length > 0) {
-				TaskSums selected = (TaskSums) selection[0].getData();
-				parentTaskId = selected.getTask().getId();
-			}
-			FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.SAVE);
-			fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
-			fd.setOverwrite(true);
-			String fileName = fd.open();
-			// Si le nom est spécifié
-			if (fileName != null) {
-				try {
-					// Correction du nom du fichier si besoin
-					if (!fileName.endsWith(".xls")) //$NON-NLS-1$
-						fileName += ".xls"; //$NON-NLS-1$
-					// Sauvegarde du document
-					byte[] excel = modelMgr.exportToExcel(parentTaskId);
-					FileOutputStream out = new FileOutputStream(fileName);
-					out.write(excel);
-					out.close();
-				} catch (IOException e) {
-					log.error("I/O exception", e); //$NON-NLS-1$
-					throw new UITechException(
-							Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
-				}
-			}
-		}));
+		createTreeMenuItem(exportMenu, "XLS_EXPORT", //$NON-NLS-1$
+				null,
+				selection ->  {
+					Long parentTaskId = null;
+					if (selection.length > 0) {
+						TaskSums selected = (TaskSums) selection[0].getData();
+						parentTaskId = selected.getTask().getId();
+					}
+					FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.SAVE);
+					fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
+					fd.setOverwrite(true);
+					String fileName = fd.open();
+					// Si le nom est spécifié
+					if (fileName != null) {
+						try {
+							// Correction du nom du fichier si besoin
+							if (!fileName.endsWith(".xls")) //$NON-NLS-1$
+								fileName += ".xls"; //$NON-NLS-1$
+							// Sauvegarde du document
+							byte[] excel = modelMgr.exportToExcel(parentTaskId);
+							FileOutputStream out = new FileOutputStream(fileName);
+							out.write(excel);
+							out.close();
+						} catch (IOException e) {
+							log.error("I/O exception", e); //$NON-NLS-1$
+							throw new UITechException(
+									Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
+						}
+					}
+				});
 
-		xlsImportItem = new MenuItem(exportMenu, SWT.CASCADE);
-		xlsImportItem.setText(Strings.getString("TasksUI.menuitems.XLS_IMPORT")); //$NON-NLS-1$
-		xlsImportItem.addSelectionListener(onTreeSelection(selection -> {
-			Long parentTaskId = null;
-			TaskSums selected = null;
-			if (selection.length > 0) {
-				selected = (TaskSums) selection[0].getData();
-				parentTaskId = selected.getTask().getId();
-				// Expand the tree
-				treeViewer.expandToLevel(selected, 1);
-			}
-			FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.OPEN);
-			fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
-			String fileName = fd.open();
-			// Si le nom est spécifié
-			if (fileName != null) {
-				try {
-					FileInputStream in = new FileInputStream(fileName);
-					modelMgr.importFromExcel(parentTaskId, in);
-					in.close();
-					// Refresh the tree
-					treeViewer.refresh();
-				} catch (IOException e) {
-					log.error("I/O exception", e); //$NON-NLS-1$
-					throw new UITechException(
-							Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
-				}
-			}
-		}));
+		createTreeMenuItem(exportMenu, "XLS_IMPORT", //$NON-NLS-1$
+				null,
+				selection ->  {
+					Long parentTaskId = null;
+					TaskSums selected = null;
+					if (selection.length > 0) {
+						selected = (TaskSums) selection[0].getData();
+						parentTaskId = selected.getTask().getId();
+						// Expand the tree
+						treeViewer.expandToLevel(selected, 1);
+					}
+					FileDialog fd = new FileDialog(parent.getShell(), SWT.APPLICATION_MODAL | SWT.OPEN);
+					fd.setFilterExtensions(new String[] { "*.xls", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
+					String fileName = fd.open();
+					// Si le nom est spécifié
+					if (fileName != null) {
+						try {
+							FileInputStream in = new FileInputStream(fileName);
+							modelMgr.importFromExcel(parentTaskId, in);
+							in.close();
+							// Refresh the tree
+							treeViewer.refresh();
+						} catch (IOException e) {
+							log.error("I/O exception", e); //$NON-NLS-1$
+							throw new UITechException(
+									Strings.getString("SWTHelper.errors.IO_EXCEPTION_WHILE_EXPORTING"), e); //$NON-NLS-1$
+						}
+					}
+				});
 
-		xlsSnapshotExportItem = new MenuItem(exportMenu, SWT.CASCADE);
-		xlsSnapshotExportItem.setText(Strings.getString("TasksUI.menuitems.XLS_SNAPSHOT_EXPORT")); //$NON-NLS-1$
-		xlsSnapshotExportItem.addSelectionListener(onTreeSelection(selection -> {
-			// Export du tableau
-			SWTHelper.exportToWorkBook(treeViewer.getTree());
-		}));
+		createTreeMenuItem(exportMenu, "XLS_SNAPSHOT_EXPORT", //$NON-NLS-1$
+				null,
+				selection -> SWTHelper.exportToWorkBook(treeViewer.getTree()));
 
 	}
 
@@ -1093,21 +1095,7 @@ public class TasksUI extends AbstractTableMgrUI
 
 	private void updateMenu() {
 		TreeItem[] selection = treeViewer.getTree().getSelection();
-		boolean emptySelection = selection.length == 0;
-		boolean singleSelection = selection.length == 1;
-		boolean rootSingleSelection = singleSelection && selection[0] == null;
-
-		newTaskItem.setEnabled(emptySelection || singleSelection);
-		newSubtaskItem.setEnabled(singleSelection);
-		moveUpItem.setEnabled(singleSelection);
-		moveDownItem.setEnabled(singleSelection);
-		moveBeforeAnotherTaskItem.setEnabled(singleSelection);
-		moveAfterAnotherTaskItem.setEnabled(singleSelection);
-		moveToAnotherTaskItem.setEnabled(singleSelection);
-		moveToRootItem.setEnabled(singleSelection && !rootSingleSelection);
-		xlsSnapshotExportItem.setEnabled(true);
-
-		menuRefreshs.forEach(it -> it.enable(emptySelection, singleSelection));
+		menuRefreshs.forEach(it -> it.accept(selection));
 	}
 
 

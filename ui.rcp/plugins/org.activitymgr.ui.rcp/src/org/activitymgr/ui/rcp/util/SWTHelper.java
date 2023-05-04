@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -58,7 +58,7 @@ public class SWTHelper {
 
 	/**
 	 * Centre un popup par rapport à sa fenêtre parent.
-	 * 
+	 *
 	 * @param popupShell
 	 *            le popup.
 	 */
@@ -85,7 +85,7 @@ public class SWTHelper {
 
 	/**
 	 * Exporte un arbre SWT en fichier EXCEL.
-	 * 
+	 *
 	 * @param tree
 	 *            l'arbre à exporter.
 	 * @throws UITechException
@@ -99,15 +99,14 @@ public class SWTHelper {
 		String fileName = fd.open();
 		// Si le nom est spécifié
 		if (fileName != null) {
-			try {
-				// Correction du nom du fichier si besoin
-				if (!fileName.endsWith(".xls")) //$NON-NLS-1$
-					fileName += ".xls"; //$NON-NLS-1$
+			// Correction du nom du fichier si besoin
+			if (!fileName.endsWith(".xls")) {//$NON-NLS-1$
+				fileName += ".xls"; //$NON-NLS-1$
+			}
+			try(FileOutputStream out = new FileOutputStream(fileName)) {
 				// Sauvegarde du document
 				Workbook wb = toWorkBook(tree);
-				FileOutputStream out = new FileOutputStream(fileName);
 				wb.write(out);
-				out.close();
 			} catch (IOException e) {
 				log.error("I/O exception", e); //$NON-NLS-1$
 				throw new UITechException(
@@ -118,7 +117,7 @@ public class SWTHelper {
 
 	/**
 	 * Convertit un arbre en classeur EXCEL.
-	 * 
+	 *
 	 * @param tree
 	 *            l'arbre à convertir.
 	 * @return le classeur EXCEL.
@@ -136,7 +135,7 @@ public class SWTHelper {
 		TreeColumn[] columns = tree.getColumns();
 		for (int i = 0; i < columns.length; i++) {
 			TreeColumn column = columns[i];
-			sheet.setColumnWidth(i, (column.getWidth() * 50));
+			sheet.setColumnWidth(i, column.getWidth() * 50);
 			Cell cell = row.createCell(i);
 			wb.asHeaderCellStyl(cell).setCellValue(column.getText());
 		}
@@ -150,7 +149,7 @@ public class SWTHelper {
 	/**
 	 * Génère des lignes dans le classeur EXCEL récursivement pour les éléments
 	 * d'arbres spécifiés et leurs éléments fils.
-	 * 
+	 *
 	 * @param indent
 	 *            l'indentiation à appliquer (plus la profondeur dans l'arbre
 	 *            est élevée, plus l'indentation est longue).
@@ -199,7 +198,7 @@ public class SWTHelper {
 		}
 		int endRowNum = sheet.getLastRowNum();
 		log.debug("startRowNum=" + startRowNum + ", endRowNum=" + endRowNum); //$NON-NLS-1$ //$NON-NLS-2$
-		if (!"".equals(indent) && (endRowNum - startRowNum >= 1)) { //$NON-NLS-1$
+		if (!"".equals(indent) && endRowNum - startRowNum >= 1) { //$NON-NLS-1$
 			log.debug(" -> grouped!"); //$NON-NLS-1$
 			sheet.groupRow(startRowNum, endRowNum);
 		}
@@ -207,7 +206,7 @@ public class SWTHelper {
 
 	/**
 	 * Exporte un tableau SWT en fichier EXCEL.
-	 * 
+	 *
 	 * @param table
 	 *            le tableau à exporter.
 	 * @throws UITechException
@@ -240,7 +239,7 @@ public class SWTHelper {
 
 	/**
 	 * Convertit un tableau en classeur EXCEL.
-	 * 
+	 *
 	 * @param table
 	 *            le tableau à convertir.
 	 * @return le classeur EXCEL.
@@ -270,7 +269,7 @@ public class SWTHelper {
 
 	/**
 	 * Génère des lignes dans le classeur EXCEL pour les éléments d'un tableau.
-	 * 
+	 *
 	 * @param sheet
 	 *            le feuillet EXCEL.
 	 * @param cellStyle

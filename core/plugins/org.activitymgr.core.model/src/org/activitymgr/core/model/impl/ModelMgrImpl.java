@@ -1334,8 +1334,9 @@ public class ModelMgrImpl implements IModelMgr {
 		// n'est autorisée que pour les champs autres que le chemin et le
 		// numéro.
 		verifyTaskPath(task);
-		if (destParentTask != null)
+		if (destParentTask != null) {
 			verifyTaskPath(destParentTask);
+		}
 
 		// Control : la tache de destination ne doit pas être
 		// une tache fille de la tache à déplacer
