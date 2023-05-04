@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Activity Manager Hsqldb JDBC Driver Fragment
 Bundle-SymbolicName: org.activitymgr.core.dao.hsqldbfragment
-Bundle-Version: 1.2.4.qualifier
+Bundle-Version: 1.3.0.qualifier
 Fragment-Host: org.apache.commons.dbcp
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ClassPath: hsqldb-2.3.4.jar

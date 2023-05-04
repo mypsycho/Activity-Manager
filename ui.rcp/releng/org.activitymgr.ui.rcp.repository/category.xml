@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.activitymgr.ui.rcp.feature_1.2.4.qualifier.jar" id="org.activitymgr.ui.rcp.feature" version="1.2.4.qualifier">
+   <feature url="features/org.activitymgr.ui.rcp.feature_1.3.0.qualifier.jar" id="org.activitymgr.ui.rcp.feature" version="1.3.0.qualifier">
       <category name="org.activitymgr.ui.rcp"/>
    </feature>
    <category-def name="org.activitymgr.ui.rcp" label="ActivityManager RCP UI"/>
