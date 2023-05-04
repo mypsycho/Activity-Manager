@@ -20,7 +20,7 @@ jobs:
       
       - name: Build with Maven 🔧
         # xvfb-run enables XDisplay
-        run: xvfb-run mvn --batch-mode clean verify -Dmaven.test.failure.ignore=true
+        run: xvfb-run mvn --batch-mode clean verify
       
       - name: Deploy RCP 🚀
         if: ${{ (github.ref == 'refs/heads/master') }}
