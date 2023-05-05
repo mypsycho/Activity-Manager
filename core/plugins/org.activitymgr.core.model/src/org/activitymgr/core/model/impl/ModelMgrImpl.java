@@ -1544,7 +1544,7 @@ public class ModelMgrImpl implements IModelMgr {
 
 		// Vérification que la tache n'est pas utilisé
 		long contribsNb = getContributionsCount(null, task, null, null);
-		verify("TASK_HAS_SUBTASKS", contribsNb == 0); //$NON-NLS-1$ 
+		verify("TASK_HAS_SUBTASKS", contribsNb == 0, contribsNb); //$NON-NLS-1$ 
 
 		// Récupération de la tâche parent pour reconstruction des
 		// numéros de taches
