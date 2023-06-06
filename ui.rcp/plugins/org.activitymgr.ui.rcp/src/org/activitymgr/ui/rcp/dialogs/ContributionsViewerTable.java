@@ -74,9 +74,9 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 	public static final int TASK_CODE_PATH_COLUMN_IDX = 2;
 	public static final int TASK_NAME_COLUMN_IDX = 3;
 	public static final int DURATION_COLUMN_IDX = 4;
-	private static TableOrTreeColumnsMgr tableColsMgr = new TableOrTreeColumnsMgr();
+	private static final TableOrTreeColumnsMgr TABLE_MGR = new TableOrTreeColumnsMgr();
 	static {
-		BiConsumer<String, Integer> addColumn = (code, size) -> tableColsMgr.addColumn(
+		BiConsumer<String, Integer> addColumn = (code, size) -> TABLE_MGR.addColumn(
 				code, Strings.getString("ContributionsViewerTable.columns." + code), //$NON-NLS-1$
 				size, SWT.LEFT);
 		addColumn.accept("DATE", 70); //$NON-NLS-1$
@@ -144,8 +144,7 @@ public class ContributionsViewerTable extends AbstractTableMgr implements
 		tableViewer.setLabelProvider(this);
 
 		// Configuration des colonnes
-		tableColsMgr = new TableOrTreeColumnsMgr();
-		tableColsMgr.configureTable(tableViewer);
+		TABLE_MGR.configureTable(tableViewer);
 
 		// Configuration du menu popup
 		final Menu menu = new Menu(table);

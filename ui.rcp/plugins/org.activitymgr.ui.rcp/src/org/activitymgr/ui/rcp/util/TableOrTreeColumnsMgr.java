@@ -76,7 +76,7 @@ public class TableOrTreeColumnsMgr {
 		log.debug("configureTree"); //$NON-NLS-1$
 		treeViewer.setColumnProperties(getColumnCodes());
 		Tree tree = treeViewer.getTree();
-		Column[] columns = getColumns();
+
 		for (Column column : columns) {
 			TreeColumn treeColumn = new TreeColumn(tree, column.alignment);
 			treeColumn.setText(column.name);
@@ -94,14 +94,13 @@ public class TableOrTreeColumnsMgr {
 		log.debug("configureTable"); //$NON-NLS-1$
 		tableViewer.setColumnProperties(getColumnCodes());
 		Table table = tableViewer.getTable();
-		Column[] columns = getColumns();
+
 		for (Column column : columns) {
 			TableColumn tableColumn = new TableColumn(table, column.alignment);
 			tableColumn.setText(column.name);
 			tableColumn.setWidth(column.width);
 		}
 	}
-
 
 
 	/**
@@ -157,9 +156,7 @@ public class TableOrTreeColumnsMgr {
 	 *            numéro de la colonne.
 	 */
 	public String getColumnCode(int columnIndex) {
-		String code = columns.get(columnIndex).code;
-		log.debug("getColumnCode(" + columnIndex + ")=" + code); //$NON-NLS-1$ //$NON-NLS-2$
-		return code;
+		return columns.get(columnIndex).code;
 	}
 
 	/**
@@ -168,14 +165,14 @@ public class TableOrTreeColumnsMgr {
 	 *            code de la colonne.
 	 */
 	public int getColumnIndex(String columnCode) {
-		int index = -1;
-		for (int i = 0; i < columns.size() && index < 0; i++) {
-			Column column = columns.get(i);
-			if (column.code.equals(columnCode))
-				index = i;
+		for (int index = 0; index < columns.size(); index++) {
+			Column column = columns.get(index);
+			if (column.code.equals(columnCode)) {
+				return index;
+			}
 		}
-		log.debug("getColumnIndex(" + columnCode + ")=" + index); //$NON-NLS-1$ //$NON-NLS-2$
-		return index;
+
+		return -1;
 	}
 
 	/**
@@ -190,20 +187,14 @@ public class TableOrTreeColumnsMgr {
 	}
 
 	/**
-	 * @return Retourne la liste des colonnes.
+	 * Bean contenant les attributs dune colonne.
 	 */
-	private Column[] getColumns() {
-		return columns.toArray(new Column[columns.size()]);
+	static class Column {
+		String code;
+		String name;
+		int width;
+		int alignment;
 	}
-
 }
 
-/**
- * Bean contenant les attributs dune colonne.
- */
-class Column {
-	String code;
-	String name;
-	int width;
-	int alignment;
-}
+

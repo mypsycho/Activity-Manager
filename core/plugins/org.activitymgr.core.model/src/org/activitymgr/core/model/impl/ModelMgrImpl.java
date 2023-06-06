@@ -139,8 +139,8 @@ public class ModelMgrImpl implements IModelMgr {
 	// comparaison
 	// de chaînes (en java), on a bien 0102 > 010101 et 010102.
 
-	private static final Comparator<Task> TASK_PATH_SORTER = (Task t1, Task t2)  
-			->  t1.getFullPath().compareTo(t2.getFullPath());
+
+	private static final Comparator<Task> TASK_PATH_SORTER = Comparator.comparing(it -> it.getFullPath());
 	
 	/** Logger */
 	private static Logger log = Logger.getLogger(ModelMgrImpl.class);
@@ -187,21 +187,11 @@ public class ModelMgrImpl implements IModelMgr {
 		defaultReportColumnComputers.put(ReflectiveReportColumnComputer.TASK_PREFIX + PATH_ATTRIBUTE, new TaskPathReportColumnComputer());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#tablesExist()
-	 */
 	@Override
 	public boolean tablesExist() {
 		return dao.tablesExist();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#createTables()
-	 */
 	@Override
 	public void createTables() {
 		dao.createTables();
@@ -227,11 +217,9 @@ public class ModelMgrImpl implements IModelMgr {
 	private void changeTasksPaths(Task[] tasks, int oldPathLength,
 			String newPath) {
 		// Récupération de la liste des taches
-		Iterator<Task> it = Arrays.asList(tasks).iterator();
 		int newPathLength = newPath.length();
 		StringBuffer buf = new StringBuffer(newPath);
-		while (it.hasNext()) {
-			Task task = it.next();
+		for (Task task : tasks) {
 			log.debug("Updating path of task '" + task.getName() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 			// Mise à jour des taches filles
 			Task[] subTasks = getSubTasks(task);
@@ -427,8 +415,8 @@ public class ModelMgrImpl implements IModelMgr {
 	}
 
 	@Override
-	public synchronized Task createNewTask(Task parentTask) throws 
-			ModelException {
+	public synchronized Task createNewTask(Task parentTask) 
+			throws ModelException {
 		// Le code doit être unique => il faut vérifier si
 		// celui-ci n'a pas déja été attribué
 		int idx = 0;
@@ -962,23 +950,12 @@ public class ModelMgrImpl implements IModelMgr {
 		return result;
 	}
 
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getDurations()
-	 */
 	@Override
 	public Duration[] getDurations() {
 		return durationDAO.select(null, null,
 				new Object[] { new AscendantOrderByClause("id") }, -1);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getActiveDurations()
-	 */
 	@Override
 	public Duration[] getActiveDurations() {
 		return durationDAO.select(
@@ -986,23 +963,11 @@ public class ModelMgrImpl implements IModelMgr {
 				new Object[] { new AscendantOrderByClause("id") }, -1);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getDuration(long)
-	 */
 	@Override
 	public Duration getDuration(long durationId) {
 		return durationDAO.selectByPK(new Object[] { durationId });
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#getParentTask(org.activitymgr.core.beans
-	 * .Task)
-	 */
 	public Task getParentTask(Task task) {
 
 		String parentTaskFullPath = task.getPath();
@@ -1024,9 +989,6 @@ public class ModelMgrImpl implements IModelMgr {
 
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.model.IModelMgr#getSubTasks(java.lang.Long, java.lang.String)
-	 */
 	@Override
 	public Task[] getSubTasks(Long parentTaskId, String filter) {
 		Task parentTask = parentTaskId != null ? getTask(parentTaskId)
@@ -1035,19 +997,11 @@ public class ModelMgrImpl implements IModelMgr {
 		return taskDAO.getSubTasks(fullpath, filter);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.model.IModelMgr#getFirstTaskMatching(java.lang.String)
-	 */
 	@Override
 	public Task getFirstTaskMatching(String filter) {
 		return taskDAO.getFirstTaskMatching(filter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getSubtasks(java.lang.Long)
-	 */
 	public Task[] getSubTasks(Long parentTaskId) {
 		// Récupération des sous tâches
 		Task parentTask = parentTaskId != null ? getTask(parentTaskId)
@@ -1056,13 +1010,6 @@ public class ModelMgrImpl implements IModelMgr {
 		return getSubTasks(parentTask);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#getSubtasks(org.activitymgr.core.beans
-	 * .Task)
-	 */
 	private Task[] getSubTasks(Task parentTask) {
 		// Récupération du chemin à partir de la tache parent
 		String fullpath = parentTask == null ? "" : parentTask.getFullPath(); //$NON-NLS-1$
@@ -1070,20 +1017,10 @@ public class ModelMgrImpl implements IModelMgr {
 		return taskDAO.select(new String[] { PATH_ATTRIBUTE }, new Object[] { fullpath }, new Object[] { new AscendantOrderByClause("number") }, -1);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getTask(long)
-	 */
 	public Task getTask(long taskId) {
 		return taskDAO.selectByPK(new Object[] { taskId });
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.IModelMgr#getRootTasksCount()
-	 */
 	@Override
 	public int getRootTasksCount() {
 		return (int) taskDAO.count(new String[] { PATH_ATTRIBUTE }, new Object[] { "" });
@@ -1250,13 +1187,6 @@ public class ModelMgrImpl implements IModelMgr {
 		return Tasks.buildTaskCodePath(task, parents);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#moveDownTask(org.activitymgr.core.beans
-	 * .Task)
-	 */
 	@Override
 	public void moveDownTask(Task task) throws ModelException {
 		// Le chemin de la tache et son numéro ne doivent pas avoir changés
@@ -1275,13 +1205,6 @@ public class ModelMgrImpl implements IModelMgr {
 		toggleTasks(task, taskToMoveUp);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#moveTaskUpOrDown(org.activitymgr.core.
-	 * beans.Task, int)
-	 */
 	@Override
 	public void moveTaskUpOrDown(Task task, int newTaskNumber)
 			throws ModelException {
@@ -1314,13 +1237,6 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#moveTask(org.activitymgr.core.beans.Task,
-	 * org.activitymgr.core.beans.Task)
-	 */
 	@Override
 	public synchronized void moveTask(Task task, Task destParentTask)
 			throws ModelException {
@@ -1387,13 +1303,6 @@ public class ModelMgrImpl implements IModelMgr {
 		rebuildSubtasksNumbers(srcParentTask);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#moveUpTask(org.activitymgr.core.beans.
-	 * Task)
-	 */
 	@Override
 	public void moveUpTask(Task task) throws ModelException {
 		// Le chemin de la tache et son numéro ne doivent pas avoir changés
@@ -1436,13 +1345,7 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#removeCollaborator(org.activitymgr.core
-	 * .beans.Collaborator)
-	 */
+
 	@Override
 	public void removeCollaborator(Collaborator collaborator)
 			throws ModelException {
@@ -1457,13 +1360,7 @@ public class ModelMgrImpl implements IModelMgr {
 		collaboratorDAO.delete(new String[] { "id" }, new Object[] { collaborator.getId() });
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#removeContribution(org.activitymgr.core
-	 * .beans.Contribution, boolean)
-	 */
+
 	@Override
 	public void removeContribution(Contribution contribution,
 			boolean updateEstimatedTimeToComlete) throws ModelException {
@@ -1502,27 +1399,16 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#removeContributions(org.activitymgr.core
-	 * .beans.Contribution[])
-	 */
+
 	@Override
 	public void removeContributions(Contribution[] contributions) {
 		// Suppression de la contribution
-		for (int i = 0; i < contributions.length; i++)
-			contributionDAO.delete(contributions[i]);
+		for (Contribution contribution : contributions) {
+			contributionDAO.delete(contribution);
+		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#removeDuration(org.activitymgr.core.beans
-	 * .Duration)
-	 */
+
 	@Override
 	public void removeDuration(Duration duration) throws ModelException {
 		// Vérification de l'existance
@@ -1598,13 +1484,6 @@ public class ModelMgrImpl implements IModelMgr {
 				task1.getFullPath());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#updateCollaborator(org.activitymgr.core
-	 * .beans.Collaborator)
-	 */
 	@Override
 	public Collaborator updateCollaborator(Collaborator collaborator)
 			throws ModelException {
@@ -1615,25 +1494,11 @@ public class ModelMgrImpl implements IModelMgr {
 		return collaboratorDAO.update(collaborator);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#updateDuration(org.activitymgr.core.beans
-	 * .Duration)
-	 */
 	@Override
 	public Duration updateDuration(Duration duration) {
 		return durationDAO.update(duration);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#updateContribution(org.activitymgr.core
-	 * .beans.Contribution, boolean)
-	 */
 	@Override
 	public Contribution updateContribution(Contribution contribution,
 			boolean updateEstimatedTimeToComlete) throws ModelException {
@@ -1674,13 +1539,6 @@ public class ModelMgrImpl implements IModelMgr {
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#changeContributionTask(org.activitymgr
-	 * .core.beans.Contribution[], org.activitymgr.core.beans.Task)
-	 */
 	@Override
 	public Contribution[] changeContributionTask(Contribution[] contributions,
 			Task newContributionTask) throws ModelException {
@@ -1701,13 +1559,6 @@ public class ModelMgrImpl implements IModelMgr {
 		return contributions;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#updateDuration(org.activitymgr.core.beans
-	 * .Duration, org.activitymgr.core.beans.Duration)
-	 */
 	@Override
 	public Duration updateDuration(Duration duration, Duration newDuration)
 			throws ModelException {
@@ -1724,13 +1575,6 @@ public class ModelMgrImpl implements IModelMgr {
 		return newDuration;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.IModelMgr#updateTask(org.activitymgr.core.beans.
-	 * Task)
-	 */
 	@Override
 	public Task updateTask(Task task) throws ModelException {
 		// Le chemin de la tache et son numéro ne doivent pas avoir changés
@@ -1946,17 +1790,11 @@ public class ModelMgrImpl implements IModelMgr {
 		});
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.model.IModelMgr#getContributionYears()
-	 */
 	@Override
 	public Collection<Integer> getContributionYears() {
 		return contributionDAO.getContributionYears();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.model.IModelMgr#buildReport(java.util.Calendar, org.activitymgr.core.dto.report.ReportIntervalType, int, java.lang.Long, int, boolean, boolean)
-	 */
 	@Override
 	public Report buildReport(Calendar start, ReportIntervalType intervalType,
 			Integer intervalCount, Long rootTaskId, int taskDepth,
@@ -2276,9 +2114,6 @@ public class ModelMgrImpl implements IModelMgr {
 		start.set(Calendar.MILLISECOND, 0);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.activitymgr.core.model.IModelMgr#getMaxTaskDepth()
-	 */
 	@Override
 	public int getMaxTaskDepthUnder(Long rootTaskId) throws DAOException {
 		String path = "";
@@ -2305,20 +2140,14 @@ public class ModelMgrImpl implements IModelMgr {
 		return contributionDAO.getContributionsInterval(rootTaskPath);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.model.IModelMgr#getConfigurations(java.lang.String,
-	 * java.lang.Long)
-	 */
 	@Override
 	public ReportCfg[] getReportCfgs(String category, Long ownerId)
 			throws ModelException {
 		checkReportCfgCategory(category);
-		return reportCfgDAO
-				.select(new String[] { "category", "ownerId" }, new Object[] {
-						category, ownerId }, new Object[] { "name" }, -1);
+		return reportCfgDAO.select(
+					new String[] { "category", "ownerId" }, 
+					new Object[] { category, ownerId }, 
+					new Object[] { "name" }, -1);
 	}
 
 	/**
@@ -2335,13 +2164,6 @@ public class ModelMgrImpl implements IModelMgr {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.model.IModelMgr#createReportCfg(org.activitymgr.
-	 * core.dto.ReportCfg)
-	 */
 	@Override
 	public ReportCfg createReportCfg(ReportCfg reportCfg) throws ModelException {
 		checkReportCfgCategory(reportCfg.getCategory());
@@ -2351,35 +2173,16 @@ public class ModelMgrImpl implements IModelMgr {
 		return reportCfgDAO.insert(reportCfg);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.model.IModelMgr#removeReportCfg(org.activitymgr.
-	 * core.dto.ReportCfg)
-	 */
 	@Override
 	public void removeReportCfg(long id) {
 		reportCfgDAO.deleteByPK(id);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.activitymgr.core.model.IModelMgr#updateReportCfg(org.activitymgr.
-	 * core.dto.ReportCfg)
-	 */
 	@Override
 	public void updateReportCfg(ReportCfg reportCfg) {
 		reportCfgDAO.update(reportCfg);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.activitymgr.core.model.IModelMgr#getReportCfg(long)
-	 */
 	@Override
 	public ReportCfg getReportCfg(long id) {
 		return reportCfgDAO.selectByPK(id);
