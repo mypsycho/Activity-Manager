@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
+ * Copyright (c) 2004-2025, Jean-Francois Brazeau and Obeo.
+ *
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -449,24 +451,19 @@ public class TasksUI extends AbstractTableMgrUI
 		Menu moveToMenu = createSubMenu(menu, "MOVE"); //$NON-NLS-1$
 
 		createTreeMenuItem(moveToMenu, "MOVE_UP", //$NON-NLS-1$
-				FOR_SINGLE,
-				selection -> moveTask(selection, true));
+				FOR_SINGLE, selection -> moveTask(selection, true));
 
 		createTreeMenuItem(moveToMenu, "MOVE_DOWN", //$NON-NLS-1$
-				FOR_SINGLE,
-				selection -> moveTask(selection, false));
+				FOR_SINGLE, selection -> moveTask(selection, false));
 
 		createTreeMenuItem(moveToMenu, "MOVE_BEFORE_ANOTHER_TASK", //$NON-NLS-1$
-				FOR_SINGLE,
-				selection -> moveTaskItem(selection, true));
+				FOR_SINGLE, selection -> moveTaskItem(selection, true));
 
 		createTreeMenuItem(moveToMenu, "MOVE_AFTER_ANOTHER_TASK", //$NON-NLS-1$
-				FOR_SINGLE,
-				selection -> moveTaskItem(selection, false));
+				FOR_SINGLE, selection -> moveTaskItem(selection, false));
 
 		createTreeMenuItem(moveToMenu, "MOVE_UNDER_ANOTHER_TASK", //$NON-NLS-1$
-				FOR_SINGLE,
-				selection -> {
+				FOR_SINGLE, selection -> {
 					TaskSums selected = (TaskSums) selection[0].getData();
 					Task taskToMove = selected.getTask();
 					// Récupération du noeud parent
@@ -521,8 +518,7 @@ public class TasksUI extends AbstractTableMgrUI
 		Menu exportMenu = createSubMenu(menu, "EXPORT_IMPORT"); //$NON-NLS-1$
 
 		createTreeMenuItem(exportMenu, "XLS_EXPORT", //$NON-NLS-1$
-				null,
-				selection ->  {
+				null, selection ->  {
 					Long parentTaskId = null;
 					if (selection.length > 0) {
 						TaskSums selected = (TaskSums) selection[0].getData();
@@ -552,8 +548,7 @@ public class TasksUI extends AbstractTableMgrUI
 				});
 
 		createTreeMenuItem(exportMenu, "XLS_IMPORT", //$NON-NLS-1$
-				null,
-				selection ->  {
+				null, selection ->  {
 					Long parentTaskId = null;
 					TaskSums selected = null;
 					if (selection.length > 0) {
@@ -567,10 +562,8 @@ public class TasksUI extends AbstractTableMgrUI
 					String fileName = fd.open();
 					// Si le nom est spécifié
 					if (fileName != null) {
-						try {
-							FileInputStream in = new FileInputStream(fileName);
+						try (FileInputStream in = new FileInputStream(fileName)) {
 							modelMgr.importFromExcel(parentTaskId, in);
-							in.close();
 							// Refresh the tree
 							treeViewer.refresh();
 						} catch (IOException e) {

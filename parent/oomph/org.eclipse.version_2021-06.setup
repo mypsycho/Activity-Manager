@@ -116,7 +116,7 @@
 		<requirement name="org.eclipse.fx.ide.feature.feature.group" />
 		
 		<!-- swt or swing -->
-		<repository url="http://download.eclipse.org/windowbuilder/latest/" />
+		<repository url="http://download.eclipse.org/releases/2021-06" />
 		<requirement name="org.eclipse.wb.core.feature.feature.group" />
 		<requirement name="org.eclipse.wb.core.java.feature.feature.group" />
 		<requirement name="org.eclipse.wb.core.ui.feature.feature.group" />
@@ -173,9 +173,9 @@
 		<requirement name="com.github.spotbugs.plugin.eclipse.feature.group" />
 		<!-- Decompiler -->
 		<repository url="https://ecd-plugin.github.io/update/" />
+		<requirement name="org.sf.feeling.decompiler.feature.group" /> <!-- main -->
 		<requirement name="org.sf.feeling.decompiler.cfr.feature.group" />
-		<requirement name="org.sf.feeling.decompiler.feature.group" />
-		<requirement name="org.sf.feeling.decompiler.jad.feature.group" />
+		<requirement name="org.sf.feeling.decompiler.quiltflower.feature.group" />
 		<requirement name="org.sf.feeling.decompiler.jd.feature.group" />
 		<requirement name="org.sf.feeling.decompiler.procyon.feature.group" />
 		

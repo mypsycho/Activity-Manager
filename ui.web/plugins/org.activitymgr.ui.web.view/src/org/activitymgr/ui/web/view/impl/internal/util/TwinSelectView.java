@@ -1,3 +1,32 @@
+/*
+ * Copyright (c) 2004-2025, Jean-Francois Brazeau and Obeo.
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  1. Redistributions of source code must retain the above copyright notice,
+ *     this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *
+ *  3. The name of the author may not be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIEDWARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.activitymgr.ui.web.view.impl.internal.util;
 
 import java.util.ArrayList;
@@ -8,17 +37,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.activitymgr.ui.web.logic.ITwinSelectFieldLogic;
 import org.activitymgr.ui.web.logic.ITwinSelectFieldLogic.View;
 
-import com.vaadin.data.Property.ValueChangeEvent;
-import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.ListSelect;
 import com.vaadin.ui.VerticalLayout;
@@ -44,102 +71,56 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		super();
 		// Left select
 		leftSelect = newSelect();
-		addComponent(leftSelect);
+
 
 		// Middle buttons
-		VerticalLayout middleButtonsLayout = new VerticalLayout();
-		middleButtonsLayout.setMargin(true);
-		middleButtonsLayout.setMargin(new MarginInfo(false, true));
-		addComponent(middleButtonsLayout);
-		moveAllRightButton = addButton(middleButtonsLayout, ">>");
-		moveRightButton = addButton(middleButtonsLayout, ">");
-		moveLeftButton = addButton(middleButtonsLayout, "<");
-		moveAllLeftButton = addButton(middleButtonsLayout, "<<");
+		VerticalLayout selectButtons = new VerticalLayout();
+		selectButtons.setMargin(new MarginInfo(false, true));
+		addComponent(selectButtons);
+		moveAllRightButton = addSelectButton(selectButtons, ">>", event -> selectAll());
+		moveRightButton = addSelectButton(selectButtons, ">",
+				event -> moveSelectedItems(leftSelect, rightSelect));
+		moveLeftButton = addSelectButton(selectButtons, "<",
+				event -> moveSelectedItems(rightSelect, leftSelect));
+		moveAllLeftButton = addSelectButton(selectButtons, "<<", event -> deselectAll());
 
 		// Create order buttons (but don't add it to the UI)
-		moveUpButton = new Button("Up");
-		moveUpButton.setImmediate(true);
-		moveDownButton = new Button("Down");
-		moveDownButton.setImmediate(true);
-
+		moveUpButton = createRightMoveButton("Up", 1, (ids, selects) -> {
+			String first = selects.get(0);
+			return ids.indexOf(first) - 1;
+		});
+		
+		moveDownButton = createRightMoveButton("Down", -1, (ids, selects) -> {
+			String last = selects.get(selects.size() - 1);
+			return ids.indexOf(last) + 1;
+		});
+		
 		// Right select
 		rightSelect = newSelect();
-		addComponent(rightSelect);
 
-		ValueChangeListener listener = new ValueChangeListener() {
-			@Override
-			public void valueChange(ValueChangeEvent event) {
-				updateButtonsEnablement();
-			}
-		};
-		leftSelect.addValueChangeListener(listener);
-		rightSelect.addValueChangeListener(listener);
-
-		moveAllRightButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				selectAll();
-			}
-		});
-		moveRightButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				moveSelectedItems(leftSelect, rightSelect);
-			}
-		});
-		moveLeftButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				moveSelectedItems(rightSelect, leftSelect);
-			}
-		});
-		moveAllLeftButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				deselectAll();
-			}
-		});
-		moveUpButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				// Moving up a joined group of items is equivalent to move the
-				// item that is just before the group, after the group
-				List<Object> rightItemIds = new ArrayList<Object>(rightSelect
-						.getItemIds());
-				List<String> rightSelectedItems = getRightSelectedItemIds();
-
-				// Retrieve the item that is before the group
-				String firstSelectedItemId = rightSelectedItems.get(0);
-				int idx = rightItemIds.indexOf(firstSelectedItemId) - 1;
-				String itemIdToMove = (String) rightItemIds.get(idx);
-
-				// Move the item after the group
-				int newIdx = idx + rightSelectedItems.size();
-				moveRightSelectItemUpOrDown(itemIdToMove, newIdx);
-			}
-
-		});
-		moveDownButton.addClickListener(new Button.ClickListener() {
-			@Override
-			public void buttonClick(ClickEvent event) {
-				// Moving down a joined group of items is equivalent to move the
-				// item that is just after the group, before the group
-				List<Object> rightItemIds = new ArrayList<Object>(rightSelect
-						.getItemIds());
-				List<String> rightSelectedItems = getRightSelectedItemIds();
-
-				// Retrieve the item that is after the group
-				String lastSelectedItemId = rightSelectedItems
-						.get(rightSelectedItems.size() - 1);
-				int idx = rightItemIds.indexOf(lastSelectedItemId) + 1;
-				String itemIdToMove = (String) rightItemIds.get(idx);
-
-				// Move the item after the group
-				int newIdx = idx - rightSelectedItems.size();
-				moveRightSelectItemUpOrDown(itemIdToMove, newIdx);
-			}
-		});
 		logicNotificationEnabled = true;
+	}
+	
+	private Button createRightMoveButton(String label, int direction, 
+			BiFunction<List<Object>, List<String>, Integer> indexToMove) {
+		Button result = new Button(label);
+		result.setImmediate(true);
+		result.setWidth("75px");
+		result.addClickListener(event -> {
+			// Moving down a joined group of items is equivalent to move the
+			// item that is just after the group, before the group
+			List<Object> rightItemIds = new ArrayList<>(rightSelect.getItemIds());
+			List<String> rightSelectedItems = getRightSelectedItemIds();
+
+			// Retrieve the item that is after the group
+			int idx = indexToMove.apply(rightItemIds, rightSelectedItems);
+			String itemIdToMove = (String) rightItemIds.get(idx);
+
+			// Move the item after the group
+			int newIdx = idx + direction * rightSelectedItems.size();
+			moveRightSelectItemUpOrDown(itemIdToMove, newIdx);
+		});
+		return result;
 	}
 
 	private void moveRightSelectItemUpOrDown(String itemId, int newIdx) {
@@ -159,12 +140,9 @@ public class TwinSelectView extends HorizontalLayout implements View {
 	public void showOrderButton() {
 		this.orderMode = true;
 		// Right buttons
-		VerticalLayout orderButtonsLayout = new VerticalLayout();
-		orderButtonsLayout.setMargin(true);
-		orderButtonsLayout.setMargin(new MarginInfo(false, true));
-		addComponent(orderButtonsLayout);
-		orderButtonsLayout.addComponent(moveUpButton);
-		orderButtonsLayout.addComponent(moveDownButton);
+		VerticalLayout orderButtons = new VerticalLayout(moveUpButton, moveDownButton);
+		orderButtons.setMargin(new MarginInfo(false, true));
+		addComponent(orderButtons);
 	}
 
 	@Override
@@ -176,72 +154,77 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		updateButtonsEnablement();
 	}
 
+	private void enableForContent(Button action, Collection<?> content) {
+		action.setEnabled(!content.isEmpty());
+	}
+	
 	private void updateButtonsEnablement() {
 		List<Object> rightItemIds = new ArrayList<Object>(
 				rightSelect.getItemIds());
-		List<String> rightSelectedItems = getRightSelectedItemIds();
+		List<String> selectedItems = getRightSelectedItemIds();
 
 		// Middle buttons enablement
-		moveAllRightButton.setEnabled(leftSelect.getItemIds().size() > 0);
-		moveRightButton.setEnabled(((Collection<?>) leftSelect.getValue())
-				.size() > 0);
-		moveLeftButton.setEnabled(rightSelectedItems
-				.size() > 0);
-		moveAllLeftButton.setEnabled(rightItemIds.size() > 0);
+		enableForContent(moveAllRightButton, leftSelect.getItemIds());
+		enableForContent(moveRightButton, (Collection<?>) leftSelect.getValue());
+		
+		enableForContent(moveLeftButton, selectedItems);
+		enableForContent(moveAllLeftButton, rightItemIds);
 
+		if (!orderMode) {
+			return;
+		}
 		// Up and down buttons are enabled only if at least one item is selected
 		// and if all selected items are joined and if it's not the last items
 		// for down button and not the first items for up button
 		moveUpButton.setEnabled(false);
 		moveDownButton.setEnabled(false);
-		if (rightSelectedItems.size() > 0) {
-			Iterator<String> rightSelectedItemIdsIterator = rightSelectedItems
+		if (!selectedItems.isEmpty()) {
+			Iterator<String> iSelect = selectedItems
 					.iterator();
-			String firstSelectedItemId = rightSelectedItemIdsIterator.next();
+			String firstSelectedItemId = iSelect.next();
 			int firstIdx = rightItemIds.indexOf(firstSelectedItemId);
 			boolean joined = true;
 			int idx = firstIdx + 1;
-			while (rightSelectedItemIdsIterator.hasNext()) {
-				String nextSelectedItemId = rightSelectedItemIdsIterator.next();
+			while (iSelect.hasNext()) {
+				String next = iSelect.next();
 				String nextItemId = (String) rightItemIds.get(idx++);
-				if (!nextSelectedItemId.equals(nextItemId)) {
+				if (!next.equals(nextItemId)) {
 					joined = false;
 					break;
 				}
 			}
 			if (joined) {
 				moveUpButton.setEnabled(firstIdx != 0);
-				boolean isAtLast = firstIdx + rightSelectedItems.size() == rightItemIds
-						.size();
+				boolean isAtLast = firstIdx + selectedItems.size() 
+						== rightItemIds.size();
 				moveDownButton.setEnabled(!isAtLast);
 			}
 		}
 	}
 
 	private List<String> getRightSelectedItemIds() {
-		final List<Object> rightItemIds = new ArrayList<Object>(
+		final List<Object> rightItemIds = new ArrayList<>(
 				rightSelect.getItemIds());
+		
 		@SuppressWarnings("unchecked")
-		List<String> rightSelectedItems = new ArrayList<String>(
+		List<String> rightSelectedItems = new ArrayList<>(
 				(Collection<String>) rightSelect.getValue());
-		Collections.sort(rightSelectedItems, new Comparator<Object>() {
-			@Override
-			public int compare(Object o1, Object o2) {
-				return rightItemIds.indexOf((String) o1)
-						- rightItemIds.indexOf((String) o2);
-			}
-		});
+		
+		
+		Collections.sort(rightSelectedItems, Comparator.comparingInt(rightItemIds::indexOf));
 		return rightSelectedItems;
 	}
 
-	private Button addButton(VerticalLayout middleButtonsLayout, String title) {
-		Button button = new Button(title);
-		button.setImmediate(true);
-		middleButtonsLayout.addComponent(button);
-		middleButtonsLayout.setComponentAlignment(button,
-				Alignment.MIDDLE_CENTER);
-		button.setEnabled(false);
-		return button;
+	private Button addSelectButton(VerticalLayout container, String title, Button.ClickListener task) {
+		Button result = new Button(title);
+		result.setImmediate(true);
+		result.setWidth("50px");
+		// result.setWidth("100%");
+		container.addComponent(result);
+		container.setComponentAlignment(result, Alignment.MIDDLE_CENTER);
+		result.setEnabled(false);
+		
+		return result;
 	}
 
 	private ListSelect newSelect() {
@@ -249,7 +232,10 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		select.setImmediate(true);
 		select.setMultiSelect(true);
 		select.setWidth("130px");
+		
 		select.setHeight("100px");
+		select.addValueChangeListener(event -> updateButtonsEnablement());
+		addComponent(select);
 		return select;
 	}
 

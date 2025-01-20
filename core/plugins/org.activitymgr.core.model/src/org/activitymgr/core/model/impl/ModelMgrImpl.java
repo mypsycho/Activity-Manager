@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
+ * Copyright (c) 2004-2025, Jean-Francois Brazeau and Obeo. 
+ * 
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are met:
@@ -41,7 +43,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;

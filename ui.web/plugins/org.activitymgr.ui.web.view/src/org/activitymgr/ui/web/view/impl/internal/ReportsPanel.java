@@ -1,3 +1,32 @@
+/*
+ * Copyright (c) 2004-2025, Jean-Francois Brazeau and Obeo.
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  1. Redistributions of source code must retain the above copyright notice,
+ *     this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *
+ *  3. The name of the author may not be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIEDWARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.activitymgr.ui.web.view.impl.internal;
 
 import java.util.Date;
@@ -50,8 +79,10 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	@Inject
 	public ReportsPanel(IResourceCache resourceCache) {
 		super(2, 16);
+		setId("ReportsPanel");
 		setSpacing(true);
 		setWidth("650px");
+		setHeight("100%");
 		setColumnExpandRatio(0, 100);
 //		setColumnExpandRatio(0, 30);
 //		setColumnExpandRatio(1, 70);
@@ -69,13 +100,21 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		
 		createIntervalConfigurationPanel();
 		createScopeConfigurationPanel(advancedMode);
-		createHeaderColumnsContentConfigurationPanel(
-				advancedMode);
-		createRowsContentConfigurationPanel(
-				advancedMode);
+		createHeaderColumnsContentConfigurationPanel(advancedMode);
+		createRowsContentConfigurationPanel(advancedMode);
+		
+		
+		if (!advancedMode) {
+			// Line separator should be on 13.
+			while (getCursorY() < 13) {
+				addComponent(new Label());
+			}
+		}
 		
 		// On line space
-		addComponent(new Label("&nbsp;", ContentMode.HTML));
+		Label bottomSeparator = new Label("&nbsp;", ContentMode.HTML);
+		addComponent(bottomSeparator);
+		setRowExpandRatio(getCursorY(), 1);
 		addComponent(new Label("", ContentMode.HTML));
 
 		// Report buttons
@@ -85,9 +124,7 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		reportButtonsLayout.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
 		addComponent(reportButtonsLayout);
 		reportButtonsLayout.setWidth(100, Unit.PERCENTAGE);
-		
-
-		setRowExpandRatio(15, 1);
+				
 		Label leftAlign = new Label("");
 		reportButtonsLayout.addComponent(leftAlign);
 		reportButtonsLayout.setExpandRatio(leftAlign, 100);
@@ -311,11 +348,11 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	}
 
 	private void addComponentWithHorizontalSpan(Component component) {
-		addComponent(component);
-		Area area = getComponentArea(component);
-		removeComponent(component);
-		addComponent(component, area.getColumn1(), area.getRow1(),
-				area.getColumn2() + 1, area.getRow2());
+		addComponent(component, 0, getCursorY(), 1, getCursorY());
+//		Area area = getComponentArea(component);
+//		removeComponent(component);
+//		addComponent(component, area.getColumn1(), area.getRow1(),
+//				area.getColumn2() + 1, area.getRow2());
 	}
 
 	private PopupDateFieldWithParser newDateField() {

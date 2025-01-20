@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
+ * Copyright (c) 2004-2025, Jean-Francois Brazeau and Obeo.
+ *
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -135,8 +137,7 @@ public class AboutUI implements SelectionListener {
 		// Ajout de la license
 		try {
 			InputStream in = AboutUI.class.getResourceAsStream("LICENSE.txt"); //$NON-NLS-1$
-			LineNumberReader lin = new LineNumberReader(new InputStreamReader(
-					in));
+			LineNumberReader lin = new LineNumberReader(new InputStreamReader(in));
 			String line = null;
 			while ((line = lin.readLine()) != null) {
 				list.add(line);
@@ -162,10 +163,10 @@ public class AboutUI implements SelectionListener {
 		boolean copyURLToClipboard = true;
 		// Sous windows lancement du brower ou du client de mail
 		// Si le lancement échoue, on effectuera le copier/coller
-		if (windows && (SafeRunner.exec(parent.getShell(), null, () ->
+		if (windows && SafeRunner.exec(parent.getShell(), null, () ->
 			Runtime.getRuntime().exec(
 					"rundll32 url.dll,FileProtocolHandler " + url) //$NON-NLS-1$
-			) != null))
+			) != null)
 			copyURLToClipboard = false;
 		// Sur les autres plateformes que linux, dépot dans le clipboard
 		if (copyURLToClipboard) {

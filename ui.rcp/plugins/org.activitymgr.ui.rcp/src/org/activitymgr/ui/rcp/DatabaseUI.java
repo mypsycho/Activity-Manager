@@ -1,16 +1,18 @@
 /*
- * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
+ * Copyright (c) 2004-2025, Jean-Francois Brazeau and Obeo.
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- * 
+ *
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
  *
@@ -53,13 +55,10 @@ import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -78,23 +77,23 @@ import org.xml.sax.SAXException;
  */
 public class DatabaseUI implements ModifyListener {
 
-	private static final List<Long> DEFAULT_DURATION = Arrays.asList(25l, 50l, 75l, 100l);
-	
+	private static final List<Long> DEFAULT_DURATION = Arrays.asList(25L, 50L, 75L, 100L);
+
 	/**
 	 * Interface utilisée pour notifier de l'état de la connexion à la base de
 	 * données.
 	 */
-	public static interface IDbStatusListener {
+	public interface IDbStatusListener {
 
 		/**
 		 * Notifie de l'ouverture de l'accès à la base de données.
 		 */
-		public void databaseOpened();
+		void databaseOpened();
 
 		/**
 		 * Notifie de l'ouverture de la fermeture.
 		 */
-		public void databaseClosed();
+		void databaseClosed();
 
 	}
 
@@ -108,12 +107,12 @@ public class DatabaseUI implements ModifyListener {
 
 	/** Model manager */
 	private IModelMgr modelMgr;
-	
+
 	/** Datasource */
 	private BasicDataSource datasource;
 
 	/** Listener */
-	private List<IDbStatusListener> listeners = new ArrayList<IDbStatusListener>();
+	private List<IDbStatusListener> listeners = new ArrayList<>();
 
 	/** Composant parent */
 	private Composite parent;
@@ -158,7 +157,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Constructeur permettant de placer l'IHM dans un onglet.
-	 * 
+	 *
 	 * @param tabItem
 	 *            item parent.
 	 * @param modelMgr
@@ -171,7 +170,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Constructeur par défaut.
-	 * 
+	 *
 	 * @param parentComposite
 	 *            composant parent.
 	 * @param modelMgr
@@ -195,9 +194,11 @@ public class DatabaseUI implements ModifyListener {
 		Group conectionGroup = new Group(centeredPanel, SWT.NONE);
 		conectionGroup.setText(Strings
 				.getString("DatabaseUI.labels.CONNECTION_PROPERTIES")); //$NON-NLS-1$
+
 		FillLayout fillLayout = new FillLayout(SWT.VERTICAL);
 		fillLayout.marginWidth = 5;
 		fillLayout.marginHeight = 5;
+
 		conectionGroup.setLayout(fillLayout);
 		conectionPanel = new Composite(conectionGroup, SWT.NONE);
 		conectionPanel.setLayout(new GridLayout(3, false));
@@ -218,19 +219,8 @@ public class DatabaseUI implements ModifyListener {
 		gridData.horizontalAlignment = SWT.FILL;
 		gridData.horizontalSpan = 2;
 		dbTypeCombo.setLayoutData(gridData);
-		dbTypeCombo.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				// Construction d'un contexte d'exécution sécurisé
-				SafeRunner runner = new SafeRunner() {
-					public Object runUnsafe() throws Exception {
-						dbTypeChanged();
-						return null;
-					}
-				};
-				// Exécution du traitement
-				runner.run(parent.getShell());
-			}
-		});
+		dbTypeCombo.addSelectionListener(SelectionListener.widgetSelectedAdapter(evt ->
+			SafeRunner.exec(parent.getShell(), this::dbTypeChanged)));
 
 		// Driver JDBC
 		jdbcDriverLabel = new Label(conectionPanel, SWT.NONE);
@@ -289,7 +279,7 @@ public class DatabaseUI implements ModifyListener {
 		gridData = new GridData();
 		// gridData.widthHint = 250;
 		gridData.horizontalAlignment = SWT.FILL;
-		
+
 		gridData.horizontalSpan = 2;
 		jdbcUrlText.setLayoutData(gridData);
 
@@ -322,81 +312,26 @@ public class DatabaseUI implements ModifyListener {
 		jdbcPasswordText = new Text(jdbcPasswordAndWarningPanel, SWT.BORDER
 				| SWT.PASSWORD);
 		jdbcPasswordText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		
+
 		// Warning
 		jdbcPasswordWarning = new Label(jdbcPasswordAndWarningPanel, SWT.NONE);
 		jdbcPasswordWarning.setText(Strings
 				.getString("DatabaseUI.labels.PASSWORD_WARNING")); //$NON-NLS-1$
 
 		// Panneau contenant les boutons d'ouverture/fermeture de la BDD
-		Composite openCloseDbButtonsPanel = new Composite(conectionPanel,
-				SWT.NONE);
-		openCloseDbButtonsPanel.setLayout(new GridLayout(3, false));
-		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
-		gridData.horizontalSpan = 3;
-		openCloseDbButtonsPanel.setLayoutData(gridData);
+		createDbButtonsPanel(conectionPanel);
 
-		// Bouton d'ouverture/fermeture de la BDD
-		openDbButton = new Button(openCloseDbButtonsPanel, SWT.NONE);
-		openDbButton.setText(Strings
-				.getString("DatabaseUI.buttons.OPEN_DATABASE")); //$NON-NLS-1$
-		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
-		openDbButton.setLayoutData(gridData);
-		openDbButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				SafeRunner runner = new SafeRunner() {
-					public Object runUnsafe() throws Exception {
-						openDatabase();
-						return null;
-					}
-				};
-				// Exécution du traitement
-				runner.run(parent.getShell());
-			}
-		});
-		closeDbButton = new Button(openCloseDbButtonsPanel, SWT.NONE);
-		closeDbButton.setText(Strings
-				.getString("DatabaseUI.buttons.CLOSE_DATABASE")); //$NON-NLS-1$
-		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
-		closeDbButton.setLayoutData(gridData);
-		closeDbButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				SafeRunner runner = new SafeRunner() {
-					public Object runUnsafe() throws Exception {
-						closeDatabase();
-						return null;
-					}
-				};
-				// Exécution du traitement
-				runner.run(parent.getShell());
-			}
-		});
-		// Désactivation du bouton
-		closeDbButton.setEnabled(false);
+		// Groupe et panneau contenant les bouton d'export/import
+		createImportExportPanel(centeredPanel);
+	}
 
-		// Bouton de réinstallation de la base de données
-		resetDbDataButton = new Button(openCloseDbButtonsPanel, SWT.NONE);
-		resetDbDataButton.setText(Strings
-				.getString("DatabaseUI.buttons.RESET_DATABASE")); //$NON-NLS-1$
-		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
-		resetDbDataButton.setLayoutData(gridData);
-		resetDbDataButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				SafeRunner runner = new SafeRunner() {
-					public Object runUnsafe() throws Exception {
-						reinstallDatabaseWithWarnings();
-						return null;
-					}
-				};
-				// Exécution du traitement
-				runner.run(parent.getShell());
-			}
-		});
-		// Désactivation du bouton
-		resetDbDataButton.setEnabled(false);
+	private void createImportExportPanel(Composite parent) {
+		FillLayout fillLayout = new FillLayout(SWT.VERTICAL);
+		fillLayout.marginWidth = 5;
+		fillLayout.marginHeight = 5;
 
-		// Groupe et pannneau contenant les bouton d'export/import
-		Group xmlGroup = new Group(centeredPanel, SWT.NONE);
+		GridData gridData;
+		Group xmlGroup = new Group(parent, SWT.NONE);
 		xmlGroup.setLayoutData(new GridData(SWT.FILL, SWT.NONE, false, false));
 		xmlGroup.setText(Strings.getString("DatabaseUI.labels.EXPORT_IMPORT")); //$NON-NLS-1$
 		xmlGroup.setLayout(fillLayout);
@@ -417,43 +352,59 @@ public class DatabaseUI implements ModifyListener {
 
 		// Bouton d'ouverture/fermeture de la BDD
 		xmlExportButton = new Button(xmlButtonsPanel, SWT.NONE);
-		xmlExportButton.setText(Strings
-				.getString("DatabaseUI.buttons.EXPORT_DATABASE")); //$NON-NLS-1$
+		xmlExportButton.setText(Strings.getString("DatabaseUI.buttons.EXPORT_DATABASE")); //$NON-NLS-1$
 		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
 		xmlExportButton.setLayoutData(gridData);
-		xmlExportButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				SafeRunner runner = new SafeRunner() {
-					public Object runUnsafe() throws Exception {
-						exportToXML();
-						return null;
-					}
-				};
-				// Exécution du traitement
-				runner.run(parent.getShell());
-			}
-		});
+		onClick(xmlExportButton, this::exportToXML);
 		disableField(xmlExportButton);
 		xmlImportButton = new Button(xmlButtonsPanel, SWT.NONE);
-		xmlImportButton.setText(Strings
-				.getString("DatabaseUI.buttons.IMPORT_DATABASE")); //$NON-NLS-1$
+		xmlImportButton.setText(Strings.getString("DatabaseUI.buttons.IMPORT_DATABASE")); //$NON-NLS-1$
 		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
 		xmlImportButton.setLayoutData(gridData);
-		xmlImportButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				SafeRunner runner = new SafeRunner() {
-					public Object runUnsafe() throws Exception {
-						importFromXML();
-						return null;
-					}
-				};
-				// Exécution du traitement
-				runner.run(parent.getShell());
-			}
-		});
+		onClick(xmlImportButton, this::importFromXML);
 		// Désactivation du bouton
 		disableField(xmlImportButton);
+	}
 
+	private void createDbButtonsPanel(Composite parent) {
+		GridData gridData;
+		Composite openCloseDbButtonsPanel = new Composite(parent,
+				SWT.NONE);
+		openCloseDbButtonsPanel.setLayout(new GridLayout(3, false));
+		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+		gridData.horizontalSpan = 3;
+		openCloseDbButtonsPanel.setLayoutData(gridData);
+
+		// Bouton d'ouverture/fermeture de la BDD
+		openDbButton = new Button(openCloseDbButtonsPanel, SWT.NONE);
+		openDbButton.setText(Strings
+				.getString("DatabaseUI.buttons.OPEN_DATABASE")); //$NON-NLS-1$
+		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+		openDbButton.setLayoutData(gridData);
+		onClick(openDbButton, this::openDatabase);
+		closeDbButton = new Button(openCloseDbButtonsPanel, SWT.NONE);
+		closeDbButton.setText(Strings
+				.getString("DatabaseUI.buttons.CLOSE_DATABASE")); //$NON-NLS-1$
+		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+		closeDbButton.setLayoutData(gridData);
+		onClick(closeDbButton, this::closeDatabase);
+		// Désactivation du bouton
+		closeDbButton.setEnabled(false);
+
+		// Bouton de réinstallation de la base de données
+		resetDbDataButton = new Button(openCloseDbButtonsPanel, SWT.NONE);
+		resetDbDataButton.setText(Strings
+				.getString("DatabaseUI.buttons.RESET_DATABASE")); //$NON-NLS-1$
+		gridData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+		resetDbDataButton.setLayoutData(gridData);
+		onClick(resetDbDataButton, this::reinstallDatabaseWithWarnings);
+		// Désactivation du bouton
+		resetDbDataButton.setEnabled(false);
+	}
+
+	private void onClick(Button button, SafeRunner.Exec task) {
+		button.addSelectionListener(SelectionListener.widgetSelectedAdapter(evt ->
+			SafeRunner.exec(parent.getShell(), task)));
 	}
 
 	/**
@@ -543,30 +494,31 @@ public class DatabaseUI implements ModifyListener {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * org.eclipse.swt.events.ModifyListener#modifyText(org.eclipse.swt.events
 	 * .ModifyEvent)
 	 */
+	@Override
 	public void modifyText(ModifyEvent e) {
 		entriesChanged();
 	}
 
 	/**
 	 * Désactive le champ spécifié.
-	 * 
+	 *
 	 * @param field
 	 *            le champ à désactiver.
 	 */
 	private void disableField(Text field) {
-		Text text = (Text) field;
+		Text text = field;
 		text.setEnabled(false);
 		text.removeModifyListener(this);
 	}
 
 	/**
 	 * Désactive le champ spécifié.
-	 * 
+	 *
 	 * @param field
 	 *            le champ à désactiver.
 	 */
@@ -576,21 +528,21 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Désactive l'éditeur de nom de fichier.
-	 * 
+	 *
 	 * @param field
 	 *            le champ à désactiver.
 	 * @param parent
 	 *            le composant parent.
 	 */
 	private void disableField(FileFieldEditor field, Composite parent) {
-		FileFieldEditor fileFieldEditor = (FileFieldEditor) field;
+		FileFieldEditor fileFieldEditor = field;
 		fileFieldEditor.setEnabled(false, parent);
 		fileFieldEditor.setPropertyChangeListener(null);
 	}
 
 	/**
 	 * Active l'éditeur de nom de fichier.
-	 * 
+	 *
 	 * @param field
 	 *            le champ à désactiver.
 	 * @param defaultValue
@@ -610,7 +562,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Active le champ.
-	 * 
+	 *
 	 * @param field
 	 *            le champ à désactiver.
 	 * @param parent
@@ -626,11 +578,7 @@ public class DatabaseUI implements ModifyListener {
 		field.setEnabled(true, parent);
 		if (forceDefaultValue || "".equals(field.getStringValue())) //$NON-NLS-1$
 			field.setStringValue(defaultValue);
-		field.setPropertyChangeListener(new IPropertyChangeListener() {
-			public void propertyChange(PropertyChangeEvent event) {
-				entriesChanged();
-			}
-		});
+		field.setPropertyChangeListener(event -> entriesChanged());
 	}
 
 	/**
@@ -673,7 +621,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Ajoute un listener.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -683,7 +631,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Ajoute un listener.
-	 * 
+	 *
 	 * @param listener
 	 *            le nouveau listener.
 	 */
@@ -693,7 +641,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Ouvre la connexion à la base de données.
-	 * 
+	 *
 	 * @throws IOException
 	 *             levé en cas d'incident I/O lors du chargement de la
 	 *             configuration.
@@ -834,7 +782,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Réinstalle la base de données (tables drop + creation).
-	 * 
+	 *
 	 * @throws UITechException
 	 *             levé en cas d'incident inattendu lors de la création des
 	 *             durées.
@@ -870,7 +818,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Réinstalle la base de données (tables drop + creation).
-	 * 
+	 *
 	 * @throws UITechException
 	 *             levé en cas d'incident inattendu lors de la création des
 	 *             durées.
@@ -878,20 +826,18 @@ public class DatabaseUI implements ModifyListener {
 	private void reinstallDatabaseWithWarnings() throws UITechException {
 		if (MessageDialog.openQuestion(parent.getShell(),
 				Strings.getString("DatabaseUI.labels.CONFIRMATION"), //$NON-NLS-1$
-				Strings.getString("DatabaseUI.questions.RESET_CONFIRMATION_1"))) { //$NON-NLS-1$
-			if (MessageDialog
-					.openQuestion(
-							parent.getShell(),
-							Strings.getString("DatabaseUI.labels.CONFIRMATION"), //$NON-NLS-1$
-							Strings.getString("DatabaseUI.questions.RESET_CONFIRMATION_2"))) { //$NON-NLS-1$
-				reinstallDatabase();
-			}
+				Strings.getString("DatabaseUI.questions.RESET_CONFIRMATION_1")) && MessageDialog
+				.openQuestion(
+						parent.getShell(),
+						Strings.getString("DatabaseUI.labels.CONFIRMATION"), //$NON-NLS-1$
+						Strings.getString("DatabaseUI.questions.RESET_CONFIRMATION_2"))) { //$NON-NLS-1$
+			reinstallDatabase();
 		}
 	}
 
 	/**
 	 * Exporte le contenu de la BDD vers un fichier XML.
-	 * 
+	 *
 	 * @throws IOException
 	 *             levé en cas d'incident I/O lors de l'écriture dans le fichier
 	 *             XML.
@@ -927,7 +873,7 @@ public class DatabaseUI implements ModifyListener {
 
 	/**
 	 * Importe les données contenues dans un fichier XML.
-	 * 
+	 *
 	 * @throws IOException
 	 *             levé en cas d'incident I/O lors de la lecture du fichier XML.
 	 * @throws ParserConfigurationException
@@ -954,39 +900,37 @@ public class DatabaseUI implements ModifyListener {
 			MessageDialog.openWarning(parent.getShell(),
 					Strings.getString("DatabaseUI.errors.FILE_ERROR"), //$NON-NLS-1$
 					Strings.getString("DatabaseUI.errors.FILE_DOES_NOT_EXIST")); //$NON-NLS-1$
-		} else {
+		} else if (MessageDialog
+				.openConfirm(
+						parent.getShell(),
+						Strings.getString("DatabaseUI.labels.CONFIRMATION"), //$NON-NLS-1$
+						Strings.getString("DatabaseUI.questions.IMPORTATION_CONFIRMATION"))) { //$NON-NLS-1$
+			// Peut-être l'utilisateur veut faire un reset sur la base
+			// avant import
 			if (MessageDialog
-					.openConfirm(
+					.openQuestion(
 							parent.getShell(),
 							Strings.getString("DatabaseUI.labels.CONFIRMATION"), //$NON-NLS-1$
-							Strings.getString("DatabaseUI.questions.IMPORTATION_CONFIRMATION"))) { //$NON-NLS-1$
-				// Peut-être l'utilisateur veut faire un reset sur la base
-				// avant import
-				if (MessageDialog
-						.openQuestion(
-								parent.getShell(),
-								Strings.getString("DatabaseUI.labels.CONFIRMATION"), //$NON-NLS-1$
-								Strings.getString("DatabaseUI.questions.DATABASE_RESET_BEFORE_IMPORTATION"))) { //$NON-NLS-1$
-					// Même traitement que pour le bouton 'Reset database data'
-					reinstallDatabaseWithWarnings();
-				}
-				// Importation des données
-				FileInputStream in = new FileInputStream(xmlFile);
-				modelMgr.importFromXML(in);
-				in.close();
-				// Notification de fikn de chargement (équivalent ouverture BDD)
-				Iterator<IDbStatusListener> it = listeners.iterator();
-				while (it.hasNext()) {
-					IDbStatusListener listener = it.next();
-					listener.databaseOpened();
-				}
-				// Popup d'info de fin de traitement
-				MessageDialog
-						.openInformation(
-								parent.getShell(),
-								Strings.getString("DatabaseUI.labels.INFORMATION"), //$NON-NLS-1$
-								Strings.getString("DatabaseUI.informations.DATABASE_SUCCESSFULLY_IMPORTED")); //$NON-NLS-1$
+							Strings.getString("DatabaseUI.questions.DATABASE_RESET_BEFORE_IMPORTATION"))) { //$NON-NLS-1$
+				// Même traitement que pour le bouton 'Reset database data'
+				reinstallDatabaseWithWarnings();
 			}
+			// Importation des données
+			FileInputStream in = new FileInputStream(xmlFile);
+			modelMgr.importFromXML(in);
+			in.close();
+			// Notification de fikn de chargement (équivalent ouverture BDD)
+			Iterator<IDbStatusListener> it = listeners.iterator();
+			while (it.hasNext()) {
+				IDbStatusListener listener = it.next();
+				listener.databaseOpened();
+			}
+			// Popup d'info de fin de traitement
+			MessageDialog
+					.openInformation(
+							parent.getShell(),
+							Strings.getString("DatabaseUI.labels.INFORMATION"), //$NON-NLS-1$
+							Strings.getString("DatabaseUI.informations.DATABASE_SUCCESSFULLY_IMPORTED")); //$NON-NLS-1$
 		}
 	}
 

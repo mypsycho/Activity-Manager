@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2004-2017, Jean-Francois Brazeau. All rights reserved.
+ * Copyright (c) 2004-2025, Jean-Francois Brazeau and Obeo.
+ *
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -58,6 +60,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
@@ -493,18 +496,9 @@ public class ReportsUI {
 			}
 		});
 
-		buildReportButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				new SafeRunner() {
-					@Override
-					protected Object runUnsafe() throws Exception {
-						buildReport();
-						return null;
-					}
-				}.run(parent.getShell());
-			}
-		});
+		buildReportButton.addSelectionListener(SelectionListener.widgetSelectedAdapter(evt ->
+			SafeRunner.exec(parent.getShell(), this::buildReport)
+		));
 
 		// Create column elements comparator
 		columnElementsComparator = new ColumnElementsComparator(
@@ -581,9 +575,7 @@ public class ReportsUI {
 			report.write(out);
 			out.close();
 			Desktop.getDesktop().open(file);
-		} catch (ModelException e) {
-			new ErrorDialog(parent.getShell(), e.getMessage(), e).open();
-		} catch (IOException e) {
+		} catch (ModelException | IOException e) {
 			new ErrorDialog(parent.getShell(), e.getMessage(), e).open();
 		}
 	}
@@ -697,12 +689,13 @@ public class ReportsUI {
 				.getStructuredSelection();
 		boolean upAndDownButtonsEnabled = customMode
 				&& !columnOrderSelection.isEmpty();
+		int selectionIndex = columnsOrderViewer.getList().getSelectionIndex();
+		int lastIndex =  columnsOrderViewer
+				.getList().getItemCount() - 1;
 		upButton.setEnabled(upAndDownButtonsEnabled
-				&& columnsOrderViewer.getList().getSelectionIndex() != 0);
-		downButton
-				.setEnabled(upAndDownButtonsEnabled
-						&& columnsOrderViewer.getList().getSelectionIndex() != columnsOrderViewer
-								.getList().getItemCount() - 1);
+				&& selectionIndex > 0);
+		downButton.setEnabled(upAndDownButtonsEnabled
+						&& selectionIndex < lastIndex);
 
 		// 2nd filter : if in collaborator mode, several task fields
 		// cannot be used (because it's not possible to agregate them)
