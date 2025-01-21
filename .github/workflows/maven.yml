@@ -23,7 +23,11 @@ jobs:
         # xvfb-run enables XDisplay
         run: xvfb-run mvn --batch-mode clean verify
       
-      - name: Deploy RCP 🚀
+      - name: Get the tag version 🏷️
+        id: get_version
+        run: echo ::set-output name=TAG_VERSION::${GITHUB_REF/refs\/tags\//}
+  
+      - name: Deploy Nighlty RCP 🚀
         if: ${{ (github.ref == 'refs/heads/master') }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
@@ -32,7 +36,7 @@ jobs:
           target-folder: nightly/ui.rcp
           single-commit: true
         
-      - name: Deploy Web 🚀
+      - name: Deploy Nighlty Web 🚀
         if: ${{ (github.ref == 'refs/heads/master') }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
@@ -41,27 +45,25 @@ jobs:
           target-folder: nightly/ui.web
           single-commit: true
         
-      - name: Get the tag version 🏷️
-        id: get_version
-        run: echo "{TAG_VERSION}=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-  
-      - name: Deploy Release RCP 🚀🏷️
+      - name: P2 Deploy Release RCP 🚀🏷️
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
           folder: ui.rcp/releng/org.activitymgr.ui.rcp.repository/target/repository
           target-folder: release/${{ steps.get_version.outputs.TAG_VERSION }}/ui.rcp
           single-commit: true
+          clean: true # Remove deprecated files
         
-      - name: Deploy Release Web 🚀🏷️
+      - name: P2 Deploy Release Web 🚀🏷️
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
           folder: ui.web/releng/org.activitymgr.ui.web.repository/target/repository
           target-folder: release/${{ steps.get_version.outputs.TAG_VERSION }}/ui.web
           single-commit: true
+          clean: true # Remove deprecated files
         
       - name: Release Admin RCP Products 🖱️
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
