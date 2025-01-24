@@ -80,13 +80,16 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	public ReportsPanel(IResourceCache resourceCache) {
 		super(2, 16);
 		setId("ReportsPanel");
-		setSpacing(true);
-		setWidth("650px");
-		setHeight("100%");
-		setColumnExpandRatio(0, 100);
-//		setColumnExpandRatio(0, 30);
-//		setColumnExpandRatio(1, 70);
 		this.resourceCache = resourceCache;
+
+		setSpacing(true);
+		setHeight("100%");
+
+//		setWidth("650px");
+//		setColumnExpandRatio(0, 1);
+
+		setWidth("100%");
+		setColumnExpandRatio(1, 1); // Data Column grabs all.
 	}
 
 	@Override
@@ -95,14 +98,11 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	}
 
 	@Override
-	public void initialize(boolean advancedMode) {
-		// TODO-better: Swap with Vertical layout
-		
+	public void initialize(boolean advancedMode) {		
 		createIntervalConfigurationPanel();
 		createScopeConfigurationPanel(advancedMode);
 		createHeaderColumnsContentConfigurationPanel(advancedMode);
 		createRowsContentConfigurationPanel(advancedMode);
-		
 		
 		if (!advancedMode) {
 			// Line separator should be on 13.
@@ -132,22 +132,29 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		createStatusPanel();
 	}
 
+	private Label addLineTitle(String text) {
+		Label result = new Label(text + " : ");
+		result.setWidth(null);
+		addComponent(result);
+		return result;
+	}
+	
 	private void createIntervalConfigurationPanel() {
-		addTitle("Interval configuration");
+		addSectionTitle("Interval configuration");
 
-		addComponent(new Label("Interval unit :"));
+		addLineTitle("Interval unit");
 		intervalUnitGroup = new OptionGroup();
 		intervalUnitGroup.setImmediate(true);
 		intervalUnitGroup.setStyleName("horizontal");
 		addComponent(intervalUnitGroup);
 		
-		addComponent(new Label("Interval bounds mode :"));
+		addLineTitle("Interval bounds mode");
 		intervalBoundsModeGroup = new OptionGroup();
 		intervalBoundsModeGroup.setImmediate(true);
 		intervalBoundsModeGroup.setStyleName("horizontal");
 		addComponent(intervalBoundsModeGroup);
 
-		addComponent(new Label("Interval bounds :"));
+		addLineTitle("Interval bounds");
 		HorizontalLayout intervalBoundsPanel = new HorizontalLayout();
 		addComponent(intervalBoundsPanel);
 		startDateField = newDateField();
@@ -191,24 +198,28 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	}
 
 	private void createScopeConfigurationPanel(boolean advancedMode) {
-		addTitle("Scope configuration");
+		addSectionTitle("Scope configuration");
 
-		addComponent(new Label("Root task :"));
+		addLineTitle("Root task");
 		HorizontalLayout rootTaskPanel = new HorizontalLayout();
-		addComponent(rootTaskPanel);
+		rootTaskPanel.setWidth("100%");
+		
 		rootTaskTextField = new TextField();
 		rootTaskTextField.setImmediate(true);
-		rootTaskTextField.setWidth("300px");
+		rootTaskTextField.setWidth("100%");
 		rootTaskPanel.addComponent(rootTaskTextField);
+		rootTaskPanel.setExpandRatio(rootTaskTextField, 1f);
+		
 		browseTaskButton = new Button("...");
 		browseTaskButton.setImmediate(true);
 		rootTaskPanel.addComponent(browseTaskButton);
-
+		addComponent(rootTaskPanel);
+		
 		collaboratorsModeUnitGroup = new OptionGroup();
 		collaboratorsModeUnitGroup.setImmediate(true);
 		collaboratorsModeUnitGroup.setStyleName("horizontal");
 		if (advancedMode) {
-			addComponent(new Label("Collaborators :"));
+			addLineTitle("Collaborators");
 			addComponent(collaboratorsModeUnitGroup);
 		}
 
@@ -229,20 +240,20 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	private void createHeaderColumnsContentConfigurationPanel(
 			boolean advancedMode) {
 		if (advancedMode) {
-			addTitle("Header columns content configuration");
+			addSectionTitle("Header columns content configuration");
 		}
 		selectedColumnsComponent = new Label("");
 		if (advancedMode) {
-			addComponent(new Label("Fields :"));
+			addLineTitle("Fields");
 			addComponent(selectedColumnsComponent);
 		}
 	}
 
 	private void createRowsContentConfigurationPanel(
 			boolean advancedMode) {
-		addTitle("Rows content configuration");
+		addSectionTitle("Rows content configuration");
 
-		addComponent(new Label("Task tree depth :"));
+		addLineTitle("Task tree depth");
 		HorizontalLayout taskDepthLayout = new HorizontalLayout();
 		addComponent(taskDepthLayout);
 		decreaseTaskDepthButton = new Button("-");
@@ -264,7 +275,7 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		onlyKeepTasksWithContribsCheckbox = new CheckBox(
 				"Don't show rows for task that have no contribution");
 		if (advancedMode) {
-			addComponent(new Label("Filter empty tasks rows :"));
+			addLineTitle("Filter empty tasks rows");
 			addComponent(onlyKeepTasksWithContribsCheckbox);
 		}
 
@@ -310,6 +321,7 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	@Override
 	public void setColumnSelectionView(View view) {
 		Component newComponent = (Component) view;
+		newComponent.setId("ColumnsSelection");
 		substituteBodyComponent(selectedColumnsComponent, newComponent);
 		selectedColumnsComponent = newComponent;
 	}
@@ -317,6 +329,7 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 	@Override
 	public void setCollaboratorsSelectionView(View view) {
 		Component newComponent = (Component) view;
+		newComponent.setId("CollaboratorsSelection");
 		substituteBodyComponent(selectedCollaboratorsComponent,
 				newComponent);
 		selectedCollaboratorsComponent = newComponent;
@@ -334,25 +347,16 @@ public class ReportsPanel extends GridLayout implements IReportsLogic.View {
 		addComponent(newComponent,
 				area.getColumn1(), area.getRow1(), area.getColumn2(),
 				area.getRow2());
+		//newComponent.setWidth("100%");
 	}
 
-	private void addTitle(String caption) {
-		Label label = newTitleLabel(caption);
-		addComponentWithHorizontalSpan(label);
-	}
-
-	private Label newTitleLabel(String caption) {
-		Label label = new Label("<b>" + caption + "</b><hr>", ContentMode.HTML);
+	private void addSectionTitle(String caption) {
+		Label label = new Label("<b>" + caption + "</b><hr/>", ContentMode.HTML);
 		label.setWidth("100%");
-		return label;
-	}
-
-	private void addComponentWithHorizontalSpan(Component component) {
-		addComponent(component, 0, getCursorY(), 1, getCursorY());
-//		Area area = getComponentArea(component);
-//		removeComponent(component);
-//		addComponent(component, area.getColumn1(), area.getRow1(),
-//				area.getColumn2() + 1, area.getRow2());
+		
+		// Span 2 columns on last row
+		int lastRow = getCursorY();
+		addComponent(label, 0, lastRow, 1, lastRow);
 	}
 
 	private PopupDateFieldWithParser newDateField() {

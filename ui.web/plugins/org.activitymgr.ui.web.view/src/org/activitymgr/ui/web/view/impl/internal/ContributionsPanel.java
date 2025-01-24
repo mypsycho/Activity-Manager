@@ -3,6 +3,7 @@ package org.activitymgr.ui.web.view.impl.internal;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.function.Consumer;
 
 import org.activitymgr.ui.web.logic.IContributionsTabLogic;
 import org.activitymgr.ui.web.logic.ITableCellProviderCallback;
@@ -31,18 +32,7 @@ import com.vaadin.ui.Table.ColumnGenerator;
 public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic> 
 		implements IContributionsTabLogic.View {
 
-	private Button selectMeButton;
-
-	private Button previousYearButton;
-	private Button previousMonthButton;
-	private Button previousWeekButton;
-
 	private PopupDateField dateField;
-	private Button todayButton;
-
-	private Button nextWeekButton;
-	private Button nextMonthButton;
-	private Button nextYearButton;
 
 	private Table contributionsTable;
 	private Table collaboratorsTable;
@@ -63,8 +53,9 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		result.addComponent(left);
 		result.setExpandRatio(left, LEFT_SIDE_RATIO);
 		
-		selectMeButton = new Button("Select myself");
+		Button selectMeButton = new Button("Select myself");
 		selectMeButton.setWidth(100, Unit.PERCENTAGE);
+		selectMeButton.addClickListener(evt -> getLogic().onSelectMe());
 		left.addComponent(selectMeButton);
 		left.setWidth(100, Unit.PERCENTAGE);
 		
@@ -75,39 +66,94 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		result.setExpandRatio(dateLayout, CENTER_RATIO);
 		result.setComponentAlignment(dateLayout, Alignment.MIDDLE_CENTER);
 		
-		previousYearButton = createBoundButton(dateLayout, "<<< Year", "Ctrl+Shift+Alt+Left");
-		previousMonthButton = createBoundButton(dateLayout, "<< Month", "Ctrl+Shift+Left");
-		previousWeekButton = createBoundButton(dateLayout, "< Week", "Ctrl+Left");
+		
+		createTimeButton(dateLayout, true, Time.year, IContributionsTabLogic::onPreviousYear);
+		createTimeButton(dateLayout, true, Time.month, IContributionsTabLogic::onPreviousMonth);
+		createTimeButton(dateLayout, true, Time.week, IContributionsTabLogic::onPreviousWeek);
 
 		addSpaceComponent(dateLayout, 20);
 		
-		todayButton = new Button("Today");
+		Button todayButton = new Button("Today");
+		todayButton.addClickListener(evt -> getLogic().onDateChange(new GregorianCalendar()));
 		dateLayout.addComponent(todayButton);
+		
 		dateField = new PopupDateFieldWithParser();
 		dateField.setImmediate(true);
 		dateField.setDateFormat("E dd/MM/yyyy");
 		dateField.setShowISOWeekNumbers(true);
 		dateField.setStyleName("monday-date-field");
+		dateField.addValueChangeListener(evt -> {
+				Calendar cal = new GregorianCalendar();
+				cal.setTime(dateField.getValue() != null 
+						? dateField.getValue() 
+						: new Date());
+				getLogic().onDateChange(cal);
+		});
 		dateLayout.addComponent(dateField);
 		
 		addSpaceComponent(dateLayout, 20);
-
-		nextWeekButton = createBoundButton(dateLayout, "Week >", "Ctrl+Right");
-		nextMonthButton = createBoundButton(dateLayout, "Month >>", "Ctrl+Shift+Right");
-		nextYearButton = createBoundButton(dateLayout, "Year >>>", "Ctrl+Shift+Alt+Right");
-
+		
+		createTimeButton(dateLayout, false, Time.week, IContributionsTabLogic::onNextWeek);
+		createTimeButton(dateLayout, false, Time.month, IContributionsTabLogic::onNextMonth);
+		createTimeButton(dateLayout, false, Time.year, IContributionsTabLogic::onNextYear);
 		
 		addSpaceComponent(result, 5 + 50); // separator + Actions Column
 		
 		return result;
 	}
 	
-	private Button createBoundButton(ComponentContainer parent, String label, String description) {
-		Button result = new Button(label);
-		result.setDescription(description);
+	enum Time {
+		week("Week", "< ", " >", "Ctrl+", ModifierKey.CTRL),
+		month("Month", "<< ", " >>", "Ctrl+Shift+", ModifierKey.CTRL, ModifierKey.SHIFT),
+		year("Year", "<<< ", " >>>", "Ctrl+Shift+Alt+", ModifierKey.CTRL, ModifierKey.SHIFT, ModifierKey.ALT);		
+
+		String label;
+		int[] modifierKeys;
+		String modifierNames;
+		String leftHint;
+		String rightHint;
+
+		Time(String label, String leftHint, String rightHint, String modifierNames, int... modifierKeys) {
+			this.label = label;
+			this.leftHint = leftHint;
+			this.rightHint = rightHint;
+			this.modifierNames = modifierNames;
+			this.modifierKeys = modifierKeys;
+		}
+	}
+	
+	private Button createTimeButton(ComponentContainer parent, boolean before, Time step, Consumer<IContributionsTabLogic> task) {
+		
+		String leftHint = "";
+		String rightHint = "";
+		int keyCode = KeyCode.ARROW_RIGHT;
+		String keyName = "Right";
+		
+		String qual = "Next ";
+		if (before) {
+			keyCode = KeyCode.ARROW_LEFT;
+			keyName = "Left";
+			qual = "Previous ";
+			leftHint = step.leftHint;
+		} else {
+			rightHint = step.rightHint;
+		}
+		
+		Button result = new Button(leftHint + step.label + rightHint);
+		result.setDescription(step.modifierNames + keyName);
+		
+		result.addClickListener(evt -> task.accept(getLogic()));
+		
+		addShortcutListener(new ShortcutListener(qual + step.label, keyCode, step.modifierKeys) {
+			@Override
+			public void handleAction(Object sender, Object target) {
+				result.click();
+			}
+		});
 		parent.addComponent(result);
 		return result;
 	}
+
 
 	private void addSpaceComponent(ComponentContainer container, int width) {
 		Label emptyLabel = new Label();
@@ -117,14 +163,14 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 	
 	@Override
 	protected Component createLeftComponent() {
-		/*
-		 * Collaborators table
-		 */
 		collaboratorsTable = new Table();
 		collaboratorsTable.setSelectable(true);
 		collaboratorsTable.setImmediate(true);
 		collaboratorsTable.setNullSelectionAllowed(false);
 		collaboratorsTable.setSizeFull();
+		
+		collaboratorsTable.addValueChangeListener(evt -> 
+			getLogic().onSelectedCollaboratorChanged((Long) collaboratorsTable.getValue()));
 
 		return collaboratorsTable;
 	}
@@ -140,70 +186,6 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		return contributionsTable;
 	}
 
-	@Override
-	public void registerLogic(final IContributionsTabLogic logic) {
-		super.registerLogic(logic);
-		registerListeners();
-	}
-
-	
-	private void registerBoundButton(Button button, String caption, Runnable task,
-			int keyCode, int... modifierKeys) {
-
-		button.addClickListener(evt -> task.run());
-		addShortcutListener(new ShortcutListener(caption, keyCode, modifierKeys) {
-			@Override
-			public void handleAction(Object sender, Object target) {
-				task.run();
-			}
-		});
-	}
-	
-	private void registerListeners() {
-		collaboratorsTable.addValueChangeListener(evt -> 
-				getLogic().onSelectedCollaboratorChanged((Long) collaboratorsTable.getValue()));
-
-		todayButton.addClickListener(evt -> getLogic().onDateChange(new GregorianCalendar()));
-		selectMeButton.addClickListener(evt -> getLogic().onSelectMe());
-		
-		registerBoundButton(previousYearButton, "Previous year",
-				() -> getLogic().onPreviousYear(),
-				KeyCode.ARROW_LEFT,
-				ModifierKey.CTRL, ModifierKey.SHIFT, ModifierKey.ALT);
-
-		registerBoundButton(previousMonthButton, "Previous month",
-				() -> getLogic().onPreviousMonth(),
-				KeyCode.ARROW_LEFT,
-				ModifierKey.CTRL, ModifierKey.SHIFT);
-
-		registerBoundButton(previousWeekButton, "Previous week",
-				() -> getLogic().onPreviousWeek(),
-				KeyCode.ARROW_LEFT,
-				ModifierKey.CTRL);
-
-		registerBoundButton(nextYearButton, "next year",
-				() -> getLogic().onNextYear(),
-				KeyCode.ARROW_LEFT,
-				ModifierKey.CTRL, ModifierKey.SHIFT, ModifierKey.ALT);
-
-		registerBoundButton(nextMonthButton, "Next month",
-				() -> getLogic().onNextMonth(),
-				KeyCode.ARROW_LEFT,
-				ModifierKey.CTRL, ModifierKey.SHIFT);
-
-		registerBoundButton(nextWeekButton, "Next week",
-				() -> getLogic().onNextWeek(),
-				KeyCode.ARROW_LEFT,
-				ModifierKey.CTRL);
-		
-		dateField.addValueChangeListener(evt -> {
-				Calendar cal = new GregorianCalendar();
-				cal.setTime(dateField.getValue() != null 
-						? dateField.getValue() 
-						: new Date());
-				getLogic().onDateChange(cal);
-		});
-	}
 
 	@Override
 	public void setContributionsProvider(final ITableCellProviderCallback<Long> provider) {
@@ -244,8 +226,6 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 	public void setDate(Calendar date) {
 		dateField.setValue(date.getTime());
 	}
-
-
 
 	@Override
 	public void setCollaboratorsProvider(ITableCellProviderCallback<Long> cellProvider) {

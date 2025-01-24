@@ -68,14 +68,13 @@ public class TwinSelectView extends HorizontalLayout implements View {
 	private boolean logicNotificationEnabled = false;
 
 	public TwinSelectView() {
-		super();
 		// Left select
 		leftSelect = newSelect();
-
 
 		// Middle buttons
 		VerticalLayout selectButtons = new VerticalLayout();
 		selectButtons.setMargin(new MarginInfo(false, true));
+
 		addComponent(selectButtons);
 		moveAllRightButton = addSelectButton(selectButtons, ">>", event -> selectAll());
 		moveRightButton = addSelectButton(selectButtons, ">",
@@ -231,11 +230,15 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		ListSelect select = new ListSelect();
 		select.setImmediate(true);
 		select.setMultiSelect(true);
-		select.setWidth("130px");
+		
+		select.setWidth("200px");
+		// select.setWidth("100%"); // fails! sized by the content. 0px if empty.
 		
 		select.setHeight("100px");
 		select.addValueChangeListener(event -> updateButtonsEnablement());
+
 		addComponent(select);
+		// setExpandRatio(select, 1); // Buttons are hidden (no fix column)
 		return select;
 	}
 

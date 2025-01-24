@@ -105,8 +105,7 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 
 	private static final String SERVICE_REPORT_HTML_URI = "/service/report/html";
 
-	private static final SimpleDateFormat YYYYMMDD_SDF = new SimpleDateFormat(
-			"yyyyMMdd");
+	private static final SimpleDateFormat YYYYMMDD_SDF = new SimpleDateFormat("yyyyMMdd");
 
 	private static final String TASK = Task.class.getSimpleName().toLowerCase();
 	
@@ -114,8 +113,7 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 			.getSimpleName().toLowerCase();
 
 	private static final Collection<String> DTO_ATTRIBUTE_IDS_BLACKLIST = Arrays
-			.asList(new String[] { "collaborator.id", "task.id",
-					"task.fullPath", "task.number", "task.numberAsHex" });
+			.asList("collaborator.id", "task.id", "task.fullPath", "task.number", "task.numberAsHex" );
 
 	enum ReportIntervalBoundsMode {
 		AUTOMATIC, LOWER_BOUND, BOTH_BOUNDS
