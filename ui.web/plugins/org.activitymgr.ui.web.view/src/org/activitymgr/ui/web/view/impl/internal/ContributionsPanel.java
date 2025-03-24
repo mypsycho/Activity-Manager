@@ -241,6 +241,7 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 			collaboratorsTable.setColumnAlignment(propertyId, 
 					AlignHelper.toVaadinAlign(cellProvider.getColumnAlign(propertyId)));
 		}
+		cellProvider.getRootElements(); // load cache
 	}
 
 	@Override
