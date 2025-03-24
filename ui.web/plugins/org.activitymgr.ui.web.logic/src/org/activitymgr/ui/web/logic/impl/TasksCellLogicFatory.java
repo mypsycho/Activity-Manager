@@ -3,8 +3,6 @@ package org.activitymgr.ui.web.logic.impl;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 

@@ -10,9 +10,9 @@ import org.activitymgr.ui.web.logic.IAOPWrappersBuilder;
 import org.activitymgr.ui.web.logic.IEventBus;
 import org.activitymgr.ui.web.logic.IEventListener;
 import org.activitymgr.ui.web.logic.ILogic;
-import org.activitymgr.ui.web.logic.IUILogicContext;
 import org.activitymgr.ui.web.logic.IRootLogic;
 import org.activitymgr.ui.web.logic.ITabLogic;
+import org.activitymgr.ui.web.logic.IUILogicContext;
 import org.activitymgr.ui.web.logic.impl.event.ConnectedCollaboratorEvent;
 import org.activitymgr.ui.web.logic.impl.event.EventBusImpl;
 import org.activitymgr.ui.web.logic.impl.event.LogoutEvent;
@@ -27,9 +27,17 @@ import com.google.inject.TypeLiteral;
 
 public class RootLogicImpl implements IRootLogic {
 
+	private static final Comparator<ITabFactory> TAB_SORTER = Comparator.comparing(ITabFactory::getTabOrderPriority);
+
 	private Injector userInjector;
 	
 	private IRootLogic.View view;
+	
+	private IEventBus eventBus;
+	
+	private IEventListener<LogoutEvent> logoutListener;
+	
+	private IEventListener<ConnectedCollaboratorEvent> collaboratorListener;
 	
 	public RootLogicImpl(IRootLogic.View rootView, Injector mainInjector) {
 		userInjector = mainInjector.createChildInjector(new AbstractModule() {
@@ -47,54 +55,40 @@ public class RootLogicImpl implements IRootLogic {
 		IAOPWrappersBuilder aop = userInjector
 				.getInstance(IAOPWrappersBuilder.class);
 		// View registration
-		this.view = aop.buildViewWrapperForLogic(rootView,
-				IRootLogic.View.class);
-		view.registerLogic(aop
-				.buildLogicWrapperForView(this,
-				IRootLogic.class));
+		this.view = aop.buildViewWrapperForLogic(rootView, IRootLogic.View.class);
+		view.registerLogic(aop.buildLogicWrapperForView(this, IRootLogic.class));
 
 		// Event listeners registration
-		IEventBus eventBus = userInjector.getInstance(IEventBus.class);
-		eventBus.register(ConnectedCollaboratorEvent.class, new IEventListener<ConnectedCollaboratorEvent>() {
-			@Override
-			public void handle(ConnectedCollaboratorEvent event) {
-				// Create the tab container
-				TabFolderLogicImpl tabFolderLogic = new TabFolderLogicImpl(RootLogicImpl.this);
-				getView().setContentView(tabFolderLogic.getView());
-				
-				// Add tabs
-				IFeatureAccessManager accessMgr = userInjector.getInstance(IFeatureAccessManager.class);
-				Set<ITabFactory> tabFactories = userInjector.getInstance(Key.get(new TypeLiteral<Set<ITabFactory>>() {}));
-				List<ITabFactory> sortedTabFactories = new ArrayList<ITabFactory>(tabFactories);
-				Collections.sort(sortedTabFactories, new Comparator<ITabFactory>() {
-					@Override
-					public int compare(ITabFactory o1, ITabFactory o2) {
-						return new Integer(o1.getTabOrderPriority()).compareTo(o2.getTabOrderPriority());
-					}
-				});
-				for (ITabFactory tabFactory : sortedTabFactories) {
-					if (accessMgr.hasAccessToTab(event.getConnectedCollaborator(), tabFactory.getTabId())) {
-						ITabLogic<?> tabLogic = tabFactory.create(tabFolderLogic);
-						tabFolderLogic.addTab(tabFactory.getTabId(), tabLogic.getLabel(), tabLogic);
-					}
-				}
-				String selectedTab = getView().getCookie(TabFolderLogicImpl.SELECTED_TAB_COOKIE);
-				if (selectedTab != null) {
-					tabFolderLogic.setSelectedTab(selectedTab);
+		eventBus = userInjector.getInstance(IEventBus.class);
+		collaboratorListener = event -> {
+			// Create the tab container
+			TabFolderLogicImpl tabFolderLogic = new TabFolderLogicImpl(RootLogicImpl.this);
+			getView().setContentView(tabFolderLogic.getView());
+			
+			// Add tabs
+			IFeatureAccessManager accessMgr = userInjector.getInstance(IFeatureAccessManager.class);
+			Set<ITabFactory> tabFactories = userInjector.getInstance(Key.get(new TypeLiteral<Set<ITabFactory>>() {}));
+			List<ITabFactory> sortedTabFactories = new ArrayList<>(tabFactories);
+			Collections.sort(sortedTabFactories, TAB_SORTER);
+			for (ITabFactory tabFactory : sortedTabFactories) {
+				if (accessMgr.hasAccessToTab(event.getConnectedCollaborator(), tabFactory.getTabId())) {
+					ITabLogic<?> tabLogic = tabFactory.create(tabFolderLogic);
+					tabFolderLogic.addTab(tabFactory.getTabId(), tabLogic.getLabel(), tabLogic);
 				}
 			}
+			String selectedTab = getView().getCookie(TabFolderLogicImpl.SELECTED_TAB_COOKIE);
+			if (selectedTab != null) {
+				tabFolderLogic.setSelectedTab(selectedTab);
+			}
+		};
+		eventBus.register(ConnectedCollaboratorEvent.class, collaboratorListener);
 
-		});
 		// Create authentication logic
 		showAuthenticationUI(false);
 		
 		// Register logout listener
-		eventBus.register(LogoutEvent.class, new IEventListener<LogoutEvent>() {
-			@Override
-			public void handle(LogoutEvent event) {
-				showAuthenticationUI(true);
-			}
-		});
+		logoutListener = event -> showAuthenticationUI(true);
+		eventBus.register(LogoutEvent.class, logoutListener);
 	}
 
 	private void showAuthenticationUI(boolean afterLogout) {
@@ -126,6 +120,7 @@ public class RootLogicImpl implements IRootLogic {
 
 	@Override
 	public void dispose() {
-		// TODO unregister listeners, dispose event bus
+		eventBus.unregister(logoutListener);
+		eventBus.unregister(collaboratorListener);
 	}
 }

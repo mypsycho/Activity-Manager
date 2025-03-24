@@ -173,24 +173,23 @@ final class ActivityMgrServlet extends VaadinServlet {
 	@Override
 	protected void servletInitialized() throws ServletException {
 		super.servletInitialized();
-		getService().addSessionInitListener(event -> event.getSession()
-				.addBootstrapListener(
-						new BootstrapListener() {
-			
-							@Override
-							public void modifyBootstrapFragment(BootstrapFragmentResponse response) {
-							}
-			
-							@Override
-							public void modifyBootstrapPage(BootstrapPageResponse response) {
-								Element head = response.getDocument().head();
-								head.prependElement("script")
-										.attr("src",
-												"https://apis.google.com/js/platform.js")
-										.attr("async", "true")
-										.attr("defer", "true");
-							}
-						})
+		getService().addSessionInitListener(event -> event.getSession().addBootstrapListener(
+			new BootstrapListener() {
+
+				@Override
+				public void modifyBootstrapFragment(BootstrapFragmentResponse response) {
+				}
+
+				@Override
+				public void modifyBootstrapPage(BootstrapPageResponse response) {
+					Element head = response.getDocument().head();
+					head.prependElement("script")
+							.attr("src",
+									"https://apis.google.com/js/platform.js")
+							.attr("async", "true")
+							.attr("defer", "true");
+				}
+			})
 		);
 	}
 
