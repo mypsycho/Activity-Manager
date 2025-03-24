@@ -31,15 +31,16 @@ package org.activitymgr.ui.web.logic;
 
 public interface IStandardButtonLogic extends IButtonLogic<IStandardButtonLogic.View> {
 
-	interface CallBack {
-		void onConfirmation(String message, Runnable confirmAction);
-	}
+//	interface CallBack {
+//		void onConfirmation(String message, Runnable confirmAction);
+//	}
+//	
+//	default void onClick(CallBack cb) {
+//		onClick();
+//	}
 	
 	void onClick();
 	
-	default void onClick(CallBack cb) {
-		onClick();
-	}
 	
 	public interface View extends IButtonLogic.View<IStandardButtonLogic> {
 		
