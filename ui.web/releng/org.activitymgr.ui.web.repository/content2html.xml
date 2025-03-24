@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="content2html" default="generate-index">
+
+	<property name="repo.outputDirectory" value="${basedir}/target/repository"/>
+	<property name="help.ref" value="false"/>
+
+	<target name="generate-index">
+		<!-- 
+		Extract content.xml created by assemble-repository
+		It is the only element from content.jar
+		-->
+		<pathconvert property="docs.list">
+			<fileset dir="${repo.outputDirectory}/docs" 
+				erroronmissingdir="false" 
+				includes="*.pdf" />
+			<flattenmapper/>
+		</pathconvert>
+		<echo>List of Documents : ${docs.list}</echo>
+		
+		<unzip src="${repo.outputDirectory}/content.jar" dest="${repo.outputDirectory}/" />
+		<xslt style="content2html.xsl" force="true"
+				in="${repo.outputDirectory}/content.xml" 
+				out="${repo.outputDirectory}/index.html" >
+			<param name="docs_list" expression="${docs.list}" type="STRING"/>
+			<param name="help_ref" expression="${help.ref}" type="BOOLEAN"/>
+		</xslt>
+		<delete file="${repo.outputDirectory}/content.xml" />
+	</target>
+</project>
