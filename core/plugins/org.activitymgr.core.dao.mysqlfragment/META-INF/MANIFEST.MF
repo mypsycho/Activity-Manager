@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Activity Manager Mysql Driver Fragment
 Bundle-SymbolicName: org.activitymgr.core.dao.mysqlfragment
-Bundle-Version: 1.3.1.qualifier
+Bundle-Version: 1.3.2.qualifier
 Fragment-Host: org.apache.commons.dbcp
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ClassPath: mysql-connector-java-5.1.26-bin.jar
