@@ -43,6 +43,8 @@ import org.activitymgr.ui.web.logic.ITwinSelectFieldLogic;
 import org.activitymgr.ui.web.logic.ITwinSelectFieldLogic.View;
 
 import com.vaadin.data.util.IndexedContainer;
+import com.vaadin.event.LayoutEvents.LayoutClickListener;
+import com.vaadin.shared.MouseEventDetails.MouseButton;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
@@ -71,6 +73,7 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		// Left select
 		leftSelect = newSelect();
 
+		
 		// Middle buttons
 		VerticalLayout selectButtons = new VerticalLayout();
 		selectButtons.setMargin(new MarginInfo(false, true));
@@ -79,8 +82,11 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		moveAllRightButton = addSelectButton(selectButtons, ">>", event -> selectAll());
 		moveRightButton = addSelectButton(selectButtons, ">",
 				event -> moveSelectedItems(leftSelect, rightSelect));
+		addDoubleClickListener(leftSelect, event -> moveSelectedItems(leftSelect, rightSelect));
+		
 		moveLeftButton = addSelectButton(selectButtons, "<",
 				event -> moveSelectedItems(rightSelect, leftSelect));
+		
 		moveAllLeftButton = addSelectButton(selectButtons, "<<", event -> deselectAll());
 
 		// Create order buttons (but don't add it to the UI)
@@ -96,8 +102,20 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		
 		// Right select
 		rightSelect = newSelect();
+		addDoubleClickListener(rightSelect, event -> moveSelectedItems(rightSelect, leftSelect));
 
 		logicNotificationEnabled = true;
+	}
+	
+	private void addDoubleClickListener(ListSelect target, LayoutClickListener task) {
+		addLayoutClickListener(event -> {
+			// Double click is on container
+			if (event.isDoubleClick() 
+					&& event.getButton() == MouseButton.LEFT 
+					&& event.getClickedComponent() == target) {
+				task.layoutClick(event);
+			}
+		});
 	}
 	
 	private Button createRightMoveButton(String label, int direction, 
@@ -158,8 +176,7 @@ public class TwinSelectView extends HorizontalLayout implements View {
 	}
 	
 	private void updateButtonsEnablement() {
-		List<Object> rightItemIds = new ArrayList<Object>(
-				rightSelect.getItemIds());
+		List<Object> rightItemIds = new ArrayList<Object>(rightSelect.getItemIds());
 		List<String> selectedItems = getRightSelectedItemIds();
 
 		// Middle buttons enablement
@@ -178,8 +195,7 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		moveUpButton.setEnabled(false);
 		moveDownButton.setEnabled(false);
 		if (!selectedItems.isEmpty()) {
-			Iterator<String> iSelect = selectedItems
-					.iterator();
+			Iterator<String> iSelect = selectedItems.iterator();
 			String firstSelectedItemId = iSelect.next();
 			int firstIdx = rightItemIds.indexOf(firstSelectedItemId);
 			boolean joined = true;
@@ -194,21 +210,17 @@ public class TwinSelectView extends HorizontalLayout implements View {
 			}
 			if (joined) {
 				moveUpButton.setEnabled(firstIdx != 0);
-				boolean isAtLast = firstIdx + selectedItems.size() 
-						== rightItemIds.size();
+				boolean isAtLast = firstIdx + selectedItems.size() == rightItemIds.size();
 				moveDownButton.setEnabled(!isAtLast);
 			}
 		}
 	}
 
 	private List<String> getRightSelectedItemIds() {
-		final List<Object> rightItemIds = new ArrayList<>(
-				rightSelect.getItemIds());
+		final List<Object> rightItemIds = new ArrayList<>(rightSelect.getItemIds());
 		
 		@SuppressWarnings("unchecked")
-		List<String> rightSelectedItems = new ArrayList<>(
-				(Collection<String>) rightSelect.getValue());
-		
+		List<String> rightSelectedItems = new ArrayList<>((Collection<String>) rightSelect.getValue());
 		
 		Collections.sort(rightSelectedItems, Comparator.comparingInt(rightItemIds::indexOf));
 		return rightSelectedItems;
@@ -222,6 +234,8 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		container.addComponent(result);
 		container.setComponentAlignment(result, Alignment.MIDDLE_CENTER);
 		result.setEnabled(false);
+		
+		result.addClickListener(task);
 		
 		return result;
 	}
@@ -267,13 +281,12 @@ public class TwinSelectView extends HorizontalLayout implements View {
 		// simply append the items at the end. Otherwise, preserve the original
 		// order
 		boolean doNotPreserveOriginalOrder = (destination == rightSelect && orderMode);
-		IndexedContainer destinationContainer = ((IndexedContainer) destination
-				.getContainerDataSource());
+		IndexedContainer destinationContainer = (IndexedContainer) destination
+				.getContainerDataSource();
 		Collection<String> itemIdsToMove = (Collection<String>) from.getValue();
 		for (String itemIdToMove : itemIdsToMove) {
 			if (!doNotPreserveOriginalOrder) {
-				int globalItemIdToMoveIndex = availableItemIds
-						.indexOf(itemIdToMove);
+				int globalItemIdToMoveIndex = availableItemIds.indexOf(itemIdToMove);
 				int idx = 0;
 				Collection<String> actualItemIds = (Collection<String>) destination
 						.getItemIds();
@@ -364,8 +377,7 @@ public class TwinSelectView extends HorizontalLayout implements View {
 	private void notifyChangeToLogic() {
 		if (logicNotificationEnabled) {
 			@SuppressWarnings("unchecked")
-			Collection<String> itemIds = (Collection<String>) rightSelect
-					.getItemIds();
+			Collection<String> itemIds = (Collection<String>) rightSelect.getItemIds();
 			logic.onValueChanged(itemIds);
 		}
 	}
