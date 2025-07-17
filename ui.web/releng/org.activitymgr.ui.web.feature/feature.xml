@@ -2,7 +2,7 @@
 <feature
       id="org.activitymgr.ui.web.feature"
       label="Activity Manager Web UI Feature"
-      version="1.3.2.qualifier">
+      version="1.4.0.qualifier">
 
    <description url="https://github.com/jfbrazeau/Activity-Manager">
       Activity Manager Web UI Feature.
