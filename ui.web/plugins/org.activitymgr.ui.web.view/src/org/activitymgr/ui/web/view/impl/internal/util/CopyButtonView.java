@@ -29,7 +29,7 @@
  */
 package org.activitymgr.ui.web.view.impl.internal.util;
 
-import org.activitymgr.ui.web.logic.IStandardButtonLogic;
+import org.activitymgr.ui.web.logic.ICopyButtonLogic;
 import org.activitymgr.ui.web.view.AbstractTabPanel;
 import org.activitymgr.ui.web.view.AbstractTabPanel.ButtonBasedShortcutListener;
 import org.activitymgr.ui.web.view.IResourceCache;
@@ -37,12 +37,13 @@ import org.activitymgr.ui.web.view.IResourceCache;
 import com.google.inject.Inject;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.HasComponents;
+import com.vaadin.ui.JavaScript;
 
 @SuppressWarnings("serial")
-public class StandardButtonView extends Button implements IStandardButtonLogic.View {
+public class CopyButtonView extends Button implements ICopyButtonLogic.View {
 
 	@SuppressWarnings("unused")
-	private IStandardButtonLogic logic;
+	private ICopyButtonLogic logic;
 	
 	@Inject
 	private IResourceCache resourceCache;
@@ -60,10 +61,11 @@ public class StandardButtonView extends Button implements IStandardButtonLogic.V
 		}
 		this.label = label;
 	}
+
 	
 	@Override
 	public void setShortcut(final char key, final boolean ctrl, final boolean shift, final boolean alt) {
-		shortcut = new ButtonBasedShortcutListener(StandardButtonView.this, label, key, ctrl, shift, alt);
+		shortcut = new ButtonBasedShortcutListener(CopyButtonView.this, label, key, ctrl, shift, alt);
 	}
 
 	public ButtonBasedShortcutListener getShortcut() {
@@ -97,10 +99,15 @@ public class StandardButtonView extends Button implements IStandardButtonLogic.V
 	}
 
 	@Override
-	public void registerLogic(final IStandardButtonLogic logic) {
+	public void registerLogic(final ICopyButtonLogic logic) {
 		this.logic = logic;
 		setImmediate(true);
-		addClickListener(event -> logic.onClick());
+		addClickListener(event -> {
+			String content = logic.onClick();
+			if (content != null) { // Escape '' ?
+				JavaScript.eval("navigator.clipboard.writeText('" + content + "')");
+			}
+		});
 	}
 
 }

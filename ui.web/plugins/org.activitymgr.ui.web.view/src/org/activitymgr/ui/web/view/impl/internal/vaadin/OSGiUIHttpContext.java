@@ -3,7 +3,6 @@ package org.activitymgr.ui.web.view.impl.internal.vaadin;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.Iterator;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,13 +28,13 @@ public class OSGiUIHttpContext implements HttpContext {
 	
 	@Override
 	public URL getResource(String name) {
-		URL url = defaultContext.getResource(name);
-		Iterator<Bundle> iterator = resourceProvidersBundles.iterator();
-		while (url == null && iterator.hasNext()) {
-			Bundle bundle = iterator.next();
-			url = bundle.getResource(name);
+		for (Bundle bundle : resourceProvidersBundles) {
+			URL url = bundle.getResource(name);
+			if (url != null) {
+				return url;
+			}
 		}
-		return url;
+		return defaultContext.getResource(name);
 	}
 	
 	@Override

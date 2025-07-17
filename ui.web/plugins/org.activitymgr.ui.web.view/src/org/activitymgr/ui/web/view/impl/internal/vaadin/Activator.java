@@ -2,11 +2,11 @@ package org.activitymgr.ui.web.view.impl.internal.vaadin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.servlet.ServletException;
 
@@ -22,12 +22,12 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
-import com.google.gwt.dev.util.collect.HashSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -47,6 +47,21 @@ public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 			.asList(IExtensionRegistry.class,
 					HttpService.class 
 					/* , HttpContextExtensionService.class */);
+	
+	private static String WEB_RES_PATH = "VAADIN";
+	
+	private static String BUNDLE_PRIORITY = "Vaadin-priority";
+	
+	private static Comparator<Bundle> BUNDLE_COMPARATOR = Comparator.comparing((Bundle it) -> {
+		String priority = it.getHeaders().get(BUNDLE_PRIORITY);
+		if (priority != null && !priority.isBlank()) {
+			try {
+				return Integer.parseInt(priority);
+			} catch (NumberFormatException e) {
+			}
+		}
+		return 0;
+	}).reversed();
 
 	private BundleContext context;
 
@@ -142,37 +157,30 @@ public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 		injector = Guice.createInjector(module);
 
 		Properties props = new Properties();
-		props.put(PRODUCTION_MODE_PARAM,
-				"true");
-		//props.put(WIDGETSET_PARAM, widgetset);
+		props.put(PRODUCTION_MODE_PARAM, "true");
 		props.put(UI_PROVIDER_PARAM, OSGiUIProvider.class.getName());
 
 		// Retrieve bundles that may contain resources
-		Set<Bundle> resourceProviderBundles = new HashSet<Bundle>();
+		List<Bundle> resourceProviderBundles = new ArrayList<>();
 		for (Bundle bundle : context.getBundles()) {
-			if (bundle.getResource("VAADIN") != null) {
+			if (bundle.getResource(WEB_RES_PATH) != null) {
 				System.out.println("Register vaadin contributions from " + bundle);
 				resourceProviderBundles.add(bundle);
 			}
 		}
 		
+		java.util.Collections.sort(resourceProviderBundles, BUNDLE_COMPARATOR);
+		
 		// Register application bundle
-		Exception exception = null;
 		try {
-			httpService.registerServlet(
-					"/",
-					new ActivityMgrServlet(),
-					props,
-					new OSGiUIHttpContext(httpService.createDefaultHttpContext(), 
-							resourceProviderBundles));
-		} catch (ServletException e) {
-			exception = e;
-		} catch (NamespaceException e) {
-			exception = e;
+			HttpContext appContext = new OSGiUIHttpContext(httpService.createDefaultHttpContext(), 
+					resourceProviderBundles);
+			
+			httpService.registerServlet("/", new ActivityMgrServlet(), props, appContext);
+		} catch (ServletException | NamespaceException ex) {
+			logError("Error while registering Vaadin UI", ex);
 		}
-		if (exception != null) {
-			logError("Error while registering Vaadin UI", exception);
-		}
+
 	}
 
 	public void logError(String message, Throwable exception) {
@@ -190,7 +198,6 @@ public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 	public void logWarn(String message) {
 		ILog log = Platform.getLog(context.getBundle());
 		log.log(new Status(IStatus.WARNING, BUNDLE_ID, message));
-
 	}
 
 	public Injector getInjector() {

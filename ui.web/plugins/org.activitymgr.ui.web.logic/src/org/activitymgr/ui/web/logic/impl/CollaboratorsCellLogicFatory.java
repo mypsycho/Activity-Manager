@@ -40,77 +40,53 @@ import org.activitymgr.core.model.ModelException;
 import org.activitymgr.ui.web.logic.Align;
 import org.activitymgr.ui.web.logic.ILogic;
 import org.activitymgr.ui.web.logic.IUILogicContext;
+import org.activitymgr.ui.web.logic.spi.ICellLogicFactory;
 import org.activitymgr.ui.web.logic.spi.ICollaboratorsCellLogicFactory;
 
 import com.google.inject.Inject;
 
 public class CollaboratorsCellLogicFatory implements ICollaboratorsCellLogicFactory {
+	
 
-	@Inject
-	private IModelMgr modelMgr;
-
-	/* (non-Javadoc)
-	 * @see org.activitymgr.ui.web.logic.impl.ICollaboratorsCellLogicFactory#createCellLogic(org.activitymgr.core.dto.Collaborator, java.lang.String, boolean)
-	 */
 	@Override
 	public ILogic<?> createCellLogic(final AbstractLogicImpl<?> parentLogic, final IUILogicContext context, final Collaborator collaborator, String propertyId, boolean readonly) {
-		ILogic<?> result = null;
-		if (IS_ACTIVE_PROPERTY_NAME_ID.equals(propertyId)) {
-			result = createBoolCell(parentLogic, !readonly, collaborator, 
-					Collaborator::getIsActive, Collaborator::setIsActive);
-		} else if (LOGIN_PROPERTY_ID.equals(propertyId)) {
-			result = createTextCell(parentLogic, !readonly, collaborator, 
+		switch(propertyId) {
+		case IS_ACTIVE_PROPERTY_NAME_ID: 
+			return createBoolCell(parentLogic, !readonly, collaborator, 
+				Collaborator::getIsActive, Collaborator::setIsActive);
+		case LOGIN_PROPERTY_ID:
+			return createTextCell(parentLogic, !readonly, collaborator, 
 					Collaborator::getLogin, Collaborator::setLogin);
-		} else if (FIRST_PROPERTY_NAME_ID.equals(propertyId)) {
-			result = createTextCell(parentLogic, !readonly, collaborator, 
+		case FIRST_PROPERTY_NAME_ID:
+			return createTextCell(parentLogic, !readonly, collaborator, 
 					Collaborator::getFirstName, Collaborator::setFirstName);
-		} else if (LAST_PROPERTY_NAME_ID.equals(propertyId)) {
-			result = createTextCell(parentLogic, !readonly, collaborator, 
+		case LAST_PROPERTY_NAME_ID:
+			return createTextCell(parentLogic, !readonly, collaborator, 
 					Collaborator::getLastName, Collaborator::setLastName);
-		} else {
-			throw new IllegalArgumentException(propertyId);
 		}
-		return result;
+
+		throw new IllegalArgumentException(propertyId);
+	}
+	
+	private <C extends Collaborator, T> Modifier<C, T> updater(BiConsumer<C, T> modifier) {
+		return (logic, element, value) -> {
+			modifier.accept(element, value);
+			logic.getModelMgr().updateCollaborator(element);
+		};
 	}
 	
 	protected <T extends Collaborator> ILogic<?> createBoolCell(AbstractLogicImpl<?> parent,
 			boolean editable, T collaborator, 
 			Predicate<T> getter,  BiConsumer<T, Boolean> setter
 			) {
-		boolean value = getter.test(collaborator);
-		
-		if (!editable) {
-			return new LabelLogicImpl(parent, value ? "X" : "");
-		}
-		
-		return new AbstractSafeCheckBoxLogicImpl(parent, value) {
-			@Override
-			protected void unsafeOnValueChanged(Boolean newValue)
-					throws ModelException {
-				setter.accept(collaborator, newValue);
-				modelMgr.updateCollaborator(collaborator);
-			}
-		};
+		return ICellLogicFactory.createBoolCell(parent, editable, collaborator, getter, updater(setter));
 	}
 	
 	protected <T extends Collaborator> ILogic<?> createTextCell(AbstractLogicImpl<?> parent,
 			boolean editable, T collaborator, 
 			Function<T, String> getter,  BiConsumer<T, String> setter
 			) {
-		String value = getter.apply(collaborator);
-		
-		if (!editable) {
-			return new LabelLogicImpl(parent, value);
-		}
-		
-		return new AbstractSafeTextFieldLogicImpl(parent, value, true) {
-			@Override
-			protected void unsafeOnValueChanged(String newValue)
-					throws ModelException {
-					setter.accept(collaborator, newValue);
-					getModelMgr().updateCollaborator(collaborator);
-			}
-		};
+		return ICellLogicFactory.createTextCell(parent, editable, collaborator, getter, updater(setter));
 	}
 	
 

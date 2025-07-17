@@ -25,11 +25,11 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 	
 	public static class ButtonBasedShortcutListener extends ShortcutListener {
 		
-		private StandardButtonView buttonView;
+		private Button buttonView;
 
-		public ButtonBasedShortcutListener(StandardButtonView buttonView, char key,
+		public ButtonBasedShortcutListener(Button buttonView, String label, char key,
 				boolean ctrl, boolean shift, boolean alt) {
-			super(buttonView.getDescription(), buttonView.getIcon(), key, toModifiers(ctrl, shift, alt));
+			super(label, buttonView.getIcon(), key, toModifiers(ctrl, shift, alt));
 			this.buttonView = buttonView;
 		}
 		private static int[] toModifiers(boolean ctrl, boolean shift, boolean alt) {
@@ -105,6 +105,7 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 			// setExpandRatio(headerComponent, 5);
 			setExpandRatio(hl, 100);
 		}
+		
 		if (leftComponent != null) {
 			hl.setExpandRatio(leftComponent, LEFT_SIDE_RATIO);
 			hl.setExpandRatio(bodyComponent, CENTER_RATIO);
@@ -144,7 +145,7 @@ public abstract class AbstractTabPanel<LOGIC extends ITabLogic<?>> extends Verti
 				}
 				@Override
 				public Action[] getActions(Object target, Object sender) {
-					return activeActions.toArray(new Action[activeActions.size()]);
+					return activeActions.toArray(ShortcutListener[]::new);
 				}
 			});
 		}

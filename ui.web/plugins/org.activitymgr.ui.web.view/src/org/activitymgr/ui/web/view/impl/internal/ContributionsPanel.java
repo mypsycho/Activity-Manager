@@ -183,6 +183,9 @@ public class ContributionsPanel extends AbstractTabPanel<IContributionsTabLogic>
 		contributionsTable = new Table();
 		contributionsTable.setFooterVisible(true);
 		contributionsTable.setSizeFull();
+		
+		contributionsTable.setStyleName("activitymgr-contributions");
+		
 		return contributionsTable;
 	}
 

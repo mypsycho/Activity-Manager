@@ -31,12 +31,24 @@ public abstract class AbstractTaskChooserLogicImpl<VIEW extends ITaskChooserLogi
 		}
 	}
 	
+	
+	/**
+	 * Opens a window with associated view.
+	 */
+	public void showView() {
+		// Open the window
+		getRoot().getView().openWindow(getView());
+
+		// Update state
+		updateUI();
+	}
+	
 	@Override
 	public void onTaskFilterChanged(String filter) {
-		filter = filter.trim();
 		if (treeContentProvider != null) {
 			treeContentProvider.dispose();
 		}
+		
 		// Register the tree content provider
 		treeContentProvider = createFilteredContentProvider(filter);
 		
@@ -44,11 +56,10 @@ public abstract class AbstractTaskChooserLogicImpl<VIEW extends ITaskChooserLogi
 		ITreeContentProviderCallback<Long> cpCallback = 
 			wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
 		getView().setTasksTreeProviderCallback(cpCallback);
-		if (!"".equals(filter)) {
-			Task task = getModelMgr().getFirstTaskMatching(filter);
-			if (task != null) {
-				getView().expandToTask(task.getId());
-			}
+		
+		Task filteredTask = treeContentProvider.getFilterMatching();
+		if (filteredTask != null) {
+			getView().expandToTask(filteredTask.getId());
 		}
 	}
 	

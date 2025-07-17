@@ -11,6 +11,8 @@ public interface ILabelLogic extends ILogic<ILabelLogic.View> {
 
 		void setHtmlMode(boolean htmlMode);
 		
+		void setDescription(String description);
+		
 	}
 
 }

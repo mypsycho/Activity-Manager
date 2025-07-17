@@ -73,7 +73,8 @@ public class RootLogicImpl implements IRootLogic {
 			for (ITabFactory tabFactory : sortedTabFactories) {
 				if (accessMgr.hasAccessToTab(event.getConnectedCollaborator(), tabFactory.getTabId())) {
 					ITabLogic<?> tabLogic = tabFactory.create(tabFolderLogic);
-					tabFolderLogic.addTab(tabFactory.getTabId(), tabLogic.getLabel(), tabLogic);
+					// Icon 
+					tabFolderLogic.addTab(tabFactory.getTabId(), tabLogic.getLabel(), tabLogic, tabFactory.getIcon());
 				}
 			}
 			String selectedTab = getView().getCookie(TabFolderLogicImpl.SELECTED_TAB_COOKIE);

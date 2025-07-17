@@ -31,9 +31,6 @@ public class ContributionTaskChooserDialog
 	private TextField newTaskName;
 	private ComboBox newTaskPattern;
 
-	public ContributionTaskChooserDialog() {
-    }
-
 	@Override
 	protected Component createBody() {
 		return new HorizontalLayout() {{

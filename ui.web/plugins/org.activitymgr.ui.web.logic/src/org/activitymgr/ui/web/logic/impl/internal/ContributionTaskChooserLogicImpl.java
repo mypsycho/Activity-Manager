@@ -38,7 +38,6 @@ public class ContributionTaskChooserLogicImpl
 	@Inject
 	private Set<IConstraintsValidator> constraintsValidators;
 
-	// private TaskTreeCellProvider treeContentProvider; 
 	private String newTaskName;
 	private String newTaskCode;
 	private boolean newTaskChecked;
@@ -52,7 +51,6 @@ public class ContributionTaskChooserLogicImpl
 		this.alreadySelectedTaskIds = selectedTaskIds;
 		
 		// Retrieve recent tasks labels
-
 		Map<Long, Task> tasks = new HashMap<Long, Task>();
 		
 		// Retrieve recent tasks
@@ -98,12 +96,6 @@ public class ContributionTaskChooserLogicImpl
 
 		// Reset button state & status label
 		onSelectionChanged(taskIdToExpand);
-	
-		// Open the window
-		getRoot().getView().openWindow(getView());
-
-		// Update state
-		updateUI();
 	}
 	
 	private Comparator<Long> createTaskSorter(Map<Long, Task> maps) {
@@ -116,32 +108,11 @@ public class ContributionTaskChooserLogicImpl
 		};
 	}
 	
+	@Override
 	protected TaskTreeCellProvider createFilteredContentProvider(String filter) {
-		// Contribution is only for open task
+		// Contribution is only for open task.
 		return new TaskTreeCellProvider(this, filter, true, true);
 	}
-	
-	// IDEM as abstract
-//	@Override
-//	public void onTaskFilterChanged(String filter) {
-//		filter = filter.trim();
-//		if (treeContentProvider != null) {
-//			treeContentProvider.dispose();
-//		}
-//		// Register the tree content provider
-//		treeContentProvider = new TaskTreeCellProvider(this, filter, true);
-//		
-//		@SuppressWarnings("unchecked") // no class for generics
-//		ITreeContentProviderCallback<Long> cpCallback =
-//			wrapLogicForView(treeContentProvider, ITreeContentProviderCallback.class);
-//		getView().setTasksTreeProviderCallback(cpCallback);
-//		if (!"".equals(filter)) {
-//			Task task = getModelMgr().getFirstTaskMatching(filter);
-//			if (task != null) {
-//				getView().expandToTask(task.getId());
-//			}
-//		}
-//	}
 
 	@Override
 	public void onNewTaskCheckboxClicked() {

@@ -6,7 +6,10 @@ import java.util.Map;
 
 import org.activitymgr.ui.web.logic.ILogic.IView;
 import org.activitymgr.ui.web.logic.ITabFolderLogic;
+import org.activitymgr.ui.web.view.IResourceCache;
 
+import com.google.inject.Inject;
+import com.vaadin.server.Resource;
 import com.vaadin.server.VaadinService;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.TabSheet;
@@ -23,18 +26,20 @@ public class TabFolderViewImpl extends TabSheet implements ITabFolderLogic.View 
 
 	private Map<String, Component> componentsByTabIdsMap = new HashMap<String, Component>();
 
+	
+	@Inject
+	private IResourceCache resourceCache;
+	
 	public TabFolderViewImpl() {
-		setStyleName(Runo.TABSHEET_SMALL);
+		setStyleName("main-activitymgr-tab " + Runo.TABSHEET_SMALL);
+		 
 		setTabsVisible(false);
 		setSizeFull();
-		addSelectedTabChangeListener(new TabSheet.SelectedTabChangeListener() {
-			@Override
-			public void selectedTabChange(SelectedTabChangeEvent event) {
-				if (VaadinService.getCurrentRequest() != null) {
-					String tabId = tabIdsByComponentsMap.get(getSelectedTab());
-					if (tabId != null) {
-						logic.onSelectedTabChanged(tabId);
-					}
+		addSelectedTabChangeListener(event -> {
+			if (VaadinService.getCurrentRequest() != null) {
+				String tabId = tabIdsByComponentsMap.get(getSelectedTab());
+				if (tabId != null) {
+					logic.onSelectedTabChanged(tabId);
 				}
 			}
 		});
@@ -46,10 +51,17 @@ public class TabFolderViewImpl extends TabSheet implements ITabFolderLogic.View 
 	}
 
 	@Override
-	public void addTab(String id, String label, IView<?> view) {
+	public void addTab(String id, String label, IView<?> view, String icon) {
 		Component component = (Component) view;
-		addTab(component, label);
+
+		Resource iconRes = null;
+		if (icon != null) {
+			iconRes = resourceCache.getResource(icon + ".gif");
+		}
+		addTab(component, label, iconRes);
+		
 		tabIdsByComponentsMap.put(component, id);
+		
 		componentsByTabIdsMap.put(id, component);
 		if (moreThanOneTab) {
 			setTabsVisible(true);

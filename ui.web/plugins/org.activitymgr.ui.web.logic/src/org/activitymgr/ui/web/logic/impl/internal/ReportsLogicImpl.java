@@ -388,12 +388,12 @@ public class ReportsLogicImpl extends AbstractLogicImpl<IReportsLogic.View>
 		} catch (ModelException e) {
 			// Simply ignore, and consider that no task is selected
 		}
-		new AbstractTaskChooserLogic(this, selectedTask) {
+		new AbstractTaskChooserLogicImpl<>(this, selectedTask) {
 			@Override
 			public void onOkButtonClicked(long taskId) {
 				updateScopeTask(taskId);
 			}
-		}.showDialog();
+		}.showView();
 	}
 	
 	protected void updateScopeTask(long taskId) {

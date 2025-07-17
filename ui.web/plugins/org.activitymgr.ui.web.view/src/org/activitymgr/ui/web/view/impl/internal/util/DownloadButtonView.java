@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import org.activitymgr.ui.web.logic.IDownloadButtonLogic;
-import org.activitymgr.ui.web.logic.IDownloadButtonLogic.View;
 import org.activitymgr.ui.web.view.IResourceCache;
 
 import com.google.inject.Inject;
@@ -13,7 +12,7 @@ import com.vaadin.server.StreamResource;
 import com.vaadin.ui.Button;
 
 @SuppressWarnings("serial")
-public class DownloadButtonView extends Button implements View {
+public class DownloadButtonView extends Button implements IDownloadButtonLogic.View {
 
 	@SuppressWarnings("unused")
 	private IDownloadButtonLogic logic;
@@ -22,13 +21,12 @@ public class DownloadButtonView extends Button implements View {
 	private IResourceCache resourceCache;
 
 	@Override
-	public void setIcon(String iconId) {
-		setIcon(resourceCache.getResource(iconId + ".gif"));
-	}
-
-	@Override
-	public void setLabel(String label) {
-		setCaption(label);
+	public void setDisplay(String label, String iconId) {
+		if (iconId != null) {
+			setIcon(resourceCache.getResource(iconId + ".gif"));			
+		} else {
+			setCaption(label);
+		}
 	}
 
 	@Override

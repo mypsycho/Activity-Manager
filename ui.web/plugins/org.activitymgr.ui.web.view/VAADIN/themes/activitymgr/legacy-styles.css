@@ -1,0 +1,91 @@
+@import "../runo/legacy-styles.css";
+
+.duration-off {
+	background-color: #c6d5dc;
+}
+
+.duration-off:hover {
+	background-color: #9acae3;
+}
+
+.duration-on {
+	background-color: #5ff358;
+}
+
+.duration-on:hover {
+	background-color: #a4f1a1;
+}
+
+.monday-date-field.v-datefield-parseerror .v-textfield {
+    background: pink;
+}
+
+.amount {
+	text-align: right;
+}
+
+.day-labels, .center {
+	text-align: center;
+}
+
+.gwt-FileUpload {
+	vertical-align: top;
+}
+
+.red {
+    background: red;
+}
+
+.green {
+    background: green;
+}
+
+.blue {
+    background: blue;
+}
+
+.align-left {
+}
+
+.align-right {
+	float: right;
+}
+
+.v-widget {
+	vertical-align: middle;
+}
+
+.v-textfield-warning {
+	background: #fff3e1;
+}
+
+/* Lay the options horizontally */
+.v-select-optiongroup-horizontal .v-select-option {
+    display: inline-block;
+}
+
+/* Avoid wrapping if the layout is too tight */
+.v-select-optiongroup-horizontal {
+    white-space: nowrap;
+}
+
+/* Some extra spacing is needed */
+.v-select-optiongroup-horizontal
+  .v-select-option.v-radiobutton {
+    padding-right: 10px;
+}
+
+.main-selector {
+    min-width: 250px;
+}
+
+ /* required when inner widget has no natural scrollbar */
+.parent-selector {
+    overflow: auto;
+}
+
+.activitymgr-contributions {
+  .v-table-body  {
+  	background: url(icons/Hour_work_faded.png) right bottom no-repeat, #fff ;
+  }
+}

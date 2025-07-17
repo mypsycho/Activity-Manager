@@ -11,7 +11,6 @@ import com.vaadin.event.ShortcutListener;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
@@ -23,19 +22,20 @@ import com.vaadin.ui.VerticalLayout;
 @SuppressWarnings("serial")
 public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
 		extends AbstractDialog 
-		implements Button.ClickListener, ITaskChooserLogic.View<LOGIC> {
+		implements ITaskChooserLogic.View<LOGIC> {
 
-	private Button ok = new Button("Ok", this);
-	private Button cancel = new Button("Cancel", this);
 	private LOGIC logic;
 	private Label statusLabel;
 	private TextField filterField;
 	private Tree taskTree;
 
+	final private Button ok = new Button("Ok", evt -> onOkAction());
+	final private Button cancel = new Button("Cancel", evt -> close());
+
 	public AbstractTaskChooserDialog() {
         super("Select a task");
         setModal(true);
-
+        
         setWidth(700, Unit.PIXELS);
         setHeight(550, Unit.PIXELS);
 
@@ -66,10 +66,7 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
 			@Override
 			public void handleAction(Object sender, Object target) {
 				if (ok.isEnabled()) {
-			        if (getParent() != null) {
-			            close();
-			        }
-		        	logic.onOkButtonClicked((Long) taskTree.getValue());
+		            onOkAction();
 				} else if (target == taskTree && taskTree.getValue() != null) {
 					taskTree.expandItem(taskTree.getValue());
 				}
@@ -97,6 +94,11 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
         treeContainer.setContent(taskTree);
         taskTree.setImmediate(true);
         taskTree.setHtmlContentAllowed(true);
+        taskTree.addItemClickListener(event -> {
+        	if (event.isDoubleClick() && ok.isEnabled()) {
+        		onOkAction();
+        	}
+        });
 
         // Set expand ratios for left container
         vl.setExpandRatio(filterField, 7);
@@ -133,22 +135,12 @@ public class AbstractTaskChooserDialog<LOGIC extends ITaskChooserLogic<?>>
 				new TreeTableDatasource<Long>(getResourceCache(), callback);
 		taskTree.setContainerDataSource(dataSource);
 		taskTree.setItemCaptionPropertyId(ITasksCellLogicFactory.NAME_PROPERTY_ID);
-//		taskTree.setItemStyleGenerator((Tree source, Object itemId) -> {
-//				Item item = source.getItem(itemId);
-//				// item.getItemProperty(itemId).getValue();
-//				return "";
-//			});
 	}
 	
-	@Override
-	public void buttonClick(ClickEvent event) {
-        if (getParent() != null) {
-            close();
-        }
-        if (event.getSource() == ok) {
-        	logic.onOkButtonClicked((Long)taskTree.getValue());
-        }
-	}
+    protected void onOkAction() {
+		close();
+		logic.onOkButtonClicked((Long) taskTree.getValue());
+    }
 
 	@Override
 	public void registerLogic(LOGIC logic) {

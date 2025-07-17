@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.activitymgr.core.dto.SimpleIdentityBean;
 import org.activitymgr.core.dto.Task;
 import org.activitymgr.core.dto.misc.TaskSums;
 import org.activitymgr.core.model.IModelMgr;
@@ -36,6 +37,7 @@ class TaskTreeCellProvider
 		extends AbstractSafeTreeTableCellProviderCallback<Long> 
 		implements IEventListener<TaskUpdatedEvent> {
 
+	
 	@Inject
 	private IModelMgr modelMgr;
 
@@ -103,20 +105,27 @@ class TaskTreeCellProvider
 		Task parentTask = parentTaskId == null ? null : taskSumsCache.get(parentTaskId).getTask();
 		List<TaskSums> subTasksSums = modelMgr.getSubTasksSums(parentTask, null, null);
 		
-		// TODO Filter closed
+		// Filter closed
 		if (onlyOpened) {
 			subTasksSums.removeIf(it -> it.getTask().isClosed());
 		}
 		
-		if (filter != null && !subTasksSums.isEmpty()) {
-			List<Long> childrenIds = Stream.of(modelMgr.getSubTasks(parentTaskId, filter))
-				.filter(it -> !onlyOpened || !it.isClosed())
-				.map(it -> it.getId())
-				.collect(Collectors.toList());
-			subTasksSums.removeIf(it -> !childrenIds.contains(it.getTask().getId()));
+		if (isFiltered() && !subTasksSums.isEmpty()) {
+			if (isFilterByPath()) {
+				int depth = parentTask != null ? parentTask.getTaskDepth() : 0;
+				String expectedCode = getPathSegment(filter.substring(1), depth);
+				if (expectedCode != null && !expectedCode.isEmpty()) {
+					subTasksSums.removeIf(it -> !expectedCode.equalsIgnoreCase(it.getTask().getCode()));
+				}
+			} else { // case of code path 
+				Task[] subTasks = modelMgr.getSubTasks(parentTaskId, filter);
+				List<Long> filteredId = Stream.of(subTasks)
+					.map(SimpleIdentityBean::getId)
+					.collect(Collectors.toList());
+				subTasksSums.removeIf(it -> !filteredId.contains(it.getTask().getId()));
+			}
 		}
 		
-			
 		subTaskIds = new ArrayList<Long>();
 		for (TaskSums subTaskSums : subTasksSums) {
 			long subTaskId = subTaskSums.getTask().getId();
@@ -129,7 +138,44 @@ class TaskTreeCellProvider
 		taskChildrenCache.put(parentTaskId, subTaskIds);
 		return subTaskIds;
 	}
+	
+	public Task getFilterMatching() {
+		if (!isFiltered()) {
+			return null;
+		}
+		if (!isFilterByPath()) {
+			return modelMgr.getFirstTaskMatching(filter);
+		}
+		
+		try {
+			return modelMgr.getTaskByCodePath(filter);
+		} catch (ModelException e) {
+			return null;
+		}
+	}
+	
+	public boolean isFiltered() {
+		return filter != null;
+	}
+	
+	public boolean isFilterByPath() {
+		return isFiltered() && filter.charAt(0) == IModelMgr.PATH_SEP;
+	}
 
+	private static String getPathSegment(String path, int index) {
+		if (index < 0) {
+			return null;
+		}
+		int end = path.indexOf(IModelMgr.PATH_SEP);
+		if (index == 0) {
+			return end == -1 ? path.trim() : path.substring(0, end).trim();
+		}
+		if (end == -1) {
+			return null; // no other segment.
+		}
+		return getPathSegment(path.substring(end + 1), index - 1);
+	}
+	
 	@Override
 	protected final List<Long> unsafeGetRootElements() throws ModelException {
 		return unsafeGetChildren(null);

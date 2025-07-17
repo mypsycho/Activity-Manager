@@ -28,6 +28,7 @@ public class LabelView extends Label implements View {
 	public void setLabel(String s) {
 		setValue(s);
 	}
+	
 
 	@Override
 	public String getLabel() {

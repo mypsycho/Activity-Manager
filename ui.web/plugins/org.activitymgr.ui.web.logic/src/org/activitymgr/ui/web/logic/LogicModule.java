@@ -2,16 +2,15 @@ package org.activitymgr.ui.web.logic;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.Stack;
+
+import javax.sql.DataSource;
 
 import org.activitymgr.core.dto.Collaborator;
 import org.activitymgr.core.dto.Task;
@@ -24,6 +23,7 @@ import org.activitymgr.ui.web.logic.impl.TasksCellLogicFatory;
 import org.activitymgr.ui.web.logic.impl.internal.CollaboratorsTabLogicImpl;
 import org.activitymgr.ui.web.logic.impl.internal.ConfigurationImpl;
 import org.activitymgr.ui.web.logic.impl.internal.ContributionsTabLogicImpl;
+import org.activitymgr.ui.web.logic.impl.internal.CopyTaskPathButtonLogic;
 import org.activitymgr.ui.web.logic.impl.internal.DefaultConstraintsValidator;
 import org.activitymgr.ui.web.logic.impl.internal.NewContributionTaskButtonLogic;
 import org.activitymgr.ui.web.logic.impl.internal.ReportsTabLogicImpl;
@@ -43,7 +43,6 @@ import org.apache.log4j.PropertyConfigurator;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
@@ -51,6 +50,20 @@ import com.google.inject.multibindings.Multibinder;
 
 public class LogicModule extends AbstractModule {
 
+	private static final IFeatureAccessManager DEFAULT_FEATURE_ACCESS_MANAGER = new IFeatureAccessManager() {
+		@Override
+		public boolean hasAccessToTab(Collaborator collaborator, String tab) {
+			return true;
+		}
+
+		@Override
+		public boolean canUpdateContributions(Collaborator connected, Collaborator contributor) {
+			return true;
+		}
+
+	};
+
+	
 	@Override
 	protected void configure() {
 		// Load configuration
@@ -79,30 +92,13 @@ public class LogicModule extends AbstractModule {
 		install(new CoreModelModule());
 		
 		// Create the datasource
-		BasicDataSource datasource = new BasicDataSource();
-		IConfiguration jdbcCfg = cfg.getScoped("activitymgr.jdbc",
-				null);
-		datasource.setDriverClassName(jdbcCfg.get("driver",
-				"com.mysql.jdbc.Driver"));
-		datasource.setUrl(jdbcCfg.get("url",
-				"jdbc:mysql://localhost:3306/taskmgr_db"));
-		datasource.setUsername(jdbcCfg.get("user", "taskmgr"));
-		datasource.setPassword(jdbcCfg
-				.get("password", "taskmgr"));
-		datasource.setDefaultAutoCommit(false);
-		final ThreadLocalizedDbTransactionProviderImpl dbTxProvider = new ThreadLocalizedDbTransactionProviderImpl(datasource);
+		final ThreadLocalizedDbTransactionProviderImpl dbTxProvider = new ThreadLocalizedDbTransactionProviderImpl(createDataSource(cfg));
 		bind(ThreadLocalizedDbTransactionProviderImpl.class).toInstance(dbTxProvider);
-		bind(Connection.class).toProvider(new Provider<Connection>() {
-			@Override
-			public Connection get() {
-				return dbTxProvider.get().getTx();
-			}
-		});
+		bind(Connection.class).toProvider(() -> dbTxProvider.get().getTx());
 		
 		// Default SPI implementations
-		bind(IFeatureAccessManager.class).toInstance(new DefaultFeatureAccessManager());
-		bind(IAuthenticatorExtension.class).to(
-				DefaultAuthenticatorExtension.class).in(Singleton.class);
+		bind(IFeatureAccessManager.class).toInstance(DEFAULT_FEATURE_ACCESS_MANAGER);
+		bind(IAuthenticatorExtension.class).to(DefaultAuthenticatorExtension.class).in(Singleton.class);
 		bind(ICollaboratorsCellLogicFactory.class).toInstance(new CollaboratorsCellLogicFatory());
 		bind(IContributionsCellLogicFactory.class).toInstance(new ContributionsCellLogicFatory());
 		bind(ITasksCellLogicFactory.class).toInstance(new TasksCellLogicFatory());
@@ -112,109 +108,51 @@ public class LogicModule extends AbstractModule {
 
 		// Bind tabs
 		Multibinder<ITabFactory> tabsBinder = Multibinder.newSetBinder(binder(), ITabFactory.class);
-		tabsBinder.addBinding().toInstance(new ITabFactory() {
-			@Override
-			public int getTabOrderPriority() {
-				return 60;
-			}
-			@Override
-			public String getTabId() {
-				return ICollaboratorsTabLogic.ID;
-			}
-			@Override
-			public ITabLogic<?> create(ITabFolderLogic parent) {
-				return new CollaboratorsTabLogicImpl(parent);
-			}
-		});
-		tabsBinder.addBinding().toInstance(new ITabFactory() {
-			@Override
-			public int getTabOrderPriority() {
-				return 40;
-			}
-			@Override
-			public String getTabId() {
-				return ITasksTabLogic.ID;
-			}
-			@Override
-			public ITabLogic<?> create(ITabFolderLogic parent) {
-				return new TasksTabLogicImpl(parent);
-			}
-		});
-		tabsBinder.addBinding().toInstance(new ITabFactory() {
-			@Override
-			public int getTabOrderPriority() {
-				return 20;
-			}
-			@Override
-			public String getTabId() {
-				return IContributionsTabLogic.ID;
-			}
-			@Override
-			public ITabLogic<?> create(ITabFolderLogic parent) {
-				return new ContributionsTabLogicImpl(parent);
-			}
-		});
-		tabsBinder.addBinding().toInstance(new ITabFactory() {
-			@Override
-			public int getTabOrderPriority() {
-				return 70;
-			}
-			@Override
-			public String getTabId() {
-				return IReportsTabLogic.ADVANCED_REPORTS_ID;
-			}
+		tabsBinder.addBinding().toInstance(
+				new ITabFactory.Impl(20, IContributionsTabLogic.ID, "contributions_tab", ContributionsTabLogicImpl::new));
+		tabsBinder.addBinding().toInstance(
+				new ITabFactory.Impl(40, ITasksTabLogic.ID, "tasks_tab", TasksTabLogicImpl::new));
+		tabsBinder.addBinding().toInstance(
+				new ITabFactory.Impl(60, ICollaboratorsTabLogic.ID, "collaborators_tab", CollaboratorsTabLogicImpl::new));
+		tabsBinder.addBinding().toInstance(
+				new ITabFactory.Impl(65, IReportsTabLogic.MY_REPORTS_ID, "reports_tab", parent -> new ReportsTabLogicImpl(parent, false)));
+		tabsBinder.addBinding().toInstance(
+				new ITabFactory.Impl(70, IReportsTabLogic.ADVANCED_REPORTS_ID, "reports_tab", parent -> new ReportsTabLogicImpl(parent, true)));
 
-			@Override
-			public ITabLogic<?> create(ITabFolderLogic parent) {
-				return new ReportsTabLogicImpl(parent, true);
-			}
-		});
-		tabsBinder.addBinding().toInstance(new ITabFactory() {
-			@Override
-			public int getTabOrderPriority() {
-				return 65;
-			}
-
-			@Override
-			public String getTabId() {
-				return IReportsTabLogic.MY_REPORTS_ID;
-			}
-			@Override
-			public ITabLogic<?> create(ITabFolderLogic parent) {
-				return new ReportsTabLogicImpl(parent, false);
-			}
-		});
 
 		// Bind task creation pattern
 		MapBinder<String, ITaskCreationPatternHandler> tcpBinder = MapBinder.newMapBinder(binder(), String.class, ITaskCreationPatternHandler.class);
 		tcpBinder.addBinding("0_none").to(NoneTaskCreationPatternHandler.class);
 
 		// Bind contribution tab buttons
-		Multibinder<ITabButtonFactory<IContributionsTabLogic>> ctlBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<ITabButtonFactory<IContributionsTabLogic>>() {});
-		ctlBinder.addBinding().toInstance(new ITabButtonFactory<IContributionsTabLogic>() {
-			@Override
-			public IButtonLogic<?> create(IContributionsTabLogic parent) {
-				return new NewContributionTaskButtonLogic(parent);
-			}
-		});
+		Multibinder<ITabButtonFactory<IContributionsTabLogic>> ctlBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<>() {});
+		ctlBinder.addBinding().toInstance(parent -> new NewContributionTaskButtonLogic(parent));
 
+		Multibinder<ITabButtonFactory<ITasksTabLogic>> ttBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<>() {});
+		ttBinder.addBinding().toInstance(parent -> new CopyTaskPathButtonLogic(parent));
+		
 		// Bind constraints validator
 		Multibinder<IConstraintsValidator> cvBinder = Multibinder.newSetBinder(binder(), new TypeLiteral<IConstraintsValidator>() {});
 		cvBinder.addBinding().to(DefaultConstraintsValidator.class);
+	}
+	
+	private DataSource createDataSource(IConfiguration cfg) {
+		BasicDataSource datasource = new BasicDataSource();
+		IConfiguration jdbcCfg = cfg.getScoped("activitymgr.jdbc", null);
+		datasource.setDriverClassName(jdbcCfg.get("driver", "com.mysql.jdbc.Driver"));
+		datasource.setUrl(jdbcCfg.get("url", "jdbc:mysql://localhost:3306/taskmgr_db"));
+		datasource.setUsername(jdbcCfg.get("user", "taskmgr"));
+		datasource.setPassword(jdbcCfg.get("password", "taskmgr"));
+		datasource.setDefaultAutoCommit(false);
 
+		return datasource;
 	}
 
 	private boolean attempToLoadConfiguration(Properties props, File cfgFolder) {
-		System.out.println("Trying to load configuration from "
-				+ cfgFolder.getAbsolutePath());
+		System.out.println("Trying to load configuration from " + cfgFolder.getAbsolutePath());
 		if (cfgFolder.exists() && cfgFolder.isDirectory()) {
 			try {
-				File[] propFiles = cfgFolder.listFiles(new FilenameFilter() {
-					@Override
-					public boolean accept(File dir, String name) {
-						return name.endsWith(".properties");
-					}
-				});
+				File[] propFiles = cfgFolder.listFiles((dir, name) -> name.endsWith(".properties"));
 				for (File propFile : propFiles) {
 					System.out.println("Loading " + propFile.getAbsolutePath());
 					props.load(new FileInputStream(propFile));
@@ -229,27 +167,6 @@ public class LogicModule extends AbstractModule {
 
 }
 
-class DbTransactionContext {
-	Connection tx;
-	Stack<Method> calls = new Stack<Method>();
-	DbTransactionContext(Connection con) {
-		tx = con;
-	}
-}
-
-class DefaultFeatureAccessManager implements IFeatureAccessManager {
-	@Override
-	public boolean hasAccessToTab(Collaborator collaborator, String tab) {
-		return true;
-	}
-
-	@Override
-	public boolean canUpdateContributions(Collaborator connected,
-			Collaborator contributor) {
-		return true;
-	}
-
-}
 
 class DefaultAuthenticatorExtension implements IAuthenticatorExtension {
 	

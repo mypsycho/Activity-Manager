@@ -13,8 +13,8 @@ public class TabFolderLogicImpl extends AbstractLogicImpl<ITabFolderLogic.View> 
 		super(parent);
 	}
 
-	public void addTab(String id, String label, ITabLogic<?> logic) {
-		getView().addTab(id, label, logic.getView());
+	public void addTab(String id, String label, ITabLogic<?> logic, String icon) {
+		getView().addTab(id, label, logic.getView(), icon);
 	}
 
 	@Override

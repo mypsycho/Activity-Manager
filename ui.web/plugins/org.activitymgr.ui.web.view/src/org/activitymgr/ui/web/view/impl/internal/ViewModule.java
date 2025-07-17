@@ -5,6 +5,7 @@ import org.activitymgr.ui.web.logic.ICheckBoxFieldLogic;
 import org.activitymgr.ui.web.logic.ICollaboratorsTabLogic;
 import org.activitymgr.ui.web.logic.IContributionTaskChooserLogic;
 import org.activitymgr.ui.web.logic.IContributionsTabLogic;
+import org.activitymgr.ui.web.logic.ICopyButtonLogic;
 import org.activitymgr.ui.web.logic.IDownloadButtonLogic;
 import org.activitymgr.ui.web.logic.IExternalContentDialogLogic;
 import org.activitymgr.ui.web.logic.ILabelLogic;
@@ -23,6 +24,7 @@ import org.activitymgr.ui.web.view.IResourceCache;
 import org.activitymgr.ui.web.view.impl.dialogs.ExternalContentDialog;
 import org.activitymgr.ui.web.view.impl.dialogs.TaskChooserDialog;
 import org.activitymgr.ui.web.view.impl.internal.util.CheckBoxView;
+import org.activitymgr.ui.web.view.impl.internal.util.CopyButtonView;
 import org.activitymgr.ui.web.view.impl.internal.util.DownloadButtonView;
 import org.activitymgr.ui.web.view.impl.internal.util.LabelView;
 import org.activitymgr.ui.web.view.impl.internal.util.LinkView;
@@ -59,6 +61,8 @@ public class ViewModule extends AbstractModule {
 		bind(ITabFolderLogic.View.class).to(TabFolderViewImpl.class);
 		bind(IStandardButtonLogic.View.class).to(StandardButtonView.class);
 		bind(IDownloadButtonLogic.View.class).to(DownloadButtonView.class);
+		bind(ICopyButtonLogic.View.class).to(CopyButtonView.class);
+
 		bind(ISelectFieldLogic.View.class).to(SelectFieldView.class);
 		bind(ITwinSelectFieldLogic.View.class).to(TwinSelectView.class);
 		bind(IExternalContentDialogLogic.View.class).to(

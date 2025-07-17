@@ -29,11 +29,11 @@
  */
 package org.activitymgr.ui.web.logic;
 
-public interface IStandardButtonLogic extends IButtonLogic<IStandardButtonLogic.View> {
+public interface ICopyButtonLogic extends IButtonLogic<ICopyButtonLogic.View> {
 	
-	void onClick();	
+	String onClick();	
 	
-	public interface View extends IButtonLogic.View<IStandardButtonLogic> {
+	public interface View extends IButtonLogic.View<ICopyButtonLogic> {
 		
 		void setShortcut(char key, boolean ctrl, boolean shift, boolean alt);
 

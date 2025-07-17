@@ -40,6 +40,11 @@ import org.activitymgr.core.util.StringHelper;
 @Table("TASK")
 @ColumnNamePrefix("TSK_")
 public class Task extends SimpleIdentityBean {
+	
+	
+	// A path segment is 2 char (limited to 256).
+	public static final int PATH_SGM_SIZE = 2;
+	
 
 	/** Chemin de la tache */
 	private String path;
@@ -283,6 +288,16 @@ public class Task extends SimpleIdentityBean {
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof Task && ((Task) obj).getId() == getId();
+	}
+	
+	
+	/**
+	 * Returns the task depth based on path length.
+	 * 
+	 * @return depth
+	 */
+	public int getTaskDepth() {
+		return getFullPath().length() / PATH_SGM_SIZE;
 	}
 
 }

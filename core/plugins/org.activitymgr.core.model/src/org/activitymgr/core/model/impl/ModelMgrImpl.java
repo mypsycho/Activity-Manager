@@ -1057,7 +1057,7 @@ public class ModelMgrImpl implements IModelMgr {
 		log.debug("Processing task path '" + subpath + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 		Task task = null;
 		while (subpath.length() > 0) {
-			int idx = subpath.indexOf('/');
+			int idx = subpath.indexOf(PATH_SEP);
 			String taskCode = idx >= 0 ? subpath.substring(0, idx) : subpath;
 			String taskPath = task != null ? task.getFullPath() : ""; //$NON-NLS-1$
 			subpath = idx >= 0 ? subpath.substring(idx + 1) : ""; //$NON-NLS-1$
@@ -1071,29 +1071,37 @@ public class ModelMgrImpl implements IModelMgr {
 	}
 
 	@Override
+	public Task[] getTasksInPath(final String codePath) throws ModelException {
+		verify("INVALID_TASK_CODE_PATH", codePath.startsWith("/")); //$NON-NLS-1$ 
+
+		// Recherche de la tache
+		String subpath = codePath.trim().substring(1);
+		log.debug("Processing task path '" + subpath + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+		Task task = null;
+		List<Task> result = new ArrayList<>();
+		while (subpath.length() > 0) {
+			int idx = subpath.indexOf(PATH_SEP);
+			String taskCode = idx >= 0 ? subpath.substring(0, idx) : subpath;
+			String taskPath = task != null ? task.getFullPath() : ""; //$NON-NLS-1$
+			subpath = idx >= 0 ? subpath.substring(idx + 1) : ""; //$NON-NLS-1$
+			task = getTask(taskPath, taskCode);
+			verify("UNKNOWN_TASK_CODE_PATH", task != null, codePath);  //$NON-NLS-1$
+			result.add(task);
+		}
+		log.debug("Found " + task); //$NON-NLS-1$
+
+		// Retour du résultat
+		return result.toArray(Task[]::new);
+	}
+	
+	
+	@Override
 	public Task[] getContributedTasks(Collaborator contributor,
 			Calendar fromDate, Calendar toDate) {
 		long[] taskIds = taskDAO.getContributedTaskIds(contributor, fromDate, toDate);
 		return getTasks(taskIds);
 	}
 
-	@Override
-	public Task[] getTasksByCodePath(String[] codePaths) throws ModelException {
-		// Recherche des taches
-		Task[] tasks = new Task[codePaths.length];
-		for (int i = 0; i < codePaths.length; i++) {
-			String codePath = codePaths[i].trim();
-			log.debug("Searching task path '" + codePath + "'"); //$NON-NLS-1$ //$NON-NLS-2$
-			Task task = getTaskByCodePath(codePath);
-			// Enregistrement dans le tableau
-
-			verify("UNKNOWN_TASK", task != null, codePath); //$NON-NLS-1$
-			tasks[i] = task;
-		}
-
-		// Retour du résultat
-		return tasks;
-	}
 
 	@Override
 	public TaskSums getTaskSums(long taskId, Calendar fromDate, Calendar toDate)
@@ -1695,7 +1703,7 @@ public class ModelMgrImpl implements IModelMgr {
 				// Compute task code path
 				String taskPath = task.getPath();
 				String parentTaskCodePath = pathToTaskCodePathMap.get(taskPath);
-				String taskCodePath = (parentTaskCodePath != null ? parentTaskCodePath + '/' : "") + task.getCode();
+				String taskCodePath = (parentTaskCodePath != null ? parentTaskCodePath + PATH_SEP : "") + task.getCode();
 				pathToTaskCodePathMap.put(task.getFullPath(), taskCodePath);
 				
 				// Append row

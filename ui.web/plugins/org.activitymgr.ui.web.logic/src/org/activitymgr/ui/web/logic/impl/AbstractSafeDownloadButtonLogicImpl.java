@@ -8,11 +8,7 @@ public abstract class AbstractSafeDownloadButtonLogicImpl extends AbstractLogicI
 	public AbstractSafeDownloadButtonLogicImpl(ILogic<?> parent,
 			String label, String description, String iconId) {
 		super(parent);
-		if (iconId != null) {
-			getView().setIcon(iconId);
-		} else if (label != null) {
-			getView().setLabel(label);
-		}
+		getView().setDisplay(label, iconId);
 		if (description != null) {
 			getView().setDescription(description);
 		}

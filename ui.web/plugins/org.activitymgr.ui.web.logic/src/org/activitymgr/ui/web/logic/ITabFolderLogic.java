@@ -7,7 +7,7 @@ public interface ITabFolderLogic extends ILogic<ITabFolderLogic.View> {
 	
 	public interface View extends ILogic.IView<ITabFolderLogic> {
 		
-		void addTab(String id, String label, ILogic.IView<?> view);
+		void addTab(String id, String label, ILogic.IView<?> view, String icon);
 
 		void setSelectedTab(String id);
 	}

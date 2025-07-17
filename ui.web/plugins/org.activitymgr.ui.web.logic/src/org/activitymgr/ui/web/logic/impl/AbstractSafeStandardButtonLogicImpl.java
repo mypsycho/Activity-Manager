@@ -38,11 +38,8 @@ public abstract class AbstractSafeStandardButtonLogicImpl extends AbstractLogicI
 	public AbstractSafeStandardButtonLogicImpl(ILogic<?> parent, String label,
 			String iconId, String shortcutKey) {
 		super(parent);
-		if (iconId != null) {
-			getView().setIcon(iconId);
-		} else {
-			getView().setLabel(label);
-		}
+		getView().setDisplay(label, iconId);
+		
 		String scHint = "";
 		if (shortcutKey != null) {
 			KeyBinding kb = new KeyBinding(shortcutKey);

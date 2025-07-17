@@ -55,11 +55,13 @@ import org.xml.sax.SAXException;
  */
 public interface IModelMgr {
 
-	public static final String ETC_ATTRIBUTE = "etc";
-	public static final String INITIALLY_CONSUMED_ATTRIBUTE = "initiallyConsumed";
-	public static final String BUDGET_ATTRIBUTE = "budget";
-	public static final String PATH_ATTRIBUTE = "path";
-	public static final String CODE_ATTRIBUTE = "code";
+	char PATH_SEP = '/';
+	
+	String ETC_ATTRIBUTE = "etc";
+	String INITIALLY_CONSUMED_ATTRIBUTE = "initiallyConsumed";
+	String BUDGET_ATTRIBUTE = "budget";
+	String PATH_ATTRIBUTE = "path";
+	String CODE_ATTRIBUTE = "code";
 
 	/**
 	 * Change la tache d'une liste de contributions.
@@ -477,6 +479,18 @@ public interface IModelMgr {
 	Task getTaskByCodePath(final String codePath) throws ModelException;
 
 	/**
+	 * Retourne les taches d'un chemin construit à partir de codes de
+	 * taches.
+	 * 
+	 * @param codePath
+	 *            le chemin à base de code.
+	 * @return la tache trouvée.
+	 * @throws ModelException
+	 *             levé dans le cas ou le chemin de tache est inconnu.
+	 */
+	Task[] getTasksInPath(final String codePath) throws ModelException;
+	
+	/**
 	 * Construit le chemin de la tâche à partir des codes de tache.
 	 * 
 	 * @param task
@@ -498,19 +512,6 @@ public interface IModelMgr {
 	 *         spécifié.
 	 */
 	Task[] getTasks(TaskSearchFilter filter);
-
-	/**
-	 * Retourne la liste des taches associées aux chemins spécifiés.
-	 * 
-	 * @param codePaths
-	 *            la liste des chemins.
-	 * @return la liste des tâches.
-	 * @throws
-	 * @throws ModelException
-	 *             levé dans le cas ou une tache n'existe pas.
-	 */
-	@Deprecated // never used
-	Task[] getTasksByCodePath(String[] codePaths) throws ModelException;
 
 	/**
 	 * @param taskId
