@@ -4,16 +4,18 @@
 
 === Setting the database
 
-==== Install Mysql +
-Get community server (5.7.36 version): +
-https://dev.mysql.com/downloads/mysql/5.7.html +
+==== Install MySQL +
+Download Community Server (5.7.44 version):
+
+Web-page:: https://downloads.mysql.com/archives/community/
+Product:: https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.44-winx64.zip
 
 More info on: +
 https://dev.mysql.com/doc/refman/5.7/en/ +
 
 ==== Configure local data +
 
-Copy and update '_my_config.ini_' file in mysql using the sibling file. +
+Copy and update `my_config.ini` file in MySQL using the sibling file. +
 In *Administrator* CMD, run:
 
 [source,bash]
@@ -24,7 +26,7 @@ This command creates a server with 'root' account and no password (~= insecure).
 
 ==== Starting DB
 
-To start the mysql database if not installed as a service. (or copy and use "start-server.bat" in installation)
+To start the MySQL database if not installed as a service. (or copy and use "start-server.bat" in installation)
 
 [source,bash]
 ----
@@ -50,14 +52,14 @@ But it is useless for developer.
 
 ==== Create schema
 
-Use in mysql client: _/misc/sql/createDatabase.sql_
+Use in MySQL client: `/misc/sql/createDatabase.sql`
 [source,bash]
 ----
 bin\mysql -u root --skip-password < %git_home%\Activity-Manager\misc\sql\createDatabase.sql
 ---- 
 
-Create a connection in 'Data Source Explorer' from +
-_/org.activitymgr.ui.web.feature/cfg-db.properties_
+Create a connection in *_Data Source Explorer_* from +
+`/org.activitymgr.ui.web.feature/cfg-db.properties`
 
 
 ==== Stopping DB
@@ -75,23 +77,20 @@ Using console "Close" may break a transaction.
 
 .Get Eclipse instance from Oomph
 
-Use _/misc/oomph/org.eclipse.setup_ to get all plugins.
-
-Path without git-clone:
-https://raw.githubusercontent.com/mypsycho/Activity-Manager/1.0.x/misc/oomph/org.eclipse.setup
+Use `/parent/oomph/org.eclipse.setup` to get all SQL plugins for Eclipse IDE.
 
 .Import a connection
 
-In 'Data Source Explorer' view ('Database development' perspective), import _/misc/doc/eclipse_connection.xml_.
+In *_Data Source Explorer_* View (*_Database development_* Perspective), import `/misc/doc/eclipse_dbconnection_localtest.xml`.
 
 .Declare MySQL driver
 
 Importing a connection also declare the driver but JAR file is absolute.
 
-Driver is placed at _/misc/sql/mysql-connector-java-8.0.27.jar_, mirror of:
+Driver is placed at `/misc/sql/mysql-connector-java-8.0.27.jar`, mirror of:
 https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.27.zip
 
-In _Windows/Preference#Data manager/Connectivity/Driver definition_:+
+In _Windows/Preference#Data manager/Connectivity/Driver definition_: +
 Correct 'MySQL JDBC Driver' with provided JAR if needed.
 
 
@@ -102,4 +101,4 @@ Correct 'MySQL JDBC Driver' with provided JAR if needed.
 bin\mysql --user=taskmgr --password=taskmgr taskmgr_db < %git_home%\Activity-Manager\misc\sql\createTables.sql
 ----
 
-or use eclipse connection with _misc/sql/createTables.sql_.
+or use eclipse connection with `misc/sql/createTables.sql`.

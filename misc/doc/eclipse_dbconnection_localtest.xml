@@ -4,37 +4,21 @@
 		id="4891aef1-5c32-11ec-8605-f807f88628a4" name="taskmgr"
 		providerID="org.eclipse.datatools.enablement.mysql.connectionProfile">
 		<baseproperties>
-			<property
-				name="org.eclipse.datatools.connectivity.db.connectionProperties"
-				value="" />
-			<property
-				name="org.eclipse.datatools.connectivity.db.savePWD" value="true" />
-			<property
-				name="org.eclipse.datatools.connectivity.drivers.defnType"
-				value="org.eclipse.datatools.enablement.mysql.5_1.driverTemplate" />
-			<property
-				name="org.eclipse.datatools.connectivity.db.username"
-				value="taskmgr" />
-			<property
-				name="org.eclipse.datatools.connectivity.db.driverClass"
-				value="com.mysql.jdbc.Driver" />
-			<property
-				name="org.eclipse.datatools.connectivity.driverDefinitionID"
+			<property name="org.eclipse.datatools.connectivity.db.connectionProperties" value="" />
+			<property name="org.eclipse.datatools.connectivity.db.savePWD"              value="true" />
+			<property name="org.eclipse.datatools.connectivity.drivers.defnType"        value="org.eclipse.datatools.enablement.mysql.5_1.driverTemplate" />
+			<property name="org.eclipse.datatools.connectivity.db.driverClass"          value="com.mysql.jdbc.Driver" />
+			<property name="org.eclipse.datatools.connectivity.driverDefinitionID"
 				value="DriverDefn.org.eclipse.datatools.enablement.mysql.5_1.driverTemplate.MySQL JDBC Driver" />
-			<property
-				name="org.eclipse.datatools.connectivity.db.databaseName"
-				value="database" />
-			<property
-				name="org.eclipse.datatools.connectivity.db.password"
-				value="taskmgr" />
-			<property
-				name="org.eclipse.datatools.connectivity.db.version" value="5.1" />
+			<property name="org.eclipse.datatools.connectivity.db.vendor"               value="MySql" />
+			<property name="jarList" 
+				value="C:\dev\projects.git\Obeo\Activity-Manager\misc\sql\mysql-connector-java-8.0.27.jar" />
+			<property name="org.eclipse.datatools.connectivity.db.databaseName"         value="database" />
 			<property name="org.eclipse.datatools.connectivity.db.URL"
 				value="jdbc:mysql://localhost:3306/taskmgr_db" />
-			<property
-				name="org.eclipse.datatools.connectivity.db.vendor" value="MySql" />
-			<property name="jarList"
-				value="C:\dev\projects.git\Obeo\Activity-Manager\misc\sql\mysql-connector-java-8.0.27.jar" />
+			<property name="org.eclipse.datatools.connectivity.db.username"             value="taskmgr" />
+			<property name="org.eclipse.datatools.connectivity.db.password"             value="taskmgr" />
+			<property name="org.eclipse.datatools.connectivity.db.version"              value="5.1" />
 		</baseproperties>
 		<org.eclipse.datatools.connectivity.versionInfo>
 			<property name="server.version" value="5.7.36" />

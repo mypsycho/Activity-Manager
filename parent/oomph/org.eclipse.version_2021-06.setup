@@ -45,8 +45,8 @@
 	
 	<setupTask xsi:type="setup.p2:P2Task" id="eclipse" label="Eclipse basic">
 	
-		<repository url="http://download.eclipse.org/releases/2021-06" />
-		<repository url="http://download.eclipse.org/technology/epp/packages/2021-06" />
+		<repository url="https://download.eclipse.org/releases/2021-06" />
+		<repository url="https://download.eclipse.org/technology/epp/packages/2021-06" />
 	
 		<requirement name="epp.package.modeling" />
 		<requirement name="epp.package.jee" />
@@ -67,10 +67,10 @@
 		<requirement name="org.eclipse.equinox.p2.discovery.feature.feature.group" />
 		<requirement name="org.eclipse.userstorage.feature.group" />
 		<!-- market place is fine to search, but use oomph to trace installation -->
-		<repository url="http://download.eclipse.org/cbi/tpd/3.0.0-SNAPSHOT/" />
+		<repository url="https://download.eclipse.org/cbi/tpd/3.0.0-SNAPSHOT/" />
 		<requirement name="org.eclipse.cbi.targetplatform-feature.feature.group" />
 		
-	 	<!-- Team work -->
+	 	<!-- Team work
 		<requirement name="org.eclipse.mylyn.bugzilla_feature.feature.group" />
 		<requirement name="org.eclipse.mylyn.context_feature.feature.group" />
 		<requirement name="org.eclipse.mylyn.ide_feature.feature.group" />
@@ -79,6 +79,7 @@
 		<requirement name="org.eclipse.mylyn.wikitext_feature.feature.group" />
 		<requirement name="org.eclipse.mylyn_feature.feature.group" />
 		<requirement name="org.eclipse.egit.mylyn.feature.group" />
+		 -->
 	
 		<!--  xml and web -->
 		<requirement name="org.eclipse.xsd.sdk.feature.group" />
@@ -98,25 +99,26 @@
 		<requirement name="de.jcup.asciidoctoreditor.feature.group" />
 		
 		<!-- Image browser
-		<repository url="http://manu26.manufrog.com/~psnetnu/eclipse/updates/" />
+		<repository url="https://manu26.manufrog.com/~psnetnu/eclipse/updates/" />
 		<requirement name="nu.psnet.quickimage.feature.group" />
 		 -->
 	</setupTask>
 	
-	<!-- Devstyle (provide Darkest theme) -->
+	<!-- Devstyle (provide Darkest theme)
 	<setupTask xsi:type="setup.p2:P2Task" id="themes" label="IDE themes">
-		<repository url="http://www.genuitec.com/updates/devstyle/ci/" />
+		<repository url="https://www.genuitec.com/updates/devstyle/ci/" />
 		<requirement name="com.genuitec.eclipse.theming.core.feature.feature.group" />
 	</setupTask>
+	 -->
 			
 	<setupTask xsi:type="setup.p2:P2Task" id="ui" label="UI designer">
 		
 		<!-- javafx -->
-		<repository url="http://download.eclipse.org/efxclipse/updates-released/3.6.0/site/" />
+		<repository url="https://download.eclipse.org/efxclipse/updates-released/3.6.0/site/" />
 		<requirement name="org.eclipse.fx.ide.feature.feature.group" />
 		
 		<!-- swt or swing -->
-		<repository url="http://download.eclipse.org/releases/2021-06" />
+		<repository url="https://download.eclipse.org/releases/2021-06" />
 		<requirement name="org.eclipse.wb.core.feature.feature.group" />
 		<requirement name="org.eclipse.wb.core.java.feature.feature.group" />
 		<requirement name="org.eclipse.wb.core.ui.feature.feature.group" />
@@ -133,7 +135,7 @@
 	</setupTask>
 	
 	<setupTask xsi:type="setup.p2:P2Task" id="langs" label="Language">
-		<repository url="http://download.eclipse.org/releases/2021-06" />
+		<repository url="https://download.eclipse.org/releases/2021-06" />
 	
 		<!-- Java language -->
 		<requirement name="org.eclipse.xtend.sdk.feature.group" />
@@ -162,7 +164,7 @@
 	https://bugs.eclipse.org/bugs/show_bug.cgi?id=575002
 	-->
 	
-		<repository url="http://download.eclipse.org/releases/2021-06" />
+		<repository url="https://download.eclipse.org/releases/2021-06" />
 		<requirement name="org.eclipse.eclemma.feature.feature.group" /> <!-- from eclipse dist -->
 	
 		<repository url="https://checkstyle.org/eclipse-cs-update-site" />
@@ -175,7 +177,7 @@
 		<repository url="https://ecd-plugin.github.io/update/" />
 		<requirement name="org.sf.feeling.decompiler.feature.group" /> <!-- main -->
 		<requirement name="org.sf.feeling.decompiler.cfr.feature.group" />
-		<requirement name="org.sf.feeling.decompiler.quiltflower.feature.group" />
+		<requirement name="org.sf.feeling.decompiler.vineflower.feature.group" />
 		<requirement name="org.sf.feeling.decompiler.jd.feature.group" />
 		<requirement name="org.sf.feeling.decompiler.procyon.feature.group" />
 		
@@ -186,7 +188,7 @@
 	</setupTask>
 	
 	<setupTask xsi:type="setup.p2:P2Task" id="modeling" label="Eclipse Modeling">
-		<repository url="http://download.eclipse.org/releases/2021-06" />
+		<repository url="https://download.eclipse.org/releases/2021-06" />
 		<requirement name="org.eclipse.emf.sdk.feature.group" />
 		<requirement name="org.eclipse.emf.query.sdk.feature.group" />
 		<requirement name="org.eclipse.emf.transaction.sdk.feature.group" />
@@ -207,10 +209,10 @@
 		<requirement name="org.eclipse.eef.sdk.feature.source.feature.group" />
 		<requirement name="org.eclipse.sirius.runtime.ide.xtext.source.feature.group" />
 		
-		<repository url="http://download.eclipse.org/modeling/gmp/gmf-runtime/updates/releases/" />
+		<repository url="https://download.eclipse.org/modeling/gmp/gmf-runtime/updates/releases/" />
 		<requirement name="org.eclipse.gmf.feature.group" versionRange="[1.13.0,1.14.0)"/>
 		
-		<repository url="http://download.eclipse.org/modeling/gmp/gmf-notation/updates/releases/" />
+		<repository url="https://download.eclipse.org/modeling/gmp/gmf-notation/updates/releases/" />
 		<requirement name="org.eclipse.gmf.runtime.notation.feature.group" versionRange="1.10"/>
 		
 		<repository url="https://download.eclipse.org/elk/updates/releases/0.7.1/" />
@@ -230,12 +232,13 @@
 	
 	</setupTask>
 
+<!--
 	<setupTask xsi:type="setup.p2:P2Task" id="vaadin" label="vaadin framework">
 	
 		<requirement name="com.vaadin.integration.eclipse.feature.group"/>
 		<repository url="http://vaadin.com/eclipse"/>
-		<repository url="http://www.apache.org/dist/ant/ivyde/updatesite"/>
+		<repository url="https://www.apache.org/dist/ant/ivyde/updatesite"/>
 	
 	</setupTask>
-
+-->
 </setup:ProductVersion>

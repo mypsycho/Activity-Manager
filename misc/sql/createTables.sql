@@ -101,3 +101,10 @@ insert into DURATION (DUR_ID, DUR_IS_ACTIVE) values ( 75, 1);
 insert into DURATION (DUR_ID, DUR_IS_ACTIVE) values (100, 1);
 
 -- delete from Duration where dur_id = 25
+
+
+-- -----------------------------------------------------------
+-- Patch 1.2.0
+-- -----------------------------------------------------------
+-- alter table Task drop TSK_CLOSED; -- [IF EXISTS] is not a thing in MySQL
+alter table TASK add TSK_CLOSED integer(1) not null; -- Set 0 to existing values
