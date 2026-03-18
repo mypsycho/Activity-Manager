@@ -118,7 +118,13 @@ public class TasksUI extends AbstractTableMgrUI
 	public static final int CLOSED_COLUMN_IDX = 8;
 
 	private static final BiConsumer<MenuItem, TreeItem[]> FOR_SINGLE =
-			enableMItem((emptySelection, singleSelection) -> singleSelection);
+			enableMenu((emptySelection, singleSelection) -> singleSelection);
+
+	private static final BiConsumer<MenuItem, TreeItem[]> FOR_NOT_EMPTY =
+			enableMenu((emptySelection, singleSelection) -> !emptySelection);
+
+	private static final BiConsumer<MenuItem, TreeItem[]> FOR_SINGLE_OR_NONE =
+			enableMenu((emptySelection, singleSelection) -> emptySelection || singleSelection);
 
 	private TableOrTreeColumnsMgr treeColsMgr;
 
@@ -310,12 +316,10 @@ public class TasksUI extends AbstractTableMgrUI
 		createNewMenu(menu);
 		createMoveMenu(menu);
 
-		createTreeMenuItem(menu, "COPY",  //$NON-NLS-1$
-				enableMItem((emptySelection, singleSelection) -> !emptySelection),
+		createTreeMenuItem(menu, "COPY", FOR_NOT_EMPTY, //$NON-NLS-1$
 				this::copyTask);
 
-		createTreeMenuItem(menu, "REMOVE",  //$NON-NLS-1$
-				FOR_SINGLE,
+		createTreeMenuItem(menu, "REMOVE", FOR_SINGLE, //$NON-NLS-1$
 				selection -> {
 					TreeItem selectedItem = selection[0];
 					TreeItem parentItem = selectedItem.getParentItem();
@@ -337,23 +341,21 @@ public class TasksUI extends AbstractTableMgrUI
 					notifyTaskRemoved(selectedTask);
 				});
 
-		createTreeMenuItem(menu, "EXPAND_ALL",  //$NON-NLS-1$
-				FOR_SINGLE,
+		createTreeMenuItem(menu, "EXPAND_ALL", FOR_SINGLE, //$NON-NLS-1$
 				selection -> {
 					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
 					treeViewer.expandToLevel(selectedItem.getData(),
 							AbstractTreeViewer.ALL_LEVELS);
 				});
-		createTreeMenuItem(menu, "COLLAPSE_ALL",  //$NON-NLS-1$
-				FOR_SINGLE,
+
+		createTreeMenuItem(menu, "COLLAPSE_ALL", FOR_SINGLE, //$NON-NLS-1$
 				selection -> {
 					TreeItem selectedItem = treeViewer.getTree().getSelection()[0];
 					treeViewer.collapseToLevel(selectedItem.getData(),
 							AbstractTreeViewer.ALL_LEVELS);
 				});
 
-		createTreeMenuItem(menu, "LIST_CONTRIBUTIONS",  //$NON-NLS-1$
-				FOR_SINGLE,
+		createTreeMenuItem(menu, "LIST_CONTRIBUTIONS", FOR_SINGLE, //$NON-NLS-1$
 				selection -> {
 					TaskSums selected = (TaskSums) selection[0].getData();
 					Task selectedTask = selected.getTask();
@@ -362,8 +364,7 @@ public class TasksUI extends AbstractTableMgrUI
 					contribsViewerDialog.open();
 				});
 
-		createTreeMenuItem(menu, "REFRESH",  //$NON-NLS-1$
-				FOR_SINGLE,
+		createTreeMenuItem(menu, "REFRESH", FOR_SINGLE, //$NON-NLS-1$
 				selection -> {
 					// Récupération du noeud parent
 					TreeItem selectedItem = selection[0];
@@ -392,19 +393,32 @@ public class TasksUI extends AbstractTableMgrUI
 		return result;
 	}
 
-	private static BiConsumer<MenuItem, TreeItem[]> enableMItem(TreeActionEnable enabler) {
-		return (item, selection) -> {
-			item.setEnabled(enabler.enable(
-					selection.length == 0,
-					selection.length == 1));
-		};
+	private interface TreeActionEnable {
+		boolean enable(boolean emptySelection, boolean singleSelection);
+	}
+
+	private static BiConsumer<MenuItem, TreeItem[]> enableMenu(TreeActionEnable enabler) {
+		return (action, items) ->
+				action.setEnabled(enabler.enable(items.length == 0, items.length == 1));
 	}
 
 	private MenuItem createTreeMenuItem(Menu menu, String code,
 			BiConsumer<MenuItem, TreeItem[]> onUpdate, TreeSelectionAction action) {
 		MenuItem result = new MenuItem(menu, SWT.CASCADE);
 		result.setText(Strings.getString("TasksUI.menuitems." + code)); //$NON-NLS-1$
-		result.addSelectionListener(onTreeSelection(action));
+		result.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
+
+			@Override
+			public void widgetSelected(final SelectionEvent evt) {
+				TreeItem[] selection = treeViewer.getTree().getSelection();
+				safeExec(() -> action.accept(selection));
+			}
+		});
 		if (onUpdate != null) {
 			menuRefreshs.add(selection -> onUpdate.accept(result, selection));
 		}
@@ -416,8 +430,7 @@ public class TasksUI extends AbstractTableMgrUI
 		// Sous-menu 'Nouveau'
 		Menu newMenu = createSubMenu(menu, "NEW"); //$NON-NLS-1$
 
-		createTreeMenuItem(newMenu, "NEW_TASK",
-				enableMItem((emptySelection, singleSelection) -> emptySelection || singleSelection),
+		createTreeMenuItem(newMenu, "NEW_TASK", FOR_SINGLE_OR_NONE, //$NON-NLS-1$
 				selection -> {
 					// Récupération du noeud parent
 					TreeItem parentItem = selection.length > 0
@@ -432,8 +445,7 @@ public class TasksUI extends AbstractTableMgrUI
 					notifyTaskAdded(newTask);
 				});
 
-		createTreeMenuItem(newMenu, "NEW_SUBTASK",
-				FOR_SINGLE,
+		createTreeMenuItem(newMenu, "NEW_SUBTASK", FOR_SINGLE, //$NON-NLS-1$
 				selection -> {
 					TaskSums selected = (TaskSums) selection[0].getData();
 					Task newTask = newTask(selected);
@@ -450,20 +462,20 @@ public class TasksUI extends AbstractTableMgrUI
 		// Sous-menu 'Déplacer'
 		Menu moveToMenu = createSubMenu(menu, "MOVE"); //$NON-NLS-1$
 
-		createTreeMenuItem(moveToMenu, "MOVE_UP", //$NON-NLS-1$
-				FOR_SINGLE, selection -> moveTask(selection, true));
+		createTreeMenuItem(moveToMenu, "MOVE_UP", FOR_SINGLE, //$NON-NLS-1$
+				selection -> moveTask(selection, true));
 
-		createTreeMenuItem(moveToMenu, "MOVE_DOWN", //$NON-NLS-1$
-				FOR_SINGLE, selection -> moveTask(selection, false));
+		createTreeMenuItem(moveToMenu, "MOVE_DOWN", FOR_SINGLE, //$NON-NLS-1$
+				selection -> moveTask(selection, false));
 
-		createTreeMenuItem(moveToMenu, "MOVE_BEFORE_ANOTHER_TASK", //$NON-NLS-1$
-				FOR_SINGLE, selection -> moveTaskItem(selection, true));
+		createTreeMenuItem(moveToMenu, "MOVE_BEFORE_ANOTHER_TASK", FOR_SINGLE, //$NON-NLS-1$
+				selection -> moveTaskItem(selection, true));
 
-		createTreeMenuItem(moveToMenu, "MOVE_AFTER_ANOTHER_TASK", //$NON-NLS-1$
-				FOR_SINGLE, selection -> moveTaskItem(selection, false));
+		createTreeMenuItem(moveToMenu, "MOVE_AFTER_ANOTHER_TASK", FOR_SINGLE, //$NON-NLS-1$
+				selection -> moveTaskItem(selection, false));
 
-		createTreeMenuItem(moveToMenu, "MOVE_UNDER_ANOTHER_TASK", //$NON-NLS-1$
-				FOR_SINGLE, selection -> {
+		createTreeMenuItem(moveToMenu, "MOVE_UNDER_ANOTHER_TASK", FOR_SINGLE, //$NON-NLS-1$
+				selection -> {
 					TaskSums selected = (TaskSums) selection[0].getData();
 					Task taskToMove = selected.getTask();
 					// Récupération du noeud parent
@@ -517,8 +529,8 @@ public class TasksUI extends AbstractTableMgrUI
 
 		Menu exportMenu = createSubMenu(menu, "EXPORT_IMPORT"); //$NON-NLS-1$
 
-		createTreeMenuItem(exportMenu, "XLS_EXPORT", //$NON-NLS-1$
-				null, selection ->  {
+		createTreeMenuItem(exportMenu, "XLS_EXPORT", null, //$NON-NLS-1$
+				selection ->  {
 					Long parentTaskId = null;
 					if (selection.length > 0) {
 						TaskSums selected = (TaskSums) selection[0].getData();
@@ -547,8 +559,8 @@ public class TasksUI extends AbstractTableMgrUI
 					}
 				});
 
-		createTreeMenuItem(exportMenu, "XLS_IMPORT", //$NON-NLS-1$
-				null, selection ->  {
+		createTreeMenuItem(exportMenu, "XLS_IMPORT", null, //$NON-NLS-1$
+				selection ->  {
 					Long parentTaskId = null;
 					TaskSums selected = null;
 					if (selection.length > 0) {
@@ -574,8 +586,7 @@ public class TasksUI extends AbstractTableMgrUI
 					}
 				});
 
-		createTreeMenuItem(exportMenu, "XLS_SNAPSHOT_EXPORT", //$NON-NLS-1$
-				null,
+		createTreeMenuItem(exportMenu, "XLS_SNAPSHOT_EXPORT", null, //$NON-NLS-1$
 				selection -> SWTHelper.exportToWorkBook(treeViewer.getTree()));
 
 	}
@@ -608,7 +619,6 @@ public class TasksUI extends AbstractTableMgrUI
 				null, // Delta
 				new TextCellEditor(tree), // comment
 				new CheckboxCellEditor(tree) // comment
-
 		});
 	}
 
@@ -958,22 +968,6 @@ public class TasksUI extends AbstractTableMgrUI
 		void accept(TreeItem[] selecteds) throws Exception;
 	}
 
-	private SelectionListener onTreeSelection(TreeSelectionAction action) {
-		return new SelectionListener() {
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				widgetSelected(e);
-			}
-
-			@Override
-			public void widgetSelected(final SelectionEvent evt) {
-				TreeItem[] selection = treeViewer.getTree().getSelection();
-				safeExec(() -> action.accept(selection));
-			}
-		};
-
-	}
-
 	private void moveTaskItem(TreeItem[] selection, boolean before) throws ModelException {
 		TaskSums selected = (TaskSums) selection[0].getData();
 		Task selectedTask = selected.getTask();
@@ -1022,8 +1016,7 @@ public class TasksUI extends AbstractTableMgrUI
 	 * @param before <code>true</code> if the task must be moved before the chosen tasks, <code>false</code> if it must be moved after.
 	 * @throws ModelException if a model error occurs.
 	 */
-	private void doMoveBeforeOrAfter(Task taskToMove, Task chosenTask,
-			boolean before) throws ModelException {
+	private void doMoveBeforeOrAfter(Task taskToMove, Task chosenTask, boolean before) throws ModelException {
 		boolean needRefresh = false;
 		// Traitement du changement éventuel de parent
 		if (!chosenTask.getPath()
@@ -1037,7 +1030,7 @@ public class TasksUI extends AbstractTableMgrUI
 			needRefresh = true;
 		}
 		// Déplacement de la tache
-		int targetNumber = chosenTask.getNumber();
+		short targetNumber = chosenTask.getNumber();
 		if (before && targetNumber > taskToMove.getNumber()) {
 			targetNumber--;
 		} else if (!before && targetNumber < taskToMove.getNumber()) {
@@ -1082,15 +1075,10 @@ public class TasksUI extends AbstractTableMgrUI
 		return newTask;
 	}
 
-	private interface TreeActionEnable {
-		boolean enable(boolean emptySelection, boolean singleSelection);
-	}
-
 	private void updateMenu() {
 		TreeItem[] selection = treeViewer.getTree().getSelection();
 		menuRefreshs.forEach(it -> it.accept(selection));
 	}
-
 
 	@Override
 	public void databaseOpened() {

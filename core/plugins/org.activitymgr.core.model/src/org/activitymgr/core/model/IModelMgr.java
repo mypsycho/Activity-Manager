@@ -649,7 +649,7 @@ public interface IModelMgr {
 	 * @throws ModelException
 	 *             levé en cas de violation du modèle.
 	 */
-	void moveTaskUpOrDown(Task task, int newTaskNumber) throws ModelException;
+	void moveTaskUpOrDown(Task task, short newTaskNumber) throws ModelException;
 
 	/**
 	 * Déplace la tache d'un cran vers le haut.

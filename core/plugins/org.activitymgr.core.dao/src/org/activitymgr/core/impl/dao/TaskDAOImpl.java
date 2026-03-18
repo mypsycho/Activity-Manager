@@ -229,7 +229,7 @@ public class TaskDAOImpl extends AbstractORMDAOImpl<Task> implements ITaskDAO {
 
 
 	@Override
-	public byte newTaskNumber(String path) throws DAOException {
+	public short newTaskNumber(String path) throws DAOException {
 
 		// Recherche du max
 		try(PreparedStatement pStmt = tx().prepareStatement(
@@ -237,11 +237,13 @@ public class TaskDAOImpl extends AbstractORMDAOImpl<Task> implements ITaskDAO {
 			
 			pStmt.setString(1, path);
 			String maxStr = executeRequired(pStmt).getString(1);
-			byte max = maxStr != null ? StringHelper.toByte(maxStr) : 0;
+			short max = maxStr != null && !maxStr.isBlank()
+					? StringHelper.hexToNumber(maxStr)
+					: 0;
 			log.debug("  => max= : " + max); //$NON-NLS-1$
 
 			// Retour du résultat
-			return (byte) (max + 1);
+			return (short) (max + 1);
 		} catch (SQLException e) {
 			return critical(e, "TASK_NUMBER_COMPUTATION_FAILURE"); //$NON-NLS-1$
 		}

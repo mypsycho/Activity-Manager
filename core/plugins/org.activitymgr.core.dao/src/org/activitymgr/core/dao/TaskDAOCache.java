@@ -12,10 +12,10 @@ public class TaskDAOCache {
 	
 	private ITaskDAO taskDAO;
 	
-	private Map<Long, Task> taskByIdCache = new HashMap<Long, Task>();
-	private Map<Long, String> taskCodePathByIdCache = new HashMap<Long, String>();
-	private Map<String, Long> taskIdByCodePathCache = new HashMap<String, Long>();
-	private Map<String, Task> taskByPathCache = new HashMap<String, Task>();
+	private Map<Long, Task> taskByIdCache = new HashMap<>();
+	private Map<Long, String> taskCodePathByIdCache = new HashMap<>();
+	private Map<String, Long> taskIdByCodePathCache = new HashMap<>();
+	private Map<String, Task> taskByPathCache = new HashMap<>();
 	
 	@Inject
 	public TaskDAOCache(ITaskDAO dao) {
@@ -34,21 +34,17 @@ public class TaskDAOCache {
 		if (fullpath == null || fullpath.length()==0) {
 			return null;
 		}
-		else if (!taskByPathCache.containsKey(fullpath)) {
+		if (!taskByPathCache.containsKey(fullpath)) {
 			int pathLength = fullpath.length() - 2;
 			String path = fullpath.substring(0, pathLength);
-			byte number = StringHelper.toByte(fullpath
-					.substring(pathLength));
+			short number = StringHelper.hexToNumber(fullpath.substring(pathLength));
 
-			Task[] selectedTasks = taskDAO.select(new String[] {"path", "number"}, new Object[] { path, number }, null, -1);
-			if (selectedTasks.length > 1) {
-				throw new IllegalStateException("More than one task returned");
-			}
-			else if (selectedTasks.length > 0) {
-				addToCache(selectedTasks[0]);
-			}
-			else {
-				// Else remember that this task doesn't exist
+			Task task = selectTaskBySegment(path, "number", number);
+
+			if (task != null) {
+				addToCache(task);
+			} else { 
+				// Remember that this task doesn't exist
 				taskByPathCache.put(fullpath, null);
 			}
 		}
@@ -78,28 +74,38 @@ public class TaskDAOCache {
 				String parentTaskCodePath = codePath.substring(0, idx);
 				parentTask = getByCodePath(parentTaskCodePath);
 			}
-			Task[] selectedTasks = taskDAO.select(new String[] { "path", "code" }, new Object[] { parentTask != null ? parentTask.getFullPath() : "", taskCode }, null, -1);
-			if (selectedTasks.length > 1) {
-				throw new IllegalStateException("More than one task returned");
-			}
-			else if (selectedTasks.length > 0) {
-				Task task = selectedTasks[0];
+			Task task = selectTaskBySegment(
+					parentTask != null ? parentTask.getFullPath() : "",
+					"code", taskCode);
+
+			if (task != null) {
 				if (!taskByIdCache.containsKey(task.getId())) {
 					addToCache(task);
-				}
-				else {
+				} else {
 					task = taskByIdCache.get(task.getId());
 				}
 				linkTaskAndPathInCache(codePath, task.getId());
-			}
-			else {
-				// Else remember that this task doesn't exist
+			} else {
+				// Remember that this task doesn't exist
 				taskIdByCodePathCache.put(codePath, null);
 			}
 		}
 
 		Long taskId = taskIdByCodePathCache.get(codePath);
 		return taskId != null ? getById(taskId) : null;
+	}
+	
+	private Task selectTaskBySegment(String path, String field, Object value) {
+		Task[] tasks = taskDAO.select(
+				new String[] { "path", field }, 
+				new Object[] { path, value }, 
+				null, -1);
+		if (tasks.length > 1) {
+			throw new IllegalStateException("More than one task returned");
+		}
+		return tasks.length == 1
+				? tasks[0]
+				: null;
 	}
 
 	private void addToCache(Task task) {

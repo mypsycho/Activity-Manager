@@ -83,7 +83,7 @@ public interface ITaskDAO extends IDAO<Task> {
 	 * @throws DAOException
 	 *             levé en cas d'incident technique d'accès à la base.
 	 */
-	byte newTaskNumber(String path) throws DAOException;
+	short newTaskNumber(String path) throws DAOException;
 
 	/**
  	 * Compute the task sums for a given task (when

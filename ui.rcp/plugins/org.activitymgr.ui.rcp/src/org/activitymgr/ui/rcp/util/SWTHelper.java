@@ -168,7 +168,10 @@ public class SWTHelper {
 		int startRowNum = sheet.getLastRowNum() + 1;
 		for (int i = 0; i < treeItems.length; i++) {
 			TreeItem treeItem = treeItems[i];
-			log.debug(" +-> TreeItem : " + i + ", expanded=" + treeItem.getExpanded() + ", data='" + treeItem.getData() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+			log.debug(" +-> TreeItem : " + i //$NON-NLS-1$
+					+ ", expanded=" + treeItem.getExpanded() //$NON-NLS-1$
+					+ ", data='" + treeItem.getData() //$NON-NLS-1$
+					+ "'"); //$NON-NLS-1$
 			if (treeItem.getData() != null) {
 				Row row = sheet
 						.createRow(sheet.getLastRowNum() + 1);
@@ -177,7 +180,9 @@ public class SWTHelper {
 				Cell cell = row.createCell(0);
 				wb.asBodyCellStyl(cell).setCellValue(indent + rowName);
 				for (int j = 1; j < columnsNb; j++) {
-					log.debug("  +-> Cell : " + j + ", '" + treeItem.getText(j) + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					log.debug("  +-> Cell : " + j //$NON-NLS-1$
+							+ ", '" + treeItem.getText(j) //$NON-NLS-1$
+							+ "'"); //$NON-NLS-1$
 					cell = row.createCell(j);
 					wb.asBodyCellStyl(cell);
 					String cellValue = treeItem.getText(j);
@@ -191,13 +196,15 @@ public class SWTHelper {
 						}
 					}
 				}
-				if (treeItem.getExpanded())
-					appendToWorkbook(
-							indent + "    ", wb, sheet, treeItem.getItems(), columnsNb); //$NON-NLS-1$
+				if (treeItem.getExpanded()) {
+					appendToWorkbook(indent + "    ", //$NON-NLS-1$
+							wb, sheet, treeItem.getItems(), columnsNb);
+				}
 			}
 		}
 		int endRowNum = sheet.getLastRowNum();
-		log.debug("startRowNum=" + startRowNum + ", endRowNum=" + endRowNum); //$NON-NLS-1$ //$NON-NLS-2$
+		log.debug("startRowNum=" + startRowNum //$NON-NLS-1$
+				+ ", endRowNum=" + endRowNum); //$NON-NLS-1$
 		if (!"".equals(indent) && endRowNum - startRowNum >= 1) { //$NON-NLS-1$
 			log.debug(" -> grouped!"); //$NON-NLS-1$
 			sheet.groupRow(startRowNum, endRowNum);
@@ -285,7 +292,9 @@ public class SWTHelper {
 		int startRowNum = sheet.getLastRowNum() + 1;
 		for (int i = 0; i < tableItems.length; i++) {
 			TableItem tableItem = tableItems[i];
-			log.debug(" +-> TreeItem : " + i + ", data='" + tableItem.getData() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			log.debug(" +-> TreeItem : " + i //$NON-NLS-1$
+					+ ", data='" + tableItem.getData() //$NON-NLS-1$
+					+ "'"); //$NON-NLS-1$
 			if (tableItem.getData() != null) {
 				Row row = sheet
 						.createRow(sheet.getLastRowNum() + 1);

@@ -1,34 +1,31 @@
 package org.activitymgr.core.util;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import junit.framework.TestCase;
 
 public class StringHelperTest extends TestCase {
 
 	public void test0() {
-		assertEquals("00", StringHelper.toHex((byte)0));
+		assertEquals("00", StringHelper.toHex2Chars((short)0));
 	}
 
 	public void test10() {
-		assertEquals("0A", StringHelper.toHex((byte)10));
+		assertEquals("0A", StringHelper.toHex2Chars((short)10));
 	}
 
 	public void test255() {
-		assertEquals("FF", StringHelper.toHex((byte)255));
+		assertEquals("FF", StringHelper.toHex2Chars((short)255));
 	}
 
 	public void test0x00() {
-		assertEquals((byte) 0, StringHelper.toByte("0"));
+		assertEquals(0, StringHelper.hexToNumber("0"));
 	}
 
 	public void test0x10() {
-		assertEquals((byte) 10, StringHelper.toByte("0A"));
+		assertEquals(10, StringHelper.hexToNumber("0A"));
 	}
 
 	public void test0xFF() {
-		assertEquals((byte) 255, StringHelper.toByte("FF"));
+		assertEquals(255, StringHelper.hexToNumber("FF"));
 	}
 
 	public void test1ToEntry() {
@@ -101,28 +98,6 @@ public class StringHelperTest extends TestCase {
 		catch (StringFormatException expected) { }
 	}
 
-	public void testBase32() {
-		Set<String> base32s = new HashSet<String>();
-		for (int value = 0; value < 1024; value++) {
-			String base32 = StringHelper.toBase32(value);
-			assertNotNull(base32);
-			assertEquals(2, base32.length());
-			assertFalse(base32s.contains(base32));
-			base32s.add(base32);
-			int decoded = StringHelper.fromBase32(base32);
-			assertEquals(value, decoded);
-		}
-	}
-
-	public void testBase32Overflow() {
-		StringHelper.toBase32(1023); // No overflow
-		try {
-			StringHelper.toBase32(1024); // Overflow
-			fail("Illegal argument exception should have been raised");
-		}
-		catch (IllegalArgumentException expected) {
-		}
-	}
 
 	public void testConvertCamelcase() {
 		assertEquals("My Taylor Is Rich",

@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -172,7 +172,8 @@ public class ReportTest extends AbstractModelTestCase {
 		String testName = getName();
 		String fileName = testName.substring(4) + ".txt";
 		POUT.println(fileName);
-		BufferedReader in = new BufferedReader(new InputStreamReader(ReportTest.class.getResourceAsStream(fileName), Charset.forName("UTF-8")));
+		BufferedReader in = new BufferedReader(new InputStreamReader(ReportTest.class.getResourceAsStream(fileName), 
+				StandardCharsets.UTF_8));
 		String line = "";
 
 		Properties props = new Properties();
@@ -230,8 +231,8 @@ public class ReportTest extends AbstractModelTestCase {
 					Boolean.parseBoolean(props.getProperty(ONLY_KEEP_TASKS_WITH_CONTRIBUTIONS_PROP)), // Only Keep Tasks With Contributions
 					Boolean.parseBoolean(props.getProperty(BY_CONTRIBUTOR_PROP)), // By contributor
 					contributorIds, // Contributor ids
-					Boolean.parseBoolean(props.getProperty(ORDER_BY_CONTRIBUTOR_PROP)) // Order by contributor
-					);
+					Boolean.parseBoolean(props.getProperty(ORDER_BY_CONTRIBUTOR_PROP))); // Order by contributor
+					
 			POUT.println(report);
 			assertNotNull(report);
 			List<ReportItem> items = report.getItems();
@@ -274,8 +275,7 @@ public class ReportTest extends AbstractModelTestCase {
 	private Calendar cal(String cal) {
 		if (cal == null) {
 			return null;
-		}
-		else if (cal.length() != 8) {
+		} else if (cal.length() != 8) {
 			throw new IllegalArgumentException("Invalide date, must match ddMMyyyy");
 		}
 		return cal(Integer.parseInt(cal.substring(4, 8)), Integer.parseInt(cal.substring(2, 4)), Integer.parseInt(cal.substring(0, 2)));
@@ -312,6 +312,7 @@ public class ReportTest extends AbstractModelTestCase {
 		Task testA = getModelMgr().getTaskByCodePath("/PR/PA/TST");
 		Task specificationB = getModelMgr().getTaskByCodePath("/PR/PB/SPE");
 		Task moduleDevC = getModelMgr().getTaskByCodePath("/PR/PB/DEV/MC");
+		@SuppressWarnings("unused")
 		Task moduleDevD = getModelMgr().getTaskByCodePath("/PR/PB/DEV/MD");
 		Task testB = getModelMgr().getTaskByCodePath("/PR/PB/TST");
 		Task vacations = getModelMgr().getTaskByCodePath("/ABS/VAC");

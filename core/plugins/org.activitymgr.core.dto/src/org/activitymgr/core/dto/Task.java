@@ -51,7 +51,7 @@ public class Task extends SimpleIdentityBean {
 
 	/** Numéro de la tâche */
 	@Converter(TaskNumberConverter.class)
-	private byte number;
+	private short number;
 
 	/** Code de la tache */
 	private String code;
@@ -119,7 +119,7 @@ public class Task extends SimpleIdentityBean {
 	/**
 	 * @return le numéro de la tache.
 	 */
-	public byte getNumber() {
+	public short getNumber() {
 		return number;
 	}
 
@@ -127,7 +127,7 @@ public class Task extends SimpleIdentityBean {
 	 * @return le numéro de la tache.
 	 */
 	public String getNumberAsHex() {
-		return StringHelper.toHex(number);
+		return StringHelper.toHex2Chars(number);
 	}
 
 	/**
@@ -190,7 +190,7 @@ public class Task extends SimpleIdentityBean {
 	 * @param number
 	 *            le nouveau numéro.
 	 */
-	public void setNumber(byte number) {
+	public void setNumber(short number) {
 		this.number = number;
 	}
 

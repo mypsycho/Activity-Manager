@@ -8,22 +8,22 @@ import java.sql.Types;
 import org.activitymgr.core.orm.IConverter;
 import org.activitymgr.core.util.StringHelper;
 
-public class TaskNumberConverter implements IConverter<Byte> {
+public class TaskNumberConverter implements IConverter<Short> {
 
 	@Override
-	public void bind(PreparedStatement stmt, int index, Byte value)
+	public void bind(PreparedStatement stmt, int index, Short value)
 			throws SQLException {
-		stmt.setString(index, StringHelper.toHex(value));
+		stmt.setString(index, StringHelper.toHex2Chars(value));
 	}
 
 	@Override
-	public Byte readValue(ResultSet rs, int index) throws SQLException {
-		return StringHelper.toByte(rs.getString(index));
+	public Short readValue(ResultSet rs, int index) throws SQLException {
+		return StringHelper.hexToNumber(rs.getString(index));
 	}
 
 	@Override
 	public int getSQLType() {
-		return Types.VARCHAR;
+		return Types.VARCHAR/*(2)*/; 
 	}
 
 }
